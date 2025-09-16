@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus } from 'lucide-react';
+import { Plus, Lock, Check } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 
 import type { User, UserState, Task } from '@/lib/types';
@@ -13,7 +13,6 @@ import { useTaskStore } from '@/hooks/use-task-store';
 import { TaskList } from './task-list';
 import { ScoreBadge } from './score-badge';
 import { CelebrationOverlay } from './celebration-overlay';
-import { AISuggester } from './ai-suggester';
 
 type TaskCardProps = {
   user: User;
@@ -50,6 +49,12 @@ export function TaskCard({ user }: TaskCardProps) {
     if (userData.isLocked) return 'Finish List';
     return 'Lock-In Tasks';
   };
+  
+  const getActionButtonIcon = () => {
+    if (userData.isFinished) return <Plus className="w-4 h-4 mr-2" />;
+    if (userData.isLocked) return <Check className="w-4 h-4 mr-2" />;
+    return <Lock className="w-4 h-4 mr-2" />;
+  }
 
   const cardBorderStyle = userData.isLocked || userData.isFinished ? 'border-[--lock-color]' : (user === 'riya' ? 'border-[--riya-primary]' : 'border-[--ambuj-primary]');
 
@@ -59,7 +64,7 @@ export function TaskCard({ user }: TaskCardProps) {
 
 
   return (
-    <Card className={`relative flex flex-col w-full h-full shadow-lg border-t-4 p-6 ${themeClass} ${cardBorderStyle}`}>
+    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-white/60 backdrop-blur-lg border-t-4 p-6 ${themeClass} ${cardBorderStyle}`}>
       <div className="flex justify-between items-center pb-4 mb-4 border-b flex-shrink-0">
         <h2 className="text-2xl font-bold text-slate-800">{userName}'s List</h2>
         <ScoreBadge
@@ -76,13 +81,13 @@ export function TaskCard({ user }: TaskCardProps) {
         <Input
           type="text"
           name="task-input"
-          placeholder="Add a new task..."
-          className={`bg-slate-50 border-slate-300 transition focus:border-transparent focus:ring-2 ${ringStyle}`}
+          placeholder="What's on your mind?"
+          className={`bg-white/80 border-slate-300 transition focus:border-transparent focus:ring-2 ${ringStyle}`}
           disabled={userData.isLocked || userData.isFinished}
         />
         <Button
           type="submit"
-          className={`text-white font-bold p-3 rounded-lg hover:opacity-90 transition transform hover:scale-105 ${addBtnStyle}`}
+          className={`text-white font-bold p-3 rounded-lg shadow-md hover:opacity-90 transition transform hover:scale-105 ${addBtnStyle}`}
           disabled={userData.isLocked || userData.isFinished}
           aria-label="Add task"
         >
@@ -101,11 +106,12 @@ export function TaskCard({ user }: TaskCardProps) {
         />
       </ScrollArea>
       
-      <div className="flex gap-2 mt-4 flex-shrink-0">
+      <div className="flex gap-2 mt-6 flex-shrink-0">
          <Button
             onClick={() => handleActionButton(user)}
-            className={`w-full font-semibold hover:opacity-90 transition ${actionBtnStyle} ${ringStyle}`}
+            className={`w-full font-semibold hover:opacity-90 transition py-3 text-base h-auto ${actionBtnStyle} ${ringStyle}`}
           >
+            {getActionButtonIcon()}
             {getActionButtonText()}
           </Button>
       </div>
