@@ -72,12 +72,12 @@
 
 @keyframes glow-riya {
   0%, 100% { box-shadow: 0 0 10px 0px rgba(167, 139, 250, 0.4); }
-  50% { box-shadow: 0 0 25px 8px rgba(167, 139, 250, 0.6); }
+  50% { box-shadow: 0 0 10px 8px rgba(167, 139, 250, 0.6); }
 }
 
 @keyframes glow-ambuj {
   0%, 100% { box-shadow: 0 0 10px 0px rgba(34, 211, 238, 0.4); }
-  50% { box-shadow: 0 0 25px 8px rgba(34, 211, 238, 0.6); }
+  50% { box-shadow: 0 0 10px 8px rgba(34, 211, 238, 0.6); }
 }
 
 
