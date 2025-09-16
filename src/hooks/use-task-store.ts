@@ -99,6 +99,7 @@ export const useTaskStore = () => {
   }, []);
 
   const toggleTask = useCallback((user: User, taskId: string) => {
+    if (!state[user].isLocked) return;
     setState(prevState => ({
       ...prevState,
       [user]: {
@@ -108,7 +109,7 @@ export const useTaskStore = () => {
         ),
       },
     }));
-  }, []);
+  }, [state]);
 
   const startNewList = useCallback((user: User) => {
     setState(prevState => ({
@@ -120,8 +121,7 @@ export const useTaskStore = () => {
         isFinished: false,
       },
     }));
-    toast({ title: "New list started!", description: "Add your tasks for today." });
-  }, [toast]);
+  }, []);
 
   const handleActionButton = useCallback((user: User) => {
     const userData = state[user];
@@ -153,7 +153,6 @@ export const useTaskStore = () => {
           isLocked: true,
         },
       }));
-      toast({ title: 'List Locked!', description: 'Time to get to work!' });
     }
   }, [state, toast, startNewList]);
   
