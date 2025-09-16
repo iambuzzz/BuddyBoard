@@ -62,7 +62,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-slate-700;
+    @apply bg-background text-slate-700 overflow-hidden;
     min-height: 100vh;
     background-image: linear-gradient(to top, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
   }
