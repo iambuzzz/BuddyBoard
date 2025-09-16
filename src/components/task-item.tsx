@@ -55,8 +55,8 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, theme }
       }`}
     >
       <div
-        className={`mr-3 ${!isLocked || task.isCompleted ? 'cursor-pointer' : 'cursor-default'}`}
-        onClick={() => !isLocked && onToggle(task.id)}
+        className={`mr-3 ${isLocked ? 'cursor-pointer' : 'cursor-default'}`}
+        onClick={() => isLocked && onToggle(task.id)}
       >
         {task.isCompleted ? (
           <CheckCircle2 className="text-emerald-500" />

@@ -108,9 +108,6 @@ export function TaskCard({ user }: TaskCardProps) {
           >
             {getActionButtonText()}
           </Button>
-          {!userData.isLocked && !userData.isFinished && (
-            <AISuggester tasks={userData.tasks} theme={user} />
-          )}
       </div>
 
       <AnimatePresence>
