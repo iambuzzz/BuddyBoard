@@ -1,7 +1,7 @@
 "use client";
 
 import { Trophy } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 
 type ScoreBadgeProps = {
   dailyCompleted: number;
@@ -34,9 +34,9 @@ export function ScoreBadge({
   const themeClass = theme === 'riya' ? 'bg-[--riya-secondary] text-[--riya-text] border-[--riya-primary]' : 'bg-[--ambuj-secondary] text-[--ambuj-text] border-[--ambuj-primary]';
 
   return (
-    <div className="score-badge-container w-44">
+    <div className="score-badge-container w-36 sm:w-44">
       <div
-        className={`score-badge w-full h-full rounded-full font-semibold text-lg border cursor-pointer ${isLocked ? 'cursor-pointer' : 'cursor-default'} ${themeClass} ${isFlipped ? 'is-flipped' : ''}`}
+        className={`score-badge w-full h-full rounded-full font-semibold text-base sm:text-lg border ${isLocked ? 'cursor-pointer' : 'cursor-default'} ${themeClass} ${isFlipped ? 'is-flipped' : ''}`}
         onClick={handleToggle}
         title={isLocked ? 'Click to toggle score' : ''}
       >

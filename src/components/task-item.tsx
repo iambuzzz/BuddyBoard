@@ -55,7 +55,7 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, theme }
       }`}
     >
       <div
-        className={`mr-3 ${isLocked ? 'cursor-pointer' : 'cursor-default'}`}
+        className={`mr-3 flex-shrink-0 ${isLocked ? 'cursor-pointer' : 'cursor-default'}`}
         onClick={() => isLocked && onToggle(task.id)}
       >
         {task.isCompleted ? (
@@ -77,7 +77,7 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, theme }
         />
       ) : (
         <>
-          <span className="task-text flex-grow overflow-hidden text-ellipsis mr-2">
+          <span className="task-text flex-grow mr-2 break-words">
             {task.text}
           </span>
           {!isLocked && (
