@@ -1,9 +1,10 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { ChevronsRight, Loader2, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { useTaskStore } from '@/hooks/use-task-store';
 import { TaskCard } from './task-card';
+import { Loader2 } from 'lucide-react';
 
 export function TaskFlipper() {
   const { state, switchUser } = useTaskStore();
@@ -30,7 +31,7 @@ export function TaskFlipper() {
         </Button>
       </div>
 
-      <div className="app-flip-shell max-w-4xl mx-auto" style={{ height: '70vh' }}>
+      <div className="app-flip-shell flex-grow max-w-4xl mx-auto w-full">
         <div className={`app-flip-card ${state.showBack ? 'is-back' : ''}`}>
           <div className="app-face front">
             <TaskCard user="riya" />
