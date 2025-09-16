@@ -13,7 +13,6 @@ import { useTaskStore } from '@/hooks/use-task-store';
 import { TaskList } from './task-list';
 import { ScoreBadge } from './score-badge';
 import { CelebrationOverlay } from './celebration-overlay';
-import { AISuggester } from './ai-suggester';
 
 type TaskCardProps = {
   user: User;
@@ -108,7 +107,6 @@ export function TaskCard({ user }: TaskCardProps) {
       </ScrollArea>
       
       <div className="flex gap-2 mt-6 flex-shrink-0">
-        <AISuggester tasks={userData.tasks} theme={user} />
          <Button
             onClick={() => handleActionButton(user)}
             className={`w-full font-semibold hover:opacity-90 transition py-3 text-base h-auto ${actionBtnStyle} ${ringStyle}`}
