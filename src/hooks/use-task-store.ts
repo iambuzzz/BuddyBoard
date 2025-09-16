@@ -40,10 +40,12 @@ export const useTaskStore = () => {
         const data = docSnap.data() as Omit<AppState, 'showBack'>;
         setState(prevState => ({ ...prevState, ...data }));
       } else {
-        // Document doesn't exist, create it with initial state.
         const initialState = getInitialState();
         const { showBack, ...initialDbState } = initialState;
-        setDoc(docRef, initialDbState);
+        setDoc(docRef, initialDbState).catch(error => {
+          console.error("Failed to create initial document:", error);
+          toast({ title: 'Error', description: 'Could not initialize database.', variant: 'destructive'});
+        });
       }
       setStatus('ready');
     }, (error) => {
@@ -58,7 +60,6 @@ export const useTaskStore = () => {
   const updateFirestore = async (newState: Partial<AppState>) => {
     const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
     try {
-      // Ensure we don't try to write 'showBack' to firestore
       const { showBack, ...dbState } = newState;
       await setDoc(docRef, dbState, { merge: true });
     } catch (error) {
@@ -166,36 +167,43 @@ export const useTaskStore = () => {
   }, []);
 
   const handleActionButton = useCallback((user: User) => {
+    const userData = state[user];
+
+    if (!userData.isLocked && userData.tasks.length === 0) {
+      toast({
+        title: 'List is empty',
+        description: 'Add at least one task to lock in your list.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setState(prevState => {
-      const userData = prevState[user];
+      const currentUserData = prevState[user];
       let newUserData;
 
-      if (userData.isFinished) {
+      if (currentUserData.isFinished) {
         // Start New List
-         newUserData = {
-          ...userData,
+        newUserData = {
+          ...currentUserData,
           tasks: [],
           isLocked: false,
           isFinished: false,
         };
-      } else if (userData.isLocked) {
+      } else if (currentUserData.isLocked) {
         // Finish List
-        const completed = userData.tasks.filter(t => t.isCompleted).length;
-        const total = userData.tasks.length;
+        const completed = currentUserData.tasks.filter(t => t.isCompleted).length;
+        const total = currentUserData.tasks.length;
         newUserData = {
-          ...userData,
+          ...currentUserData,
           isFinished: true,
-          totalCompleted: userData.totalCompleted + completed,
-          totalAssigned: userData.totalAssigned + total,
+          totalCompleted: currentUserData.totalCompleted + completed,
+          totalAssigned: currentUserData.totalAssigned + total,
         };
       } else {
         // Lock List
-        if (userData.tasks.length === 0) {
-          toast({ title: 'List is empty', description: 'Add at least one task to lock in your list.', variant: 'destructive'});
-          return prevState;
-        }
         newUserData = {
-          ...userData,
+          ...currentUserData,
           isLocked: true,
         };
       }
@@ -203,7 +211,7 @@ export const useTaskStore = () => {
       updateFirestore({ [user]: newUserData });
       return newState;
     });
-  }, [toast]);
+  }, [state, toast]);
   
 
   return {
