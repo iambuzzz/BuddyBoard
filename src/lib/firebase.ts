@@ -2,6 +2,8 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
+// --- PASTE YOUR FIREBASE CONFIGURATION OBJECT HERE ---
+// You can get this from your project's settings in the Firebase console.
 // Your web app's Firebase configuration
 const firebaseConfig = {
   apiKey: "YOUR_API_KEY",
@@ -11,6 +13,7 @@ const firebaseConfig = {
   messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
   appId: "YOUR_APP_ID"
 };
+// ----------------------------------------------------
 
 // Initialize Firebase
 const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
