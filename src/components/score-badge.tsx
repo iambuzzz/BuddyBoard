@@ -1,7 +1,7 @@
 "use client";
 
 import { Trophy } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 type ScoreBadgeProps = {
   dailyCompleted: number;
@@ -20,7 +20,11 @@ export function ScoreBadge({
   isLocked,
   theme
 }: ScoreBadgeProps) {
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [isFlipped, setIsFlipped] = useState(isLocked);
+
+  useEffect(() => {
+    setIsFlipped(isLocked);
+  }, [isLocked]);
 
   const frontText = `Total: ${lifetimeCompleted}/${lifetimeTotal}`;
   const backText = `Today: ${dailyCompleted}/${dailyTotal}`;
