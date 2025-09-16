@@ -60,7 +60,7 @@ export function TaskCard({ user }: TaskCardProps) {
   const glowClass = userData.isLocked ? (user === 'riya' ? 'card-glow-riya' : 'card-glow-ambuj') : '';
 
 
-  const addBtnStyle = user === 'riya' ? 'bg-[--riya-primary]' : 'bg-[--ambuj-primary]';
+  const addBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-purple-500' : 'bg-[--ambuj-primary] hover:bg-cyan-500';
   const actionBtnStyle = user === 'riya' ? 'bg-[--riya-secondary] text-[--riya-text] hover:bg-violet-100' : 'bg-[--ambuj-secondary] text-[--ambuj-text] hover:bg-cyan-100';
   const ringStyle = user === 'riya' ? 'focus:ring-[--riya-primary]' : 'focus:ring-[--ambuj-primary]';
 
@@ -89,7 +89,7 @@ export function TaskCard({ user }: TaskCardProps) {
         />
         <Button
           type="submit"
-          className={`text-white font-bold p-3 rounded-lg shadow-md hover:opacity-90 transition transform hover:scale-105 ${addBtnStyle}`}
+          className={`text-white font-bold p-3 rounded-lg shadow-md transition transform hover:scale-105 ${addBtnStyle}`}
           disabled={userData.isLocked || userData.isFinished}
           aria-label="Add task"
         >
