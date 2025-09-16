@@ -19,8 +19,8 @@ export function TaskFlipper() {
   }
   
   const buttonThemeClass = state.showBack 
-    ? 'bg-[--riya-primary] hover:bg-violet-500 text-white' 
-    : 'bg-[--ambuj-primary] hover:bg-cyan-500 text-white';
+    ? 'bg-[--ambuj-primary] hover:bg-cyan-500 text-white'
+    : 'bg-[--riya-primary] hover:bg-violet-500 text-white' ;
 
 
   return (
