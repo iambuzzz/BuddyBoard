@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { AppState, User, Task } from '@/lib/types';
-
-const APP_STORAGE_KEY = 'taskFlipperState';
+import { db } from '@/lib/firebase';
+import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 
 const getInitialState = (): AppState => ({
   riya: {
@@ -24,37 +24,51 @@ const getInitialState = (): AppState => ({
   showBack: false,
 });
 
+const APP_STATE_DOC_ID = 'taskFlipperState';
+const APP_STATE_COLLECTION_ID = 'app';
+
 export const useTaskStore = () => {
   const [status, setStatus] = useState<'loading' | 'ready'>('loading');
   const [state, setState] = useState<AppState>(getInitialState());
   const { toast } = useToast();
 
   useEffect(() => {
-    try {
-      const storedState = localStorage.getItem(APP_STORAGE_KEY);
-      if (storedState) {
-        const parsedState = JSON.parse(storedState);
-        // Basic validation
-        if (parsedState.riya && parsedState.ambuj) {
-          setState(parsedState);
-        }
-      }
-    } catch (error) {
-      console.error("Failed to load state from localStorage", error);
-    } finally {
-      setStatus('ready');
-    }
-  }, []);
+    const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
 
-  useEffect(() => {
-    if (status === 'ready') {
-      try {
-        localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(state));
-      } catch (error) {
-        console.error("Failed to save state to localStorage", error);
+    const unsubscribe = onSnapshot(docRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as Omit<AppState, 'showBack'>;
+        setState(prevState => ({ ...prevState, ...data, showBack: prevState.showBack }));
+      } else {
+        // If the document doesn't exist, create it with the initial state
+        setDoc(docRef, getInitialState());
       }
+      setStatus('ready');
+    }, (error) => {
+      console.error("Error fetching data from Firestore:", error);
+      toast({ title: 'Error', description: 'Could not connect to the database.', variant: 'destructive'});
+      setStatus('ready');
+    });
+
+    // On initial load, check if we need to create the doc
+    getDoc(docRef).then(docSnap => {
+        if (!docSnap.exists()) {
+            setDoc(docRef, getInitialState());
+        }
+    })
+
+    return () => unsubscribe();
+  }, [toast]);
+  
+  const updateFirestore = async (newState: Partial<AppState>) => {
+    const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
+    try {
+      await updateDoc(docRef, newState);
+    } catch (error) {
+      console.error("Failed to update state to Firestore", error);
+      toast({ title: 'Sync Error', description: 'Failed to save changes.', variant: 'destructive' });
     }
-  }, [state, status]);
+  };
 
   const switchUser = useCallback(() => {
     setState(prevState => ({ ...prevState, showBack: !prevState.showBack }));
@@ -67,94 +81,132 @@ export const useTaskStore = () => {
       isCompleted: false,
       createdAt: Date.now(),
     };
-    setState(prevState => ({
-      ...prevState,
-      [user]: {
-        ...prevState[user],
-        tasks: [...prevState[user].tasks, newTask].sort((a, b) => a.createdAt - b.createdAt),
-      },
-    }));
+    
+    setState(prevState => {
+      const userState = prevState[user];
+      const newTasks = [...userState.tasks, newTask].sort((a, b) => a.createdAt - b.createdAt);
+      const newState = {
+        ...prevState,
+        [user]: {
+          ...userState,
+          tasks: newTasks,
+        },
+      };
+      updateFirestore({ [user]: newState[user] });
+      return newState;
+    });
   }, []);
 
   const updateTask = useCallback((user: User, taskId: string, newText: string) => {
-    setState(prevState => ({
-      ...prevState,
-      [user]: {
-        ...prevState[user],
-        tasks: prevState[user].tasks.map(t =>
-          t.id === taskId ? { ...t, text: newText } : t
-        ),
-      },
-    }));
+    setState(prevState => {
+      const userState = prevState[user];
+      const newTasks = userState.tasks.map(t =>
+        t.id === taskId ? { ...t, text: newText } : t
+      );
+      const newState = {
+        ...prevState,
+        [user]: {
+          ...userState,
+          tasks: newTasks,
+        },
+      };
+      updateFirestore({ [user]: newState[user] });
+      return newState;
+    });
   }, []);
 
   const deleteTask = useCallback((user: User, taskId: string) => {
-    setState(prevState => ({
-      ...prevState,
-      [user]: {
-        ...prevState[user],
-        tasks: prevState[user].tasks.filter(t => t.id !== taskId),
-      },
-    }));
+    setState(prevState => {
+        const userState = prevState[user];
+        const newTasks = userState.tasks.filter(t => t.id !== taskId);
+        const newState = {
+          ...prevState,
+          [user]: {
+            ...userState,
+            tasks: newTasks,
+          },
+        };
+        updateFirestore({ [user]: newState[user] });
+        return newState;
+      });
   }, []);
 
   const toggleTask = useCallback((user: User, taskId: string) => {
-    if (!state[user].isLocked) return;
-    setState(prevState => ({
-      ...prevState,
-      [user]: {
-        ...prevState[user],
-        tasks: prevState[user].tasks.map(t =>
-          t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t
-        ),
-      },
-    }));
-  }, [state]);
+    setState(prevState => {
+      if (!prevState[user].isLocked) return prevState;
+
+      const userState = prevState[user];
+      const newTasks = userState.tasks.map(t =>
+        t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t
+      );
+      const newState = {
+        ...prevState,
+        [user]: {
+          ...userState,
+          tasks: newTasks,
+        },
+      };
+       updateFirestore({ [user]: newState[user] });
+      return newState;
+    });
+  }, []);
 
   const startNewList = useCallback((user: User) => {
-    setState(prevState => ({
-      ...prevState,
-      [user]: {
-        ...prevState[user],
-        tasks: [],
-        isLocked: false,
-        isFinished: false,
-      },
-    }));
+    setState(prevState => {
+      const userState = prevState[user];
+      const newState = {
+        ...prevState,
+        [user]: {
+          ...userState,
+          tasks: [],
+          isLocked: false,
+          isFinished: false,
+        },
+      };
+      updateFirestore({ [user]: newState[user] });
+      return newState;
+    });
   }, []);
 
   const handleActionButton = useCallback((user: User) => {
-    const userData = state[user];
-    if (userData.isFinished) {
-      startNewList(user);
-    } else if (userData.isLocked) {
-      // Finish List
-      const completed = userData.tasks.filter(t => t.isCompleted).length;
-      const total = userData.tasks.length;
-      setState(prevState => ({
-        ...prevState,
-        [user]: {
-          ...prevState[user],
+    setState(prevState => {
+      const userData = prevState[user];
+      let newUserData;
+
+      if (userData.isFinished) {
+        // Start New List
+         newUserData = {
+          ...userData,
+          tasks: [],
+          isLocked: false,
+          isFinished: false,
+        };
+      } else if (userData.isLocked) {
+        // Finish List
+        const completed = userData.tasks.filter(t => t.isCompleted).length;
+        const total = userData.tasks.length;
+        newUserData = {
+          ...userData,
           isFinished: true,
-          totalCompleted: prevState[user].totalCompleted + completed,
-          totalAssigned: prevState[user].totalAssigned + total,
-        },
-      }));
-    } else {
-      // Lock List
-      if (userData.tasks.length === 0) {
-        toast({ title: 'List is empty', description: 'Add at least one task to lock in your list.', variant: 'destructive'});
-        return;
-      }
-      setState(prevState => ({
-        ...prevState,
-        [user]: {
-          ...prevState[user],
+          totalCompleted: userData.totalCompleted + completed,
+          totalAssigned: userData.totalAssigned + total,
+        };
+      } else {
+        // Lock List
+        if (userData.tasks.length === 0) {
+          toast({ title: 'List is empty', description: 'Add at least one task to lock in your list.', variant: 'destructive'});
+          return prevState;
+        }
+        newUserData = {
+          ...userData,
           isLocked: true,
-        },
-      }));
-    }
-  }, [state, toast, startNewList]);
+        };
+      }
+      const newState = { ...prevState, [user]: newUserData };
+      updateFirestore({ [user]: newUserData });
+      return newState;
+    });
+  }, [toast]);
   
 
   return {

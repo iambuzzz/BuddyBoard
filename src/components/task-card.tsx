@@ -84,7 +84,7 @@ export function TaskCard({ user }: TaskCardProps) {
         <Input
           type="text"
           name="task-input"
-          placeholder="What's on your mind?"
+          placeholder="Add Task.."
           className={`bg-white/80 border-slate-300 transition focus:border-transparent ${ringStyle}`}
           disabled={userData.isLocked || userData.isFinished}
         />
