@@ -61,7 +61,7 @@ export function TaskCard({ user }: TaskCardProps) {
 
 
   const addBtnStyle = user === 'riya' ? 'bg-[--riya-primary]' : 'bg-[--ambuj-primary]';
-  const actionBtnStyle = user === 'riya' ? 'bg-[--riya-secondary] text-[--riya-text]' : 'bg-[--ambuj-secondary] text-[--ambuj-text]';
+  const actionBtnStyle = user === 'riya' ? 'bg-[--riya-secondary] text-[--riya-text] hover:bg-violet-100' : 'bg-[--ambuj-secondary] text-[--ambuj-text] hover:bg-cyan-100';
   const ringStyle = user === 'riya' ? 'focus:ring-[--riya-primary]' : 'focus:ring-[--ambuj-primary]';
 
 
@@ -111,7 +111,7 @@ export function TaskCard({ user }: TaskCardProps) {
       <div className="flex gap-2 mt-6 flex-shrink-0">
          <Button
             onClick={() => handleActionButton(user)}
-            className={`w-full font-semibold hover:opacity-90 transition py-3 text-base h-auto ${actionBtnStyle} ${ringStyle}`}
+            className={`w-full font-semibold transition py-3 text-base h-auto ${actionBtnStyle} ${ringStyle}`}
           >
             {getActionButtonIcon()}
             {getActionButtonText()}
