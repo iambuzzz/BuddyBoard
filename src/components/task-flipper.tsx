@@ -20,7 +20,7 @@ export function TaskFlipper() {
 
   return (
     <>
-      <div className="flex justify-center my-4">
+      <div className="flex justify-center mb-4">
         <Button
           onClick={switchUser}
           className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
