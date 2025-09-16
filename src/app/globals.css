@@ -141,4 +141,37 @@
   .score-back {
     transform: rotateY(180deg);
   }
+
+  /* Rainbow Border */
+  @keyframes rainbow-spin {
+    0% {
+      --rainbow-angle: 0deg;
+    }
+    100% {
+      --rainbow-angle: 360deg;
+    }
+  }
+  .border-rainbow {
+    position: relative;
+    border: none !important;
+  }
+  .border-rainbow::before {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: calc(var(--radius) + 4px);
+    z-index: -1;
+    background: conic-gradient(
+      from var(--rainbow-angle, 0deg),
+      #ff0000,
+      #ff7f00,
+      #ffff00,
+      #00ff00,
+      #0000ff,
+      #4b0082,
+      #9400d3,
+      #ff0000
+    );
+    animation: rainbow-spin 4s linear infinite;
+  }
 }
