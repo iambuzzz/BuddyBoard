@@ -17,13 +17,18 @@ export function TaskFlipper() {
       </div>
     );
   }
+  
+  const buttonThemeClass = state.showBack 
+    ? 'bg-[--riya-primary] hover:bg-violet-500 text-white' 
+    : 'bg-[--ambuj-primary] hover:bg-cyan-500 text-white';
+
 
   return (
     <>
       <div className="flex justify-center mb-4">
         <Button
           onClick={switchUser}
-          className="inline-flex items-center gap-2 rounded-full bg-white/80 backdrop-blur-sm shadow-lg text-slate-700 text-sm font-semibold px-4 py-2 hover:bg-white focus:outline-none focus:ring-2 focus:ring-slate-400"
+          className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 ${buttonThemeClass}`}
           aria-pressed={state.showBack}
         >
           <RefreshCw className="h-4 w-4" />
