@@ -1,6 +1,6 @@
 "use client";
 
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -13,6 +13,7 @@ import { useTaskStore } from '@/hooks/use-task-store';
 import { TaskList } from './task-list';
 import { ScoreBadge } from './score-badge';
 import { CelebrationOverlay } from './celebration-overlay';
+import { AISuggester } from './ai-suggester';
 
 type TaskCardProps = {
   user: User;
@@ -64,7 +65,7 @@ export function TaskCard({ user }: TaskCardProps) {
 
 
   return (
-    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-white/60 backdrop-blur-lg border-t-4 p-6 ${themeClass} ${cardBorderStyle}`}>
+    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-white/60 backdrop-blur-lg border-4 p-6 ${themeClass} ${cardBorderStyle}`}>
       <div className="flex justify-between items-center pb-4 mb-4 border-b flex-shrink-0">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-800 pr-2">{userName}'s List</h2>
         <ScoreBadge
@@ -107,6 +108,7 @@ export function TaskCard({ user }: TaskCardProps) {
       </ScrollArea>
       
       <div className="flex gap-2 mt-6 flex-shrink-0">
+        <AISuggester tasks={userData.tasks} theme={user} />
          <Button
             onClick={() => handleActionButton(user)}
             className={`w-full font-semibold hover:opacity-90 transition py-3 text-base h-auto ${actionBtnStyle} ${ringStyle}`}
