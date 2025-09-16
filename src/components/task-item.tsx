@@ -77,7 +77,7 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, theme }
         />
       ) : (
         <>
-          <span className="task-text flex-grow mr-2 break-words">
+          <span className="task-text flex-grow mr-2 break-all">
             {task.text}
           </span>
           {!isLocked && (
