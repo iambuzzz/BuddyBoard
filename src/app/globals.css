@@ -2,79 +2,59 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: Arial, Helvetica, sans-serif;
-}
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --background: 240 100% 99%;
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 231 48% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 287 43% 90%;
+    --secondary-foreground: 287 25% 25%;
+    --muted: 240 20% 94%;
+    --muted-foreground: 240 5% 45.1%;
+    --accent: 287 43% 95%;
+    --accent-foreground: 287 25% 25%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
-    --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 95%;
+    --ring: 231 48% 58%;
+    --radius: 0.8rem;
+
+    /* Custom App Theme Variables */
+    --riya-primary: #a78bfa;
+    --riya-secondary: #f5f3ff;
+    --riya-text: #6d28d9;
+    --ambuj-primary: #22d3ee;
+    --ambuj-secondary: #ecfeff;
+    --ambuj-text: #0e7490;
+    --lock-color: #34d399;
   }
+
   .dark {
-    --background: 0 0% 3.9%;
+    --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
-    --card: 0 0% 3.9%;
+    --card: 240 10% 3.9%;
     --card-foreground: 0 0% 98%;
-    --popover: 0 0% 3.9%;
+    --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 0 0% 9%;
-    --secondary: 0 0% 14.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 14.9%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
-    --accent-foreground: 0 0% 98%;
+    --primary: 231 48% 65%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 287 43% 15%;
+    --secondary-foreground: 287 43% 90%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 287 43% 15%;
+    --accent-foreground: 287 43% 90%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 14.9%;
-    --input: 0 0% 14.9%;
-    --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 231 48% 65%;
   }
 }
 
@@ -83,6 +63,74 @@ body {
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-slate-700;
+    min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* 3D Flip Card */
+  .app-flip-shell {
+    perspective: 1200px;
+  }
+  .app-flip-card {
+    @apply relative w-full h-full;
+    transform-style: preserve-3d;
+    transition: transform 0.7s ease;
+  }
+  .app-flip-card.is-back {
+    transform: rotateY(180deg);
+  }
+  .app-face {
+    @apply absolute w-full h-full;
+    backface-visibility: hidden;
+  }
+  .app-face.back {
+    transform: rotateY(180deg);
+  }
+
+  /* Task Item */
+  .task-item.completed {
+    @apply bg-emerald-50 text-emerald-800;
+  }
+  .task-item.completed .task-text {
+    @apply line-through text-emerald-700;
+  }
+
+  /* Scrollbar */
+  .task-list-container::-webkit-scrollbar {
+    width: 6px;
+  }
+  .task-list-container::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .theme-riya .task-list-container::-webkit-scrollbar-thumb {
+    background-color: var(--riya-primary);
+    border-radius: 9999px;
+  }
+  .theme-ambuj .task-list-container::-webkit-scrollbar-thumb {
+    background-color: var(--ambuj-primary);
+    border-radius: 9999px;
+  }
+
+  /* Score Badge */
+  .score-badge-container {
+    perspective: 1000px;
+    height: 3rem;
+  }
+  .score-badge {
+    position: relative;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+  .score-badge.is-flipped {
+    transform: rotateY(180deg);
+  }
+  .score-face {
+    @apply absolute inset-0 w-full h-full flex items-center justify-center gap-2;
+    backface-visibility: hidden;
+  }
+  .score-back {
+    transform: rotateY(180deg);
   }
 }
