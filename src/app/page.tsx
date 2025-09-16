@@ -7,9 +7,6 @@ export default function Home() {
         <h1 className="text-4xl sm:text-5xl font-bold font-headline text-slate-800 tracking-tight">
           Daily Dash
         </h1>
-        <p className="mt-3 text-lg text-slate-600 max-w-2xl mx-auto">
-          Lock-in your tasks for the day, crush your goals, and watch your score soar!
-        </p>
       </header>
       <main className="flex-grow flex flex-col">
         <TaskFlipper />
