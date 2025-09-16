@@ -8,7 +8,7 @@ export default function Home() {
           Daily Dash
         </h1>
       </header>
-      <main className="flex-grow flex flex-col">
+      <main className="flex-grow flex flex-col min-h-0">
         <TaskFlipper />
       </main>
     </div>
