@@ -56,7 +56,7 @@ export function TaskCard({ user }: TaskCardProps) {
     return <Lock className="w-4 h-4 mr-2" />;
   }
 
-  const cardBorderStyle = `border-4 ${user === 'riya' ? 'border-[--riya-primary]' : 'border-[--ambuj-primary]'}`;
+  const cardBorderStyle = `border-2 ${user === 'riya' ? 'border-[--riya-primary]' : 'border-[--ambuj-primary]'}`;
 
 
   const addBtnStyle = user === 'riya' ? 'bg-[--riya-primary]' : 'bg-[--ambuj-primary]';
