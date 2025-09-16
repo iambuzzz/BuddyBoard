@@ -60,9 +60,9 @@ export function TaskCard({ user }: TaskCardProps) {
   const glowClass = userData.isLocked ? (user === 'riya' ? 'card-glow-riya' : 'card-glow-ambuj') : '';
 
 
-  const addBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-purple-500' : 'bg-[--ambuj-primary] hover:bg-cyan-500';
-  const actionBtnStyle = user === 'riya' ? 'bg-[--riya-secondary] text-[--riya-text] hover:bg-violet-100' : 'bg-[--ambuj-secondary] text-[--ambuj-text] hover:bg-cyan-100';
-  const ringStyle = user === 'riya' ? 'focus:ring-[--riya-primary]' : 'focus:ring-[--ambuj-primary]';
+  const addBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' : 'bg-[--ambuj-primary] hover:bg-cyan-500';
+  const actionBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' : 'bg-[--ambuj-primary] hover:bg-cyan-500';
+  const ringStyle = user === 'riya' ? 'focus-visible:ring-[--riya-primary]' : 'focus-visible:ring-[--ambuj-primary]';
 
 
   return (
@@ -84,7 +84,7 @@ export function TaskCard({ user }: TaskCardProps) {
           type="text"
           name="task-input"
           placeholder="What's on your mind?"
-          className={`bg-white/80 border-slate-300 transition focus:border-transparent focus:ring-2 ${ringStyle}`}
+          className={`bg-white/80 border-slate-300 transition focus:border-transparent ${ringStyle}`}
           disabled={userData.isLocked || userData.isFinished}
         />
         <Button
