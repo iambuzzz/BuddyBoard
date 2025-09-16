@@ -70,6 +70,17 @@
   }
 }
 
+@keyframes glow-riya {
+  0%, 100% { box-shadow: 0 0 10px 0px rgba(167, 139, 250, 0.4); }
+  50% { box-shadow: 0 0 25px 8px rgba(167, 139, 250, 0.6); }
+}
+
+@keyframes glow-ambuj {
+  0%, 100% { box-shadow: 0 0 10px 0px rgba(34, 211, 238, 0.4); }
+  50% { box-shadow: 0 0 25px 8px rgba(34, 211, 238, 0.6); }
+}
+
+
 @layer components {
   /* 3D Flip Card */
   .app-flip-shell {
@@ -117,7 +128,7 @@
   }
   .theme-ambuj .task-list-container::-webkit-scrollbar-thumb {
     background-color: var(--ambuj-primary);
-    border-radius: 9999px;
+    border-radius: 9-999px;
     border: 2px solid hsl(var(--muted));
   }
 
@@ -140,5 +151,12 @@
   }
   .score-back {
     transform: rotateY(180deg);
+  }
+  
+  .card-glow-riya {
+    animation: glow-riya 3s ease-in-out infinite;
+  }
+  .card-glow-ambuj {
+    animation: glow-ambuj 3s ease-in-out infinite;
   }
 }

@@ -57,6 +57,7 @@ export function TaskCard({ user }: TaskCardProps) {
   }
 
   const cardBorderStyle = `border-2 ${user === 'riya' ? 'border-[--riya-primary]' : 'border-[--ambuj-primary]'}`;
+  const glowClass = userData.isLocked ? (user === 'riya' ? 'card-glow-riya' : 'card-glow-ambuj') : '';
 
 
   const addBtnStyle = user === 'riya' ? 'bg-[--riya-primary]' : 'bg-[--ambuj-primary]';
@@ -65,7 +66,7 @@ export function TaskCard({ user }: TaskCardProps) {
 
 
   return (
-    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-white/60 backdrop-blur-lg p-6 ${themeClass} ${cardBorderStyle}`}>
+    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-white/60 backdrop-blur-lg p-6 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
       <div className="flex justify-between items-center pb-4 mb-4 border-b flex-shrink-0">
         <h2 className="text-xl sm:text-2xl font-bold text-slate-800 pr-2">{userName}'s List</h2>
         <ScoreBadge
