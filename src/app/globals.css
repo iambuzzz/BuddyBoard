@@ -23,7 +23,6 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 95%;
     --ring: 231 48% 58%;
-    --radius: 0.8rem;
 
     /* Custom App Theme Variables */
     --riya-primary: #a78bfa;
@@ -87,7 +86,7 @@
     backface-visibility: hidden;
   }
   .app-face.back {
-    transform: rotateY(180deg);
+    /* transform: rotateY(180deg); */ /* This is now handled inline */
   }
 
   /* Task Item */

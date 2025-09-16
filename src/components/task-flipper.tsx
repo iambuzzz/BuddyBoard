@@ -36,7 +36,7 @@ export function TaskFlipper() {
           <div className="app-face front">
             <TaskCard user="riya" />
           </div>
-          <div className="app-face back">
+          <div className="app-face back" style={{ transform: 'rotateY(180deg)' }}>
             <TaskCard user="ambuj" />
           </div>
         </div>
