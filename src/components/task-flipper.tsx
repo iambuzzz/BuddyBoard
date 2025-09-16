@@ -19,8 +19,8 @@ export function TaskFlipper() {
   }
   
   const buttonThemeClass = state.showBack 
-    ? 'bg-[--ambuj-primary] hover:bg-cyan-500 text-white'
-    : 'bg-[--riya-primary] hover:bg-violet-500 text-white' ;
+    ? 'bg-[--riya-primary] hover:bg-violet-500 text-white'
+    : 'bg-[--ambuj-primary] hover:bg-cyan-500 text-white' ;
 
 
   return (
@@ -28,7 +28,7 @@ export function TaskFlipper() {
       <div className="flex justify-center mb-4">
         <Button
           onClick={switchUser}
-          className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-2 focus:ring-slate-400 ${buttonThemeClass}`}
+          className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none ${buttonThemeClass}`}
           aria-pressed={state.showBack}
         >
           <RefreshCw className="h-4 w-4" />
