@@ -39,9 +39,6 @@ export const useTaskStore = () => {
       if (docSnap.exists()) {
         const data = docSnap.data() as Omit<AppState, 'showBack'>;
         setState(prevState => ({ ...prevState, ...data, showBack: prevState.showBack }));
-      } else {
-        // If the document doesn't exist, create it with the initial state
-        setDoc(docRef, getInitialState());
       }
       setStatus('ready');
     }, (error) => {
@@ -53,7 +50,12 @@ export const useTaskStore = () => {
     // On initial load, check if we need to create the doc
     getDoc(docRef).then(docSnap => {
         if (!docSnap.exists()) {
-            setDoc(docRef, getInitialState());
+            // Document doesn't exist, create it with initial state.
+            // Using setDoc here ensures it's created.
+            const initialState = getInitialState();
+            // We don't want to persist 'showBack' in Firestore
+            const { showBack, ...initialDbState } = initialState;
+            setDoc(docRef, initialDbState);
         }
     })
 
@@ -63,7 +65,9 @@ export const useTaskStore = () => {
   const updateFirestore = async (newState: Partial<AppState>) => {
     const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
     try {
-      await updateDoc(docRef, newState);
+      // Ensure we don't try to write 'showBack' to firestore
+      const { showBack, ...dbState } = newState;
+      await setDoc(docRef, dbState, { merge: true });
     } catch (error) {
       console.error("Failed to update state to Firestore", error);
       toast({ title: 'Sync Error', description: 'Failed to save changes.', variant: 'destructive' });
