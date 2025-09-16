@@ -22,8 +22,8 @@ export function ScoreBadge({
 }: ScoreBadgeProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
-  const frontText = `Total: ${lifetimeCompleted} / ${lifetimeTotal}`;
-  const backText = `Today: ${dailyCompleted} / ${dailyTotal}`;
+  const frontText = `Total: ${lifetimeCompleted}/${lifetimeTotal}`;
+  const backText = `Today: ${dailyCompleted}/${dailyTotal}`;
 
   const handleToggle = () => {
     if (isLocked) {
@@ -41,12 +41,12 @@ export function ScoreBadge({
         title={isLocked ? 'Click to toggle score' : ''}
       >
         <div className="score-face score-front">
-          <Trophy className="w-5 h-5" />
-          <span>{frontText}</span>
+          <Trophy className="w-5 h-5 flex-shrink-0" />
+          <span className="whitespace-nowrap">{frontText}</span>
         </div>
         <div className="score-face score-back">
-          <Trophy className="w-5 h-5" />
-          <span>{backText}</span>
+          <Trophy className="w-5 h-5 flex-shrink-0" />
+          <span className="whitespace-nowrap">{backText}</span>
         </div>
       </div>
     </div>
