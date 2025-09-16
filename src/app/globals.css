@@ -10,19 +10,19 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 231 48% 58%;
+    --primary: 302 59% 75%; /* Light Periwinkle */
     --primary-foreground: 0 0% 100%;
-    --secondary: 287 43% 90%;
-    --secondary-foreground: 287 25% 25%;
+    --secondary: 240 60% 98%; /* Very Light Periwinkle */
+    --secondary-foreground: 240 10% 3.9%;
     --muted: 240 20% 94%;
     --muted-foreground: 240 5% 45.1%;
-    --accent: 287 43% 95%;
-    --accent-foreground: 287 25% 25%;
+    --accent: 256 75% 93%; /* Soft Lavender */
+    --accent-foreground: 256 30% 30%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 95%;
-    --ring: 231 48% 58%;
+    --ring: 302 59% 75%;
 
     /* Custom App Theme Variables */
     --riya-primary: #a78bfa;
@@ -41,19 +41,19 @@
     --card-foreground: 0 0% 98%;
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
-    --primary: 231 48% 65%;
+    --primary: 302 59% 80%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 287 43% 15%;
-    --secondary-foreground: 287 43% 90%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
-    --accent: 287 43% 15%;
-    --accent-foreground: 287 43% 90%;
+    --accent: 256 50% 20%;
+    --accent-foreground: 256 75% 90%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
-    --ring: 231 48% 65%;
+    --ring: 302 59% 80%;
   }
 }
 
@@ -86,7 +86,7 @@
     backface-visibility: hidden;
   }
   .app-face.back {
-    /* transform: rotateY(180deg); */ /* This is now handled inline */
+    transform: rotateY(180deg);
   }
 
   /* Task Item */
@@ -102,18 +102,21 @@
 
   /* Scrollbar */
   .task-list-container::-webkit-scrollbar {
-    width: 6px;
+    width: 8px;
   }
   .task-list-container::-webkit-scrollbar-track {
-    background: transparent;
+    background: hsl(var(--muted));
+    border-radius: 9999px;
   }
   .theme-riya .task-list-container::-webkit-scrollbar-thumb {
     background-color: var(--riya-primary);
     border-radius: 9999px;
+    border: 2px solid hsl(var(--muted));
   }
   .theme-ambuj .task-list-container::-webkit-scrollbar-thumb {
     background-color: var(--ambuj-primary);
     border-radius: 9999px;
+    border: 2px solid hsl(var(--muted));
   }
 
   /* Score Badge */
