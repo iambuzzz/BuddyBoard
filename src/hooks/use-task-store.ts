@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { AppState, User, Task } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
+import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
 const getInitialState = (): AppState => ({
   riya: {
@@ -38,7 +38,12 @@ export const useTaskStore = () => {
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data() as Omit<AppState, 'showBack'>;
-        setState(prevState => ({ ...prevState, ...data, showBack: prevState.showBack }));
+        setState(prevState => ({ ...prevState, ...data }));
+      } else {
+        // Document doesn't exist, create it with initial state.
+        const initialState = getInitialState();
+        const { showBack, ...initialDbState } = initialState;
+        setDoc(docRef, initialDbState);
       }
       setStatus('ready');
     }, (error) => {
@@ -46,18 +51,6 @@ export const useTaskStore = () => {
       toast({ title: 'Error', description: 'Could not connect to the database.', variant: 'destructive'});
       setStatus('ready');
     });
-
-    // On initial load, check if we need to create the doc
-    getDoc(docRef).then(docSnap => {
-        if (!docSnap.exists()) {
-            // Document doesn't exist, create it with initial state.
-            // Using setDoc here ensures it's created.
-            const initialState = getInitialState();
-            // We don't want to persist 'showBack' in Firestore
-            const { showBack, ...initialDbState } = initialState;
-            setDoc(docRef, initialDbState);
-        }
-    })
 
     return () => unsubscribe();
   }, [toast]);
