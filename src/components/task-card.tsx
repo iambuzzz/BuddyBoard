@@ -13,6 +13,7 @@ import { useTaskStore } from '@/hooks/use-task-store';
 import { TaskList } from './task-list';
 import { ScoreBadge } from './score-badge';
 import { CelebrationOverlay } from './celebration-overlay';
+import { AISuggester } from './ai-suggester';
 
 type TaskCardProps = {
   user: User;
@@ -66,7 +67,7 @@ export function TaskCard({ user }: TaskCardProps) {
   return (
     <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-white/60 backdrop-blur-lg border-t-4 p-6 ${themeClass} ${cardBorderStyle}`}>
       <div className="flex justify-between items-center pb-4 mb-4 border-b flex-shrink-0">
-        <h2 className="text-2xl font-bold text-slate-800">{userName}'s List</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-slate-800 pr-2">{userName}'s List</h2>
         <ScoreBadge
           dailyCompleted={userData.tasks.filter(t => t.isCompleted).length}
           dailyTotal={userData.tasks.length}
