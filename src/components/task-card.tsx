@@ -13,7 +13,6 @@ import { useTaskStore } from '@/hooks/use-task-store';
 import { TaskList } from './task-list';
 import { ScoreBadge } from './score-badge';
 import { CelebrationOverlay } from './celebration-overlay';
-import { AISuggester } from './ai-suggester';
 
 type TaskCardProps = {
   user: User;
@@ -96,7 +95,7 @@ export function TaskCard({ user }: TaskCardProps) {
         </Button>
       </form>
 
-      <ScrollArea className="flex-grow min-h-0 pr-2 task-list-container">
+      <ScrollArea className="flex-grow min-h-0 pr-2 task-list-container" style={{ scrollbarGutter: 'stable' }}>
         <TaskList
           tasks={userData.tasks}
           isLocked={userData.isLocked || userData.isFinished}
