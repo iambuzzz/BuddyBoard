@@ -5,6 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 export const metadata: Metadata = {
   title: 'TaskFlipper',
   description: 'Daily Dash for Riya & Ambuj',
+  manifest: '/manifest.json',
 };
 
 export default function RootLayout({
@@ -25,6 +26,8 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
           rel="stylesheet"
         />
+        <link rel="icon" href="/icon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/icon.svg" />
       </head>
       <body className="font-body antialiased">
         {children}
