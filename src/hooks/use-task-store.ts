@@ -42,7 +42,9 @@ export const useTaskStore = () => {
       } else {
         const initialState = getInitialState();
         const { showBack, connectionStatus, ...initialDbState } = initialState;
-        setDoc(docRef, initialDbState).catch(error => {
+        setDoc(docRef, initialDbState).then(() => {
+           setState(prevState => ({ ...prevState, ...initialDbState, connectionStatus: 'connected' }));
+        }).catch(error => {
           console.error("Failed to create initial document:", error);
           toast({ title: 'Error', description: 'Could not initialize database.', variant: 'destructive'});
           setState(prevState => ({ ...prevState, connectionStatus: 'error' }));
@@ -57,115 +59,107 @@ export const useTaskStore = () => {
     return () => unsubscribe();
   }, [toast]);
   
-  const updateFirestore = async (newState: Partial<AppState>) => {
+  const updateFirestore = useCallback(async (newState: Partial<AppState>) => {
     const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
     try {
       // Create a new object for Firestore without the client-side state
       const stateToSync = { ...state, ...newState };
-      const { showBack, connectionStatus, ...dbState } = stateToSync;
-      await setDoc(docRef, dbState, { merge: true });
+      delete (stateToSync as Partial<AppState>).showBack;
+      delete (stateToSync as Partial<AppState>).connectionStatus;
+
+      await setDoc(docRef, stateToSync, { merge: true });
     } catch (error) {
       console.error("Failed to update state to Firestore", error);
       toast({ title: 'Sync Error', description: 'Failed to save changes.', variant: 'destructive' });
     }
-  };
+  }, [state, toast]);
 
   const switchUser = useCallback(() => {
     setState(prevState => ({ ...prevState, showBack: !prevState.showBack }));
   }, []);
 
   const addTask = useCallback((user: User, text: string) => {
-    setState(prevState => {
-      const newTask: Task = {
-        id: crypto.randomUUID(),
-        text,
-        isCompleted: false,
-        createdAt: Date.now(),
-      };
-      const userState = prevState[user];
-      const newTasks = [...userState.tasks, newTask].sort((a, b) => a.createdAt - b.createdAt);
-      const newState = {
-        ...prevState,
-        [user]: {
-          ...userState,
-          tasks: newTasks,
-        },
-      };
-      updateFirestore(newState);
-      return newState;
-    });
-  }, []);
+    const newTask: Task = {
+      id: crypto.randomUUID(),
+      text,
+      isCompleted: false,
+      createdAt: Date.now(),
+    };
+    const userState = state[user];
+    const newTasks = [...userState.tasks, newTask].sort((a, b) => a.createdAt - b.createdAt);
+    const newState = {
+      ...state,
+      [user]: {
+        ...userState,
+        tasks: newTasks,
+      },
+    };
+    setState(newState);
+    updateFirestore(newState);
+  }, [state, updateFirestore]);
 
   const updateTask = useCallback((user: User, taskId: string, newText: string) => {
-    setState(prevState => {
-      const userState = prevState[user];
-      const newTasks = userState.tasks.map(t =>
-        t.id === taskId ? { ...t, text: newText } : t
-      );
-      const newState = {
-        ...prevState,
-        [user]: {
-          ...userState,
-          tasks: newTasks,
-        },
-      };
-      updateFirestore(newState);
-      return newState;
-    });
-  }, []);
+    const userState = state[user];
+    const newTasks = userState.tasks.map(t =>
+      t.id === taskId ? { ...t, text: newText } : t
+    );
+    const newState = {
+      ...state,
+      [user]: {
+        ...userState,
+        tasks: newTasks,
+      },
+    };
+    setState(newState);
+    updateFirestore(newState);
+  }, [state, updateFirestore]);
 
   const deleteTask = useCallback((user: User, taskId: string) => {
-    setState(prevState => {
-        const userState = prevState[user];
-        const newTasks = userState.tasks.filter(t => t.id !== taskId);
-        const newState = {
-          ...prevState,
-          [user]: {
-            ...userState,
-            tasks: newTasks,
-          },
-        };
-        updateFirestore(newState);
-        return newState;
-      });
-  }, []);
+    const userState = state[user];
+    const newTasks = userState.tasks.filter(t => t.id !== taskId);
+    const newState = {
+      ...state,
+      [user]: {
+        ...userState,
+        tasks: newTasks,
+      },
+    };
+    setState(newState);
+    updateFirestore(newState);
+  }, [state, updateFirestore]);
 
   const toggleTask = useCallback((user: User, taskId: string) => {
-    setState(prevState => {
-      if (!prevState[user].isLocked) return prevState;
+    if (!state[user].isLocked) return;
 
-      const userState = prevState[user];
-      const newTasks = userState.tasks.map(t =>
-        t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t
-      );
-      const newState = {
-        ...prevState,
-        [user]: {
-          ...userState,
-          tasks: newTasks,
-        },
-      };
-       updateFirestore(newState);
-      return newState;
-    });
-  }, []);
+    const userState = state[user];
+    const newTasks = userState.tasks.map(t =>
+      t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t
+    );
+    const newState = {
+      ...state,
+      [user]: {
+        ...userState,
+        tasks: newTasks,
+      },
+    };
+    setState(newState);
+    updateFirestore(newState);
+  }, [state, updateFirestore]);
 
   const startNewList = useCallback((user: User) => {
-     setState(prevState => {
-      const userState = prevState[user];
-      const newState = {
-        ...prevState,
-        [user]: {
-          ...userState,
-          tasks: [],
-          isLocked: false,
-          isFinished: false,
-        },
-      };
-      updateFirestore(newState);
-      return newState;
-    });
-  }, []);
+    const userState = state[user];
+    const newState = {
+      ...state,
+      [user]: {
+        ...userState,
+        tasks: [],
+        isLocked: false,
+        isFinished: false,
+      },
+    };
+    setState(newState);
+    updateFirestore(newState);
+  }, [state, updateFirestore]);
 
   const handleActionButton = useCallback((user: User) => {
     const userData = state[user];
@@ -179,40 +173,37 @@ export const useTaskStore = () => {
       return;
     }
   
-    setState(prevState => {
-      const currentData = prevState[user];
-      let newUserData;
+    let newUserData;
 
-      if (currentData.isFinished) {
-        // Start New List
-        newUserData = {
-          ...currentData,
-          tasks: [],
-          isLocked: false,
-          isFinished: false,
-        };
-      } else if (currentData.isLocked) {
-        // Finish List
-        const completed = currentData.tasks.filter(t => t.isCompleted).length;
-        const total = currentData.tasks.length;
-        newUserData = {
-          ...currentData,
-          isFinished: true,
-          totalCompleted: currentData.totalCompleted + completed,
-          totalAssigned: currentData.totalAssigned + total,
-        };
-      } else {
-        // Lock List
-        newUserData = {
-          ...currentData,
-          isLocked: true,
-        };
-      }
-      const newState = { ...prevState, [user]: newUserData };
-      updateFirestore(newState);
-      return newState;
-    });
-  }, [state, toast]);
+    if (userData.isFinished) {
+      // Start New List
+      newUserData = {
+        ...userData,
+        tasks: [],
+        isLocked: false,
+        isFinished: false,
+      };
+    } else if (userData.isLocked) {
+      // Finish List
+      const completed = userData.tasks.filter(t => t.isCompleted).length;
+      const total = userData.tasks.length;
+      newUserData = {
+        ...userData,
+        isFinished: true,
+        totalCompleted: userData.totalCompleted + completed,
+        totalAssigned: userData.totalAssigned + total,
+      };
+    } else {
+      // Lock List
+      newUserData = {
+        ...userData,
+        isLocked: true,
+      };
+    }
+    const newState = { ...state, [user]: newUserData };
+    setState(newState);
+    updateFirestore(newState);
+  }, [state, toast, updateFirestore]);
   
 
   return {
