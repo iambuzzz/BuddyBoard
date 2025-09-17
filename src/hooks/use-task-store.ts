@@ -25,7 +25,7 @@ const getInitialState = (): AppState => ({
   connectionStatus: 'connecting',
 });
 
-const APP_STATE_DOC_ID = 'taskFlipperState';
+const APP_STATE_DOC_ID = 'riyalTodoState';
 const APP_STATE_COLLECTION_ID = 'app';
 
 // Helper to ensure user data has default values for scoring
