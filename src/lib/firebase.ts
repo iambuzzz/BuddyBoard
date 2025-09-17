@@ -6,12 +6,12 @@ import { getFirestore } from "firebase/firestore";
 // You can get this from your project's settings in the Firebase console.
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_AUTH_DOMAIN",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_STORAGE_BUCKET",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBLzLnKlMBmG24TCLisORuO21-rRLoFQfw",
+  authDomain: "studio-2709310238-bb315.firebaseapp.com",
+  projectId: "studio-2709310238-bb315",
+  storageBucket: "studio-2709310238-bb315.firebasestorage.app",
+  messagingSenderId: "201140323091",
+  appId: "1:201140323091:web:fac69e924bac71727450e6"
 };
 // ----------------------------------------------------
 

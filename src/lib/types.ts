@@ -20,6 +20,7 @@ export type AppState = {
   ambuj: UserState;
   // false for Riya's view (front), true for Ambuj's view (back)
   showBack: boolean;
+  connectionStatus: 'connecting' | 'connected' | 'error';
 };
 
 export type User = 'riya' | 'ambuj';
