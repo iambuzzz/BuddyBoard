@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { AppState, User, Task } from '@/lib/types';
+import type { AppState, User, Task, UserState } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
@@ -28,6 +28,17 @@ const getInitialState = (): AppState => ({
 const APP_STATE_DOC_ID = 'taskFlipperState';
 const APP_STATE_COLLECTION_ID = 'app';
 
+// Helper to ensure user data has default values for scoring
+const sanitizeUserData = (userData: Partial<UserState>): UserState => {
+  return {
+    tasks: userData.tasks ?? [],
+    isLocked: userData.isLocked ?? false,
+    isFinished: userData.isFinished ?? false,
+    totalCompleted: userData.totalCompleted ?? 0,
+    totalAssigned: userData.totalAssigned ?? 0,
+  };
+};
+
 export const useTaskStore = () => {
   const [state, setState] = useState<AppState>(getInitialState());
   const { toast } = useToast();
@@ -38,7 +49,14 @@ export const useTaskStore = () => {
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data() as Omit<AppState, 'showBack' | 'connectionStatus'>;
-        setState(prevState => ({ ...prevState, ...data, connectionStatus: 'connected' }));
+        
+        // Sanitize incoming data to ensure all fields are present
+        const sanitizedData = {
+          riya: sanitizeUserData(data.riya || {}),
+          ambuj: sanitizeUserData(data.ambuj || {}),
+        };
+
+        setState(prevState => ({ ...prevState, ...sanitizedData, connectionStatus: 'connected' }));
       } else {
         const initialState = getInitialState();
         const { showBack, connectionStatus, ...initialDbState } = initialState;
