@@ -5,36 +5,65 @@ import { RefreshCw } from 'lucide-react';
 import { useTaskStore } from '@/hooks/use-task-store';
 import { Loader2, Wifi, WifiOff } from 'lucide-react';
 import { TaskCard } from './task-card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const ConnectionStatus = () => {
   const { state } = useTaskStore();
-  
+
   if (state.connectionStatus === 'connecting') {
     return (
-      <div className="flex items-center justify-center gap-2 text-sm text-slate-500">
-        <Loader2 className="w-4 h-4 animate-spin" />
-        <span>Connecting...</span>
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <div className="flex items-center justify-center text-sm text-slate-500">
+              <Loader2 className="w-5 h-5 animate-spin" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Connecting...</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
-  
+
   if (state.connectionStatus === 'error') {
     return (
-      <div className="flex items-center justify-center gap-2 text-sm text-red-500">
-        <WifiOff className="w-4 h-4" />
-        <span>Connection Error</span>
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger>
+            <div className="flex items-center justify-center text-sm text-red-500">
+              <WifiOff className="w-5 h-5" />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Connection Error</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     );
   }
 
   return (
-    <div className="flex items-center justify-center gap-2 text-sm text-emerald-600">
-      <Wifi className="w-4 h-4" />
-      <span>Connected</span>
-    </div>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger>
+          <div className="flex items-center justify-center text-sm text-emerald-600">
+            <Wifi className="w-5 h-5" />
+          </div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Connected</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 };
-
 
 export function TaskFlipper() {
   const { state, switchUser } = useTaskStore();
@@ -47,7 +76,7 @@ export function TaskFlipper() {
   return (
     <>
       <div className="flex justify-between items-center mb-4">
-        <div className="w-36">
+        <div className="w-36 flex justify-start pl-2">
           <ConnectionStatus />
         </div>
         <Button
