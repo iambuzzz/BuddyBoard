@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { RefreshCw } from 'lucide-react';
 import { useTaskStore } from '@/hooks/use-task-store';
 import { Loader2, Wifi, WifiOff } from 'lucide-react';
+import { TaskCard } from './task-card';
 
 const ConnectionStatus = () => {
   const { state } = useTaskStore();
@@ -38,7 +39,7 @@ const ConnectionStatus = () => {
 export function TaskFlipper() {
   const { state, switchUser } = useTaskStore();
   
-  const buttonThemeClass = state.showBack 
+  const buttonThemeClass = state.showBack
     ? 'bg-[--riya-primary] hover:bg-violet-500 text-white' 
     : 'bg-[--ambuj-primary] hover:bg-cyan-500 text-white';
 
@@ -65,7 +66,7 @@ export function TaskFlipper() {
           <div className="app-face front">
             <TaskCard user="riya" />
           </div>
-          <div className="app-face back" style={{ transform: 'rotateY(180deg)' }}>
+          <div className="app-face back">
             <TaskCard user="ambuj" />
           </div>
         </div>
