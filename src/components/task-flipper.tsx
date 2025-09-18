@@ -75,7 +75,7 @@ export function TaskFlipper() {
 
   const userToSwitch = state.showBack ? 'Riya' : 'Naitik';
 
-  const onDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+  const onPanEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const swipeThreshold = 50;
     if (info.offset.x > swipeThreshold) {
       // Swiped right
@@ -105,11 +105,8 @@ export function TaskFlipper() {
       </div>
 
       <motion.div 
-        className="app-flip-shell flex-grow max-w-4xl mx-auto w-full cursor-grab active:cursor-grabbing"
-        drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={0.1}
-        onDragEnd={onDragEnd}
+        className="app-flip-shell flex-grow max-w-4xl mx-auto w-full"
+        onPanEnd={onPanEnd}
       >
         <div className={`app-flip-card ${state.showBack ? 'is-back' : ''}`}>
           <div className="app-face front">
