@@ -9,6 +9,7 @@ import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 const getInitialState = (): AppState => ({
   riya: {
     tasks: [],
+    previousTasks: [],
     isLocked: false,
     isFinished: false,
     totalCompleted: 0,
@@ -16,6 +17,7 @@ const getInitialState = (): AppState => ({
   },
   naitik: {
     tasks: [],
+    previousTasks: [],
     isLocked: false,
     isFinished: false,
     totalCompleted: 0,
@@ -32,6 +34,7 @@ const APP_STATE_COLLECTION_ID = 'app';
 const sanitizeUserData = (userData: Partial<UserState>): UserState => {
   return {
     tasks: userData.tasks ?? [],
+    previousTasks: userData.previousTasks ?? [],
     isLocked: userData.isLocked ?? false,
     isFinished: userData.isFinished ?? false,
     totalCompleted: userData.totalCompleted ?? 0,
@@ -179,6 +182,36 @@ export const useTaskStore = () => {
     updateFirestore(newState);
   }, [state, updateFirestore]);
 
+  const restorePreviousList = useCallback((user: User) => {
+    const userState = state[user];
+    if (!userState.previousTasks || userState.previousTasks.length === 0) {
+      toast({
+        title: 'No Previous List',
+        description: 'There is no previous list to restore.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const restoredTasks = userState.previousTasks.map(task => ({
+      ...task,
+      isCompleted: false,
+      id: crypto.randomUUID(),
+      createdAt: Date.now(),
+    }));
+
+    const newState = {
+      ...state,
+      [user]: {
+        ...userState,
+        tasks: restoredTasks,
+        isLocked: false,
+        isFinished: false,
+      },
+    };
+    setState(newState);
+    updateFirestore(newState);
+  }, [state, updateFirestore, toast]);
+
   const handleActionButton = useCallback((user: User) => {
     const userData = state[user];
 
@@ -210,6 +243,7 @@ export const useTaskStore = () => {
         isFinished: true,
         totalCompleted: userData.totalCompleted + completed,
         totalAssigned: userData.totalAssigned + total,
+        previousTasks: userData.tasks, // Save current tasks as previous
       };
     } else {
       // Lock List
@@ -233,5 +267,6 @@ export const useTaskStore = () => {
     toggleTask,
     handleActionButton,
     startNewList,
+    restorePreviousList,
   };
 };

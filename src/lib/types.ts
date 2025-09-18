@@ -9,6 +9,7 @@ export interface Task {
 
 export interface UserState {
   tasks: Task[];
+  previousTasks: Task[];
   isLocked: boolean;
   isFinished: boolean;
   totalCompleted: number;

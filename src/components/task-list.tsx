@@ -1,7 +1,10 @@
 "use client";
 
 import type { Task } from '@/lib/types';
+import { Button } from '@/components/ui/button';
 import { TaskItem } from './task-item';
+import { History } from 'lucide-react';
+
 
 type TaskListProps = {
   tasks: Task[];
@@ -10,13 +13,25 @@ type TaskListProps = {
   onUpdate: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
   theme: 'riya' | 'naitik';
+  onRestore: () => void;
+  canRestore: boolean;
 };
 
-export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, theme }: TaskListProps) {
+export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, theme, onRestore, canRestore }: TaskListProps) {
   if (tasks.length === 0) {
     return (
-      <div className="text-center text-slate-400 p-8">
-        Add a task to begin!
+      <div className="text-center text-slate-400 p-8 flex flex-col items-center gap-4">
+        <span>Add a task to begin!</span>
+        {canRestore && !isLocked && (
+           <Button
+            variant="outline"
+            className="text-slate-500 border-slate-300"
+            onClick={onRestore}
+          >
+            <History className="w-4 h-4 mr-2"/>
+            Restore Previous List
+          </Button>
+        )}
       </div>
     );
   }
