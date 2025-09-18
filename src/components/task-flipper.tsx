@@ -105,7 +105,7 @@ export function TaskFlipper() {
       </div>
 
       <motion.div 
-        className="app-flip-shell flex-grow max-w-4xl mx-auto w-full"
+        className="app-flip-shell flex-grow max-w-4xl mx-auto w-full select-none"
         onPanEnd={onPanEnd}
       >
         <div className={`app-flip-card ${state.showBack ? 'is-back' : ''}`}>
