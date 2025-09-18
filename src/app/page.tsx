@@ -12,11 +12,6 @@ export default function Home() {
     const themeMetaTag = document.querySelector('meta[name="theme-color"]');
     if (themeMetaTag) {
       themeMetaTag.setAttribute('content', themeColor);
-    } else {
-      const meta = document.createElement('meta');
-      meta.name = 'theme-color';
-      meta.content = themeColor;
-      document.getElementsByTagName('head')[0].appendChild(meta);
     }
   }, [state.showBack]);
 
