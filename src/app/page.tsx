@@ -9,9 +9,14 @@ export default function Home() {
 
   useEffect(() => {
     const themeColor = state.showBack ? '#22d3ee' : '#a78bfa';
-    const themeMetaTag = document.querySelector('meta[name="theme-color"]');
+    let themeMetaTag = document.querySelector('meta[name="theme-color"]');
     if (themeMetaTag) {
       themeMetaTag.setAttribute('content', themeColor);
+    } else {
+      themeMetaTag = document.createElement('meta');
+      themeMetaTag.name = 'theme-color';
+      themeMetaTag.content = themeColor;
+      document.getElementsByTagName('head')[0].appendChild(themeMetaTag);
     }
   }, [state.showBack]);
 
