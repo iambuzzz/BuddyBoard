@@ -7,9 +7,13 @@ export interface Task {
   createdAt: number;
 }
 
+export interface PreviousTask {
+  text: string;
+}
+
 export interface UserState {
   tasks: Task[];
-  previousTasks: Task[];
+  previousTasks: PreviousTask[];
   isLocked: boolean;
   isFinished: boolean;
   totalCompleted: number;

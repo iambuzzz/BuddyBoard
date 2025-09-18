@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { AppState, User, Task, UserState } from '@/lib/types';
+import type { AppState, User, Task, UserState, PreviousTask } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 
@@ -190,10 +190,10 @@ export const useTaskStore = () => {
       });
       return;
     }
-    const restoredTasks = userState.previousTasks.map(task => ({
-      ...task,
-      isCompleted: false,
+    const restoredTasks: Task[] = userState.previousTasks.map(task => ({
       id: crypto.randomUUID(),
+      text: task.text,
+      isCompleted: false,
       createdAt: Date.now(),
     }));
 
@@ -204,8 +204,6 @@ export const useTaskStore = () => {
         tasks: restoredTasks,
         isLocked: false,
         isFinished: false,
-        // Reset previous tasks to avoid confusion after restoring
-        previousTasks: [], 
       },
     };
     setState(newState);
@@ -241,9 +239,9 @@ export const useTaskStore = () => {
       newUserData = {
         ...userData,
         isFinished: true,
-        totalCompleted: userData.totalCompleted + completed,
-        totalAssigned: userData.totalAssigned + total,
-        previousTasks: userData.tasks, // Save current tasks as previous
+        totalCompleted: (userData.totalCompleted ?? 0) + completed,
+        totalAssigned: (userData.totalAssigned ?? 0) + total,
+        previousTasks: userData.tasks.map(t => ({ text: t.text })), // Save only task text
       };
     } else {
       // Lock List
