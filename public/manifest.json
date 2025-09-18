@@ -1,15 +1,15 @@
 {
   "name": "RiyalTodo",
   "short_name": "RiyalTodo",
-  "description": "Daily Dash for Riya & Ambuj",
+  "description": "Daily Dash for Riya & Naitik",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#a78bfa",
+  "background_color": "#FFFFFF",
+  "theme_color": "#E0BBE4",
   "icons": [
     {
       "src": "/icon.svg",
-      "sizes": "512x512",
+      "sizes": "any",
       "type": "image/svg+xml"
     }
   ]
