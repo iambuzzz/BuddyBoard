@@ -80,20 +80,18 @@ export const useTaskStore = () => {
     return () => unsubscribe();
   }, [toast]);
   
-  const updateFirestore = useCallback(async (newState: Partial<AppState>) => {
+  const updateFirestore = useCallback(async (newState: AppState) => {
     const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
     try {
       // Create a new object for Firestore without the client-side state
-      const stateToSync = { ...state, ...newState };
-      delete (stateToSync as Partial<AppState>).showBack;
-      delete (stateToSync as Partial<AppState>).connectionStatus;
+      const { showBack, connectionStatus, ...stateToSync } = newState;
 
       await setDoc(docRef, stateToSync, { merge: true });
     } catch (error) {
       console.error("Failed to update state to Firestore", error);
       toast({ title: 'Sync Error', description: 'Failed to save changes.', variant: 'destructive' });
     }
-  }, [state, toast]);
+  }, [toast]);
 
   const switchUser = useCallback(() => {
     setState(prevState => ({ ...prevState, showBack: !prevState.showBack }));

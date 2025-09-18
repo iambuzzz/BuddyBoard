@@ -72,6 +72,7 @@ export function TaskFlipper() {
     ? 'bg-[--naitik-primary] hover:bg-cyan-500 text-white' 
     : 'bg-[--riya-primary] hover:bg-violet-500 text-white';
 
+  const userToSwitch = state.showBack ? 'Riya' : 'Naitik';
 
   return (
     <>
@@ -85,7 +86,7 @@ export function TaskFlipper() {
           aria-pressed={state.showBack}
         >
           <RefreshCw className="h-4 w-4" />
-          <span>Switch to {state.showBack ? 'Riya' : 'Naitik'}</span>
+          <span>Switch to {userToSwitch}</span>
         </Button>
          <div className="w-36" />
       </div>
