@@ -4,10 +4,10 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Lock, Check, History } from 'lucide-react';
+import { Plus, Lock, Check } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 
-import type { User, UserState, Task } from '@/lib/types';
+import type { User, UserState } from '@/lib/types';
 import { useTaskStore } from '@/hooks/use-task-store';
 
 import { TaskList } from './task-list';
@@ -129,7 +129,7 @@ export function TaskCard({ user }: TaskCardProps) {
             total={userData.tasks.length}
             onNewList={() => startNewList(user)}
             onRestorePrevious={() => restorePreviousList(user)}
-            canRestore={userData.previousTasks && userData.previousTasks.length > 0}
+            canRestore={!!userData.previousTasks && userData.previousTasks.length > 0}
             theme={user}
           />
         )}

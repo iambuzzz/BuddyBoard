@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
-import { History } from 'lucide-react';
+import { History, Plus } from 'lucide-react';
 
 type CelebrationOverlayProps = {
   completed: number;
@@ -48,6 +48,7 @@ export function CelebrationOverlay({ completed, total, onNewList, onRestorePrevi
               onClick={onNewList}
               className={`px-6 py-2 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-transform transform hover:scale-105 ${buttonClass}`}
             >
+              <Plus className="w-4 h-4 mr-2"/>
               Start New List
             </Button>
             {canRestore && (
