@@ -25,7 +25,7 @@ export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, theme,
         {canRestore && !isLocked && (
            <Button
             variant="outline"
-            className="text-slate-500 border-slate-300"
+            className="text-slate-500 border-slate-300 hover:bg-slate-50 hover:text-slate-600"
             onClick={onRestore}
           >
             <History className="w-4 h-4 mr-2"/>

@@ -108,7 +108,7 @@ export function TaskCard({ user }: TaskCardProps) {
           onDelete={(taskId) => deleteTask(user, taskId)}
           theme={user}
           onRestore={() => restorePreviousList(user)}
-          canRestore={userData.previousTasks && userData.previousTasks.length > 0}
+          canRestore={!!userData.previousTasks && userData.previousTasks.length > 0}
         />
       </ScrollArea>
       
