@@ -11,6 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { motion, PanInfo } from 'framer-motion';
 
 const ConnectionStatus = () => {
   const { state } = useTaskStore();
@@ -74,6 +75,18 @@ export function TaskFlipper() {
 
   const userToSwitch = state.showBack ? 'Riya' : 'Naitik';
 
+  const onDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    const swipeThreshold = 50;
+    if (info.offset.x > swipeThreshold) {
+      // Swiped right
+      if (state.showBack) switchUser();
+    } else if (info.offset.x < -swipeThreshold) {
+      // Swiped left
+      if (!state.showBack) switchUser();
+    }
+  };
+
+
   return (
     <>
       <div className="flex justify-between items-center mb-4">
@@ -91,7 +104,13 @@ export function TaskFlipper() {
          <div className="w-36" />
       </div>
 
-      <div className="app-flip-shell flex-grow max-w-4xl mx-auto w-full">
+      <motion.div 
+        className="app-flip-shell flex-grow max-w-4xl mx-auto w-full cursor-grab active:cursor-grabbing"
+        drag="x"
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.1}
+        onDragEnd={onDragEnd}
+      >
         <div className={`app-flip-card ${state.showBack ? 'is-back' : ''}`}>
           <div className="app-face front">
             <TaskCard user="riya" />
@@ -100,7 +119,7 @@ export function TaskFlipper() {
             <TaskCard user="naitik" />
           </div>
         </div>
-      </div>
+      </motion.div>
     </>
   );
 }
