@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { motion, PanInfo, useMotionValue, useTransform, animate } from 'framer-motion';
+import { motion, PanInfo } from 'framer-motion';
 
 const ConnectionStatus = () => {
   const { state } = useTaskStore();
@@ -75,7 +75,7 @@ export function TaskFlipper() {
 
   const userToSwitch = state.showBack ? 'Riya' : 'Naitik';
 
-  const onPanEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+  const onDragEnd = (event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     const swipeThreshold = 50;
     if (info.offset.x > swipeThreshold) {
       // Swiped right
@@ -106,7 +106,10 @@ export function TaskFlipper() {
 
       <motion.div 
         className="app-flip-shell flex-grow max-w-4xl mx-auto w-full select-none"
-        onPanEnd={onPanEnd}
+        drag="x"
+        onDragEnd={onDragEnd}
+        dragConstraints={{ left: 0, right: 0 }}
+        dragElastic={0.1}
         style={{ cursor: 'grab' }}
         whileTap={{ cursor: 'grabbing' }}
       >
