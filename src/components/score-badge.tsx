@@ -9,7 +9,7 @@ type ScoreBadgeProps = {
   lifetimeCompleted: number;
   lifetimeTotal: number;
   isLocked: boolean;
-  theme: 'riya' | 'ambuj';
+  theme: 'riya' | 'naitik';
 };
 
 export function ScoreBadge({
@@ -35,7 +35,7 @@ export function ScoreBadge({
     }
   };
 
-  const themeClass = theme === 'riya' ? 'bg-[--riya-secondary] text-[--riya-text] border-[--riya-primary]' : 'bg-[--ambuj-secondary] text-[--ambuj-text] border-[--ambuj-primary]';
+  const themeClass = theme === 'riya' ? 'bg-[--riya-secondary] text-[--riya-text] border-[--riya-primary]' : 'bg-[--naitik-secondary] text-[--naitik-text] border-[--naitik-primary]';
 
   return (
     <div className="score-badge-container w-32 sm:w-40">

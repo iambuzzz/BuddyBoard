@@ -4,7 +4,7 @@ import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'RiyalTodo',
-  description: 'Daily Dash for Riya & Ambuj',
+  description: 'Daily Dash for Riya & Naitik',
   manifest: '/manifest.json',
 };
 

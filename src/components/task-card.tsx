@@ -56,14 +56,14 @@ export function TaskCard({ user }: TaskCardProps) {
     return <Lock className="w-4 h-4 mr-2" />;
   }
 
-  const cardBorderStyle = `border-2 ${user === 'riya' ? 'border-[--riya-primary]' : 'border-[--ambuj-primary]'}`;
-  const glowClass = userData.isLocked ? (user === 'riya' ? 'card-glow-riya' : 'card-glow-ambuj') : '';
+  const cardBorderStyle = `border-2 ${user === 'riya' ? 'border-[--riya-primary]' : 'border-[--naitik-primary]'}`;
+  const glowClass = userData.isLocked ? (user === 'riya' ? 'card-glow-riya' : 'card-glow-naitik') : '';
 
 
-  const addBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' : 'bg-[--ambuj-primary] hover:bg-cyan-500';
-  const actionBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' : 'bg-[--ambuj-primary] hover:bg-cyan-500';
-  const ringStyle = user === 'riya' ? 'focus-visible:ring-[--riya-primary]' : 'focus-visible:ring-[--ambuj-primary]';
-  const titleColor = user === 'riya' ? 'text-[--riya-text]' : 'text-[--ambuj-text]';
+  const addBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' : 'bg-[--naitik-primary] hover:bg-cyan-500';
+  const actionBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' : 'bg-[--naitik-primary] hover:bg-cyan-500';
+  const ringStyle = user === 'riya' ? 'focus-visible:ring-[--riya-primary]' : 'focus-visible:ring-[--naitik-primary]';
+  const titleColor = user === 'riya' ? 'text-[--riya-text]' : 'text-[--naitik-text]';
 
 
   return (

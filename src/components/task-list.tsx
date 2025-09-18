@@ -9,7 +9,7 @@ type TaskListProps = {
   onToggle: (id: string) => void;
   onUpdate: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
-  theme: 'riya' | 'ambuj';
+  theme: 'riya' | 'naitik';
 };
 
 export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, theme }: TaskListProps) {

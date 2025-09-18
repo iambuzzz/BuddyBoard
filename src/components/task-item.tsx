@@ -12,7 +12,7 @@ type TaskItemProps = {
   onToggle: (id: string) => void;
   onUpdate: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
-  theme: 'riya' | 'ambuj';
+  theme: 'riya' | 'naitik';
 };
 
 export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, theme }: TaskItemProps) {
@@ -20,7 +20,7 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, theme }
   const [text, setText] = useState(task.text);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const editBtnHoverClass = theme === 'riya' ? 'hover:text-[--riya-text]' : 'hover:text-[--ambuj-text]';
+  const editBtnHoverClass = theme === 'riya' ? 'hover:text-[--riya-text]' : 'hover:text-[--naitik-text]';
 
   useEffect(() => {
     if (isEditing) {

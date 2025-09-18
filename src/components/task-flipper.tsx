@@ -69,7 +69,7 @@ export function TaskFlipper() {
   const { state, switchUser } = useTaskStore();
   
   const buttonThemeClass = state.showBack
-    ? 'bg-[--ambuj-primary] hover:bg-cyan-500 text-white' 
+    ? 'bg-[--naitik-primary] hover:bg-cyan-500 text-white' 
     : 'bg-[--riya-primary] hover:bg-violet-500 text-white';
 
 
@@ -85,7 +85,7 @@ export function TaskFlipper() {
           aria-pressed={state.showBack}
         >
           <RefreshCw className="h-4 w-4" />
-          <span>Switch to {state.showBack ? 'Riya' : 'Ambuj'}</span>
+          <span>Switch to {state.showBack ? 'Riya' : 'Naitik'}</span>
         </Button>
          <div className="w-36" />
       </div>
@@ -96,7 +96,7 @@ export function TaskFlipper() {
             <TaskCard user="riya" />
           </div>
           <div className="app-face back">
-            <TaskCard user="ambuj" />
+            <TaskCard user="naitik" />
           </div>
         </div>
       </div>

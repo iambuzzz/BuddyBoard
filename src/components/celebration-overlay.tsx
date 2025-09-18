@@ -7,7 +7,7 @@ type CelebrationOverlayProps = {
   completed: number;
   total: number;
   onNewList: () => void;
-  theme: 'riya' | 'ambuj';
+  theme: 'riya' | 'naitik';
 };
 
 export function CelebrationOverlay({ completed, total, onNewList, theme }: CelebrationOverlayProps) {

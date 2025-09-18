@@ -29,9 +29,9 @@
     --riya-primary: #a78bfa;
     --riya-secondary: #f5f3ff;
     --riya-text: #6d28d9;
-    --ambuj-primary: #22d3ee;
-    --ambuj-secondary: #ecfeff;
-    --ambuj-text: #0e7490;
+    --naitik-primary: #22d3ee;
+    --naitik-secondary: #ecfeff;
+    --naitik-text: #0e7490;
     --lock-color: #34d399;
   }
 
@@ -75,7 +75,7 @@
   50% { box-shadow: 0 0 10px 4px rgba(167, 139, 250, 0.6); }
 }
 
-@keyframes glow-ambuj {
+@keyframes glow-naitik {
   0%, 100% { box-shadow: 0 0 10px 0px rgba(34, 211, 238, 0.4); }
   50% { box-shadow: 0 0 10px 4px rgba(34, 211, 238, 0.6); }
 }
@@ -126,8 +126,8 @@
     border-radius: 9999px;
     border: 2px solid hsl(var(--muted));
   }
-  .theme-ambuj .task-list-container::-webkit-scrollbar-thumb {
-    background-color: var(--ambuj-primary);
+  .theme-naitik .task-list-container::-webkit-scrollbar-thumb {
+    background-color: var(--naitik-primary);
     border-radius: 9-999px;
     border: 2px solid hsl(var(--muted));
   }
@@ -156,7 +156,7 @@
   .card-glow-riya {
     animation: glow-riya 3s ease-in-out infinite;
   }
-  .card-glow-ambuj {
-    animation: glow-ambuj 3s ease-in-out infinite;
+  .card-glow-naitik {
+    animation: glow-naitik 3s ease-in-out infinite;
   }
 }
