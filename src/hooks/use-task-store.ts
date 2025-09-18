@@ -204,6 +204,8 @@ export const useTaskStore = () => {
         tasks: restoredTasks,
         isLocked: false,
         isFinished: false,
+        // Reset previous tasks to avoid confusion after restoring
+        previousTasks: [], 
       },
     };
     setState(newState);
