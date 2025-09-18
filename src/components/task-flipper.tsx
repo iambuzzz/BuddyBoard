@@ -11,7 +11,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { motion, PanInfo } from 'framer-motion';
+import { motion, PanInfo, useMotionValue, useTransform, animate } from 'framer-motion';
 
 const ConnectionStatus = () => {
   const { state } = useTaskStore();
@@ -107,6 +107,7 @@ export function TaskFlipper() {
       <motion.div 
         className="app-flip-shell flex-grow max-w-4xl mx-auto w-full select-none"
         onPanEnd={onPanEnd}
+        style={{ cursor: 'grab' }}
         whileTap={{ cursor: 'grabbing' }}
       >
         <div className={`app-flip-card ${state.showBack ? 'is-back' : ''}`}>
