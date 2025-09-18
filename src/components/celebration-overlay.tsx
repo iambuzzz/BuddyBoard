@@ -35,7 +35,7 @@ export function CelebrationOverlay({ completed, total, onNewList, onRestorePrevi
           damping: 20,
           delay: 0.2,
         }}
-        className="flex flex-col items-center gap-4"
+        className="flex flex-col items-center gap-4 w-full max-w-xs"
       >
         <div>
             <h3 className="text-4xl font-bold text-emerald-600">List Finished!</h3>
@@ -43,10 +43,10 @@ export function CelebrationOverlay({ completed, total, onNewList, onRestorePrevi
               You completed {completed} of {total} tasks.
             </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4 w-full">
             <Button
               onClick={onNewList}
-              className={`px-6 py-2 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-transform transform hover:scale-105 ${buttonClass}`}
+              className={`w-full px-6 py-2 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-transform transform hover:scale-105 ${buttonClass}`}
             >
               <Plus className="w-4 h-4 mr-2"/>
               Start New List
@@ -55,7 +55,7 @@ export function CelebrationOverlay({ completed, total, onNewList, onRestorePrevi
               <Button
                 variant="outline"
                 onClick={onRestorePrevious}
-                className={`px-6 py-2 font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-transform transform hover:scale-105 ${restoreButtonClass}`}
+                className={`w-full px-6 py-2 font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-transform transform hover:scale-105 ${restoreButtonClass}`}
               >
                 <History className="w-4 h-4 mr-2"/>
                 Previous List
