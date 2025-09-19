@@ -83,7 +83,7 @@ export function TaskCard({ user }: TaskCardProps) {
 
 
   return (
-    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-white/60 backdrop-blur-lg p-6 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
+    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card p-6 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
       <div className="flex justify-between items-center pb-4 mb-4 border-b flex-shrink-0 pt-2">
         <h2 className={`text-xl sm:text-2xl font-bold pr-2 ${titleColor}`}>{userName}'s List</h2>
         <ScoreBadge
