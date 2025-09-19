@@ -22,13 +22,17 @@ export default function Home() {
   }, [state.showBack]);
 
   return (
-    <div className="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8 space-y-8">
-      <div className="h-[85vh]">
-        <TaskFlipper />
-      </div>
-      <div className="h-[85vh]">
-        <TaskCard user="ambuj" />
-      </div>
+    <div>
+      <section className="snap-section h-screen w-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="h-full w-full max-w-4xl">
+          <TaskFlipper />
+        </div>
+      </section>
+      <section className="snap-section h-screen w-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+        <div className="h-full w-full max-w-4xl">
+           <TaskCard user="ambuj" />
+        </div>
+      </section>
     </div>
   );
 }

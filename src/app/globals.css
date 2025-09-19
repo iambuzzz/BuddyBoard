@@ -66,10 +66,17 @@
   * {
     @apply border-border;
   }
+  html {
+    scroll-snap-type: y mandatory;
+  }
   body {
     @apply bg-background text-slate-700;
     min-height: 100vh;
     background-image: linear-gradient(to top, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
+  }
+  .snap-section {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
 }
 
