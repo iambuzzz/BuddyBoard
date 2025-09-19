@@ -72,7 +72,7 @@
   body {
     @apply bg-background text-slate-700;
     min-height: 100vh;
-    background-image: linear-gradient(to top, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
+    background-color: #e3eeff;
   }
   .snap-section {
     scroll-snap-align: start;
