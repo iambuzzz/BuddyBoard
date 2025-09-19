@@ -32,12 +32,12 @@ export default function Home() {
 
   return (
     <div>
-      <section id="top-section" className="snap-section h-screen flex flex-col justify-center p-4 sm:p-6 lg:p-8">
+      <section id="top-section" className="snap-section h-screen flex flex-col justify-center pt-4 pb-6 pl-5 pr-5">
         <div className="h-full w-full max-w-4xl mx-auto">
           <TaskFlipper />
         </div>
       </section>
-      <section id="ambuj" className="snap-section h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
+      <section id="ambuj" className="snap-section h-screen flex items-center justify-center pt-4 pb-6 pl-5 pr-5">
         <div className="h-full w-full max-w-4xl flex flex-col">
            <div className="flex justify-center items-center mb-4">
              <Button
