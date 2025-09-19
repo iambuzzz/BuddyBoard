@@ -42,7 +42,7 @@ export default function Home() {
            <div className="flex justify-center items-center mb-4">
              <Button
                 onClick={scrollToTop}
-                className="inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 bg-[--ambuj-primary] hover:bg-orange-500 text-white"
+                className="inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 bg-[--ambuj-primary] hover:bg-emerald-500 text-white"
               >
                 <ArrowUp className="h-4 w-4" />
                 <span>Go to Top</span>
