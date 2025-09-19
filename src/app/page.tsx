@@ -32,8 +32,8 @@ export default function Home() {
 
   return (
     <div>
-      <section id="top-section" className="snap-section h-screen flex items-center justify-center p-4 sm:p-6 lg:p-8">
-        <div className="h-full w-full max-w-4xl">
+      <section id="top-section" className="snap-section h-screen flex flex-col justify-center p-4 sm:p-6 lg:p-8">
+        <div className="h-full w-full max-w-4xl mx-auto">
           <TaskFlipper />
         </div>
       </section>
