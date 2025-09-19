@@ -99,7 +99,7 @@ export function TaskCard({ user }: TaskCardProps) {
         </Button>
       </form>
 
-      <ScrollArea className="flex-grow min-h-0 pr-2 task-list-container" style={{ scrollbarGutter: 'stable' }}>
+      <ScrollArea className="flex-grow min-h-0 pr-2 task-list-container" style={{ scrollbarGutter: 'stable', touchAction: 'pan-y' }}>
         <TaskList
           tasks={userData.tasks}
           isLocked={userData.isLocked || userData.isFinished}

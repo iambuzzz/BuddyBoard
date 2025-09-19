@@ -110,6 +110,7 @@ export function TaskFlipper() {
         onDragEnd={onDragEnd}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.1}
+        dragPropagation
         style={{ cursor: 'grab' }}
         whileTap={{ cursor: 'grabbing' }}
       >
