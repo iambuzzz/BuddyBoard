@@ -23,6 +23,14 @@ const getInitialState = (): AppState => ({
     totalCompleted: 0,
     totalAssigned: 0,
   },
+  ambuj: {
+    tasks: [],
+    previousTasks: [],
+    isLocked: false,
+    isFinished: false,
+    totalCompleted: 0,
+    totalAssigned: 0,
+  },
   showBack: false,
   connectionStatus: 'connecting',
 });
@@ -57,6 +65,7 @@ export const useTaskStore = () => {
         const sanitizedData = {
           riya: sanitizeUserData(data.riya || {}),
           naitik: sanitizeUserData(data.naitik || {}),
+          ambuj: sanitizeUserData(data.ambuj || {}),
         };
 
         setState(prevState => ({ ...prevState, ...sanitizedData, connectionStatus: 'connected' }));

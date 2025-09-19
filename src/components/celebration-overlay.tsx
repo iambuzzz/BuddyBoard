@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { History, Plus } from 'lucide-react';
+import { User } from '@/lib/types';
 
 type CelebrationOverlayProps = {
   completed: number;
@@ -10,13 +11,18 @@ type CelebrationOverlayProps = {
   onNewList: () => void;
   onRestorePrevious: () => void;
   canRestore: boolean;
-  theme: 'riya' | 'naitik';
+  theme: User;
 };
 
 export function CelebrationOverlay({ completed, total, onNewList, onRestorePrevious, canRestore, theme }: CelebrationOverlayProps) {
   
-  const buttonClass = theme === 'riya' ? 'bg-purple-500 hover:bg-purple-600 focus:ring-purple-400' : 'bg-cyan-500 hover:bg-cyan-600 focus:ring-cyan-400';
-  const restoreButtonClass = theme === 'riya' ? 'text-purple-600 border-purple-300 hover:bg-purple-50' : 'text-cyan-600 border-cyan-300 hover:bg-cyan-50';
+  const buttonClass = theme === 'riya' ? 'bg-purple-500 hover:bg-purple-600 focus:ring-purple-400' 
+    : theme === 'naitik' ? 'bg-cyan-500 hover:bg-cyan-600 focus:ring-cyan-400'
+    : 'bg-emerald-500 hover:bg-emerald-600 focus:ring-emerald-400';
+
+  const restoreButtonClass = theme === 'riya' ? 'text-purple-600 border-purple-300 hover:bg-purple-50' 
+    : theme === 'naitik' ? 'text-cyan-600 border-cyan-300 hover:bg-cyan-50'
+    : 'text-emerald-600 border-emerald-300 hover:bg-emerald-50';
 
 
   return (

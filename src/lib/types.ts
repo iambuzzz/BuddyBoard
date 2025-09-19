@@ -23,9 +23,10 @@ export interface UserState {
 export type AppState = {
   riya: UserState;
   naitik: UserState;
+  ambuj: UserState;
   // false for Riya's view (front), true for Naitik's view (back)
   showBack: boolean;
   connectionStatus: 'connecting' | 'connected' | 'error';
 };
 
-export type User = 'riya' | 'naitik';
+export type User = 'riya' | 'naitik' | 'ambuj';

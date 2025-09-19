@@ -1,6 +1,6 @@
 "use client";
 
-import type { Task } from '@/lib/types';
+import type { Task, User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { TaskItem } from './task-item';
 import { History } from 'lucide-react';
@@ -12,7 +12,7 @@ type TaskListProps = {
   onToggle: (id: string) => void;
   onUpdate: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
-  theme: 'riya' | 'naitik';
+  theme: User;
   onRestore: () => void;
   canRestore: boolean;
 };

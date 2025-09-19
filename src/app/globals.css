@@ -32,6 +32,9 @@
     --naitik-primary: #22d3ee;
     --naitik-secondary: #ecfeff;
     --naitik-text: #0e7490;
+    --ambuj-primary: #34d399;
+    --ambuj-secondary: #f0fdf4;
+    --ambuj-text: #047857;
     --lock-color: #34d399;
   }
 
@@ -64,7 +67,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-slate-700 overflow-hidden;
+    @apply bg-background text-slate-700;
     min-height: 100vh;
     background-image: linear-gradient(to top, #f3e7e9 0%, #e3eeff 99%, #e3eeff 100%);
   }
@@ -78,6 +81,11 @@
 @keyframes glow-naitik {
   0%, 100% { box-shadow: 0 0 10px 0px rgba(34, 211, 238, 0.4); }
   50% { box-shadow: 0 0 10px 4px rgba(34, 211, 238, 0.6); }
+}
+
+@keyframes glow-ambuj {
+  0%, 100% { box-shadow: 0 0 10px 0px rgba(52, 211, 153, 0.4); }
+  50% { box-shadow: 0 0 10px 4px rgba(52, 211, 153, 0.6); }
 }
 
 
@@ -131,6 +139,11 @@
     border-radius: 9-999px;
     border: 2px solid hsl(var(--muted));
   }
+  .theme-ambuj .task-list-container::-webkit-scrollbar-thumb {
+    background-color: var(--ambuj-primary);
+    border-radius: 9-999px;
+    border: 2px solid hsl(var(--muted));
+  }
 
   /* Score Badge */
   .score-badge-container {
@@ -158,5 +171,8 @@
   }
   .card-glow-naitik {
     animation: glow-naitik 3s ease-in-out infinite;
+  }
+  .card-glow-ambuj {
+    animation: glow-ambuj 3s ease-in-out infinite;
   }
 }

@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Circle, CheckCircle2, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
-import type { Task } from '@/lib/types';
+import type { Task, User } from '@/lib/types';
 
 type TaskItemProps = {
   task: Task;
@@ -12,7 +12,7 @@ type TaskItemProps = {
   onToggle: (id: string) => void;
   onUpdate: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
-  theme: 'riya' | 'naitik';
+  theme: User;
 };
 
 export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, theme }: TaskItemProps) {
@@ -20,7 +20,9 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, theme }
   const [text, setText] = useState(task.text);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const editBtnHoverClass = theme === 'riya' ? 'hover:text-[--riya-text]' : 'hover:text-[--naitik-text]';
+  const editBtnHoverClass = theme === 'riya' ? 'hover:text-[--riya-text]' 
+    : theme === 'naitik' ? 'hover:text-[--naitik-text]'
+    : 'hover:text-[--ambuj-text]';
 
   useEffect(() => {
     if (isEditing) {
