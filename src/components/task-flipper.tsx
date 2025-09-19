@@ -88,7 +88,7 @@ export function TaskFlipper() {
 
 
   return (
-    <>
+    <div className="flex flex-col h-full">
       <div className="flex justify-between items-center mb-4">
         <div className="w-36 flex justify-start pl-2">
           <ConnectionStatus />
@@ -123,6 +123,6 @@ export function TaskFlipper() {
           </div>
         </div>
       </motion.div>
-    </>
+    </div>
   );
 }

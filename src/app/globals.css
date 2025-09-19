@@ -93,6 +93,7 @@
   /* 3D Flip Card */
   .app-flip-shell {
     perspective: 1200px;
+    @apply h-full;
   }
   .app-flip-card {
     @apply relative w-full h-full;
