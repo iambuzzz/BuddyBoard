@@ -32,9 +32,9 @@
     --naitik-primary: #22d3ee;
     --naitik-secondary: #ecfeff;
     --naitik-text: #0e7490;
-    --ambuj-primary: #3b82f6; /* Blue */
-    --ambuj-secondary: #eff6ff; /* Light Blue */
-    --ambuj-text: #1d4ed8; /* Dark Blue */
+    --ambuj-primary: #fb923c; /* Sunny Orange */
+    --ambuj-secondary: #fff7ed; /* Light Orange */
+    --ambuj-text: #c2410c; /* Dark Orange */
     --lock-color: #34d399;
   }
 
@@ -91,8 +91,8 @@
 }
 
 @keyframes glow-ambuj {
-  0%, 100% { box-shadow: 0 0 10px 0px rgba(59, 130, 246, 0.4); }
-  50% { box-shadow: 0 0 10px 4px rgba(59, 130, 246, 0.6); }
+  0%, 100% { box-shadow: 0 0 10px 0px rgba(251, 146, 60, 0.4); }
+  50% { box-shadow: 0 0 10px 4px rgba(251, 146, 60, 0.6); }
 }
 
 
