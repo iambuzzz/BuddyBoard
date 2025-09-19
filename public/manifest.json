@@ -1,11 +1,11 @@
 {
   "name": "RiyalTodo",
   "short_name": "RiyalTodo",
-  "description": "Daily Dash for Riya & Naitik",
-  "start_url": "/",
+  "start_url": ".",
   "display": "standalone",
-  "background_color": "#FFFFFF",
-  "theme_color": "#E0BBE4",
+  "background_color": "#e3eeff",
+  "theme_color": "#e3eeff",
+  "description": "Daily Dash for Riya & Naitik",
   "icons": [
     {
       "src": "/icon.svg",
