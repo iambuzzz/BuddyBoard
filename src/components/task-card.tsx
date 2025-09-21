@@ -1,13 +1,24 @@
 "use client";
 
+import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Lock, Check } from 'lucide-react';
+import { Plus, Lock, Check, AlertTriangle } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
-import type { User, UserState } from '@/lib/types';
+import type { User } from '@/lib/types';
 import { useTaskStore } from '@/hooks/use-task-store';
 
 import { TaskList } from './task-list';
@@ -30,19 +41,35 @@ export function TaskCard({ user }: TaskCardProps) {
     restorePreviousList,
   } = useTaskStore();
 
+  const [showLockWarning, setShowLockWarning] = useState(false);
+  const [taskToAdd, setTaskToAdd] = useState('');
+
   const userData = state[user];
   const userName = user.charAt(0).toUpperCase() + user.slice(1);
   const themeClass = `theme-${user}`;
+
+  const handleConfirmAddTask = () => {
+    if (taskToAdd) {
+      addTask(user, taskToAdd);
+      setTaskToAdd('');
+    }
+    setShowLockWarning(false);
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const form = e.currentTarget;
     const input = form.elements.namedItem('task-input') as HTMLInputElement;
     const text = input.value.trim();
-    if (text) {
+    if (!text) return;
+
+    if (userData.isLocked) {
+      setTaskToAdd(text);
+      setShowLockWarning(true);
+    } else {
       addTask(user, text);
-      input.value = '';
     }
+    input.value = '';
   };
 
   const getActionButtonText = () => {
@@ -70,16 +97,20 @@ export function TaskCard({ user }: TaskCardProps) {
 
   const addBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' 
     : user === 'naitik' ? 'bg-[--naitik-primary] hover:bg-cyan-500' 
-    : 'bg-[--ambuj-primary] hover:bg-blue-600';
+    : 'bg-[--ambuj-primary] hover:bg-emerald-500';
   const actionBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' 
     : user === 'naitik' ? 'bg-[--naitik-primary] hover:bg-cyan-500' 
-    : 'bg-[--ambuj-primary] hover:bg-blue-600';
+    : 'bg-[--ambuj-primary] hover:bg-emerald-500';
   const ringStyle = user === 'riya' ? 'focus-visible:ring-[--riya-primary]' 
     : user === 'naitik' ? 'focus-visible:ring-[--naitik-primary]' 
     : 'focus-visible:ring-[--ambuj-primary]';
   const titleColor = user === 'riya' ? 'text-[--riya-text]' 
     : user === 'naitik' ? 'text-[--naitik-text]' 
     : 'text-[--ambuj-text]';
+    
+  const confirmButtonStyle = user === 'riya' ? 'bg-violet-600 hover:bg-violet-700'
+    : user === 'naitik' ? 'bg-cyan-600 hover:bg-cyan-700'
+    : 'bg-emerald-600 hover:bg-emerald-700';
 
 
   return (
@@ -102,12 +133,12 @@ export function TaskCard({ user }: TaskCardProps) {
           name="task-input"
           placeholder="Add Task.."
           className={`bg-white/80 border-slate-300 transition focus:border-transparent ${ringStyle}`}
-          disabled={userData.isLocked || userData.isFinished}
+          disabled={userData.isFinished}
         />
         <Button
           type="submit"
           className={`text-white font-bold p-3 rounded-lg shadow-md transition transform hover:scale-105 ${addBtnStyle}`}
-          disabled={userData.isLocked || userData.isFinished}
+          disabled={userData.isFinished}
           aria-label="Add task"
         >
           <Plus />
@@ -151,6 +182,27 @@ export function TaskCard({ user }: TaskCardProps) {
           />
         )}
       </AnimatePresence>
+
+      <AlertDialog open={showLockWarning} onOpenChange={setShowLockWarning}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="text-amber-500" />
+              Add to a Locked List?
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              You are adding a task to a list that is already locked. This new task will also be locked immediately and cannot be edited or deleted. Do you want to continue?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmAddTask} className={confirmButtonStyle}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </Card>
   );
 }
