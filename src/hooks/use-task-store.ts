@@ -33,6 +33,7 @@ const getInitialState = (): AppState => ({
   },
   showBack: false,
   connectionStatus: 'connecting',
+  lastUpdater: null,
 });
 
 const APP_STATE_DOC_ID = 'riyalTodoState';
@@ -59,27 +60,18 @@ export const useTaskStore = () => {
     
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
-        const data = docSnap.data() as Omit<AppState, 'showBack' | 'connectionStatus'>;
+        const data = docSnap.data() as Partial<Omit<AppState, 'showBack' | 'connectionStatus'>>;
         
-        // Sanitize incoming data to ensure all fields are present
         const sanitizedData = {
           riya: sanitizeUserData(data.riya || {}),
           naitik: sanitizeUserData(data.naitik || {}),
           ambuj: sanitizeUserData(data.ambuj || {}),
+          lastUpdater: data.lastUpdater || null,
         };
 
         setState(prevState => ({ ...prevState, ...sanitizedData, connectionStatus: 'connected' }));
-      } else {
-        const initialState = getInitialState();
-        const { showBack, connectionStatus, ...initialDbState } = initialState;
-        setDoc(docRef, initialDbState).then(() => {
-           setState(prevState => ({ ...prevState, ...initialDbState, connectionStatus: 'connected' }));
-        }).catch(error => {
-          console.error("Failed to create initial document:", error);
-          toast({ title: 'Error', description: 'Could not initialize database.', variant: 'destructive'});
-          setState(prevState => ({ ...prevState, connectionStatus: 'error' }));
-        });
       }
+      // THE DANGEROUS 'ELSE' BLOCK THAT CAUSED DATA DELETION HAS BEEN REMOVED.
     }, (error) => {
       console.error("Error fetching data from Firestore:", error);
       toast({ title: 'Error', description: 'Could not connect to the database.', variant: 'destructive'});
@@ -88,6 +80,19 @@ export const useTaskStore = () => {
 
     return () => unsubscribe();
   }, [toast]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('setAppBadge' in navigator)) return;
+
+    const lastUpdater = state.lastUpdater;
+    const currentViewUser = state.showBack ? 'naitik' : 'riya';
+
+    if (lastUpdater && lastUpdater !== currentViewUser) {
+      navigator.setAppBadge(1).catch(error => console.error('Failed to set app badge:', error));
+    } else {
+      navigator.clearAppBadge().catch(error => console.error('Failed to clear app badge:', error));
+    }
+  }, [state.lastUpdater, state.showBack]);
   
   const updateFirestore = useCallback(async (newState: AppState) => {
     const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
@@ -121,6 +126,7 @@ export const useTaskStore = () => {
         ...userState,
         tasks: newTasks,
       },
+      lastUpdater: user,
     };
     setState(newState);
     updateFirestore(newState);
@@ -137,6 +143,7 @@ export const useTaskStore = () => {
         ...userState,
         tasks: newTasks,
       },
+      lastUpdater: user,
     };
     setState(newState);
     updateFirestore(newState);
@@ -151,6 +158,7 @@ export const useTaskStore = () => {
         ...userState,
         tasks: newTasks,
       },
+      lastUpdater: user,
     };
     setState(newState);
     updateFirestore(newState);
@@ -169,6 +177,7 @@ export const useTaskStore = () => {
         ...userState,
         tasks: newTasks,
       },
+      lastUpdater: user,
     };
     setState(newState);
     updateFirestore(newState);
@@ -184,6 +193,7 @@ export const useTaskStore = () => {
         isLocked: false,
         isFinished: false,
       },
+      lastUpdater: user,
     };
     setState(newState);
     updateFirestore(newState);
@@ -214,6 +224,7 @@ export const useTaskStore = () => {
         isLocked: false,
         isFinished: false,
       },
+      lastUpdater: user,
     };
     setState(newState);
     updateFirestore(newState);
@@ -259,7 +270,7 @@ export const useTaskStore = () => {
         isLocked: true,
       };
     }
-    const newState = { ...state, [user]: newUserData };
+    const newState = { ...state, [user]: newUserData, lastUpdater: user };
     setState(newState);
     updateFirestore(newState);
   }, [state, toast, updateFirestore]);

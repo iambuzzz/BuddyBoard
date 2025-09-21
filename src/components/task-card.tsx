@@ -198,7 +198,7 @@ export function TaskCard({ user }: TaskCardProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="w-full">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="w-full border-slate-300">Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={handleConfirmAddTask} className={`${confirmButtonStyle} w-full`}>
               Confirm
             </AlertDialogAction>
