@@ -66,10 +66,11 @@ export function TaskCard({ user }: TaskCardProps) {
     if (userData.isLocked) {
       setTaskToAdd(text);
       setShowLockWarning(true);
+      input.value = '';
     } else {
       addTask(user, text);
+      input.value = '';
     }
-    input.value = '';
   };
 
   const getActionButtonText = () => {
@@ -186,8 +187,10 @@ export function TaskCard({ user }: TaskCardProps) {
       <AlertDialog open={showLockWarning} onOpenChange={setShowLockWarning}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="text-amber-500" />
+            <div className="flex justify-center">
+                <AlertTriangle className="text-amber-500 h-8 w-8 mb-2" />
+            </div>
+            <AlertDialogTitle>
               Add to a Locked List?
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -195,8 +198,8 @@ export function TaskCard({ user }: TaskCardProps) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmAddTask} className={confirmButtonStyle}>
+            <AlertDialogCancel className="w-full">Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmAddTask} className={`${confirmButtonStyle} w-full`}>
               Confirm
             </AlertDialogAction>
           </AlertDialogFooter>
