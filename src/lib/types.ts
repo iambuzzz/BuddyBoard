@@ -18,6 +18,9 @@ export interface UserState {
   isFinished: boolean;
   totalCompleted: number;
   totalAssigned: number;
+  currentStreak: number;
+  maxStreak: number;
+  lastCompletedDate: string | null;
 }
 
 export type AppState = {
@@ -27,6 +30,7 @@ export type AppState = {
   // false for Riya's view (front), true for Naitik's view (back)
   showBack: boolean;
   connectionStatus: 'connecting' | 'connected' | 'error';
+  lastUpdater: User | null;
 };
 
 export type User = 'riya' | 'naitik' | 'ambuj';

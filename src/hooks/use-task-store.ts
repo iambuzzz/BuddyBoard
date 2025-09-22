@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { AppState, User, Task, UserState, PreviousTask } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { isToday, isYesterday, parseISO } from 'date-fns';
 
 const getInitialState = (): AppState => ({
   riya: {
@@ -14,6 +15,9 @@ const getInitialState = (): AppState => ({
     isFinished: false,
     totalCompleted: 0,
     totalAssigned: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    lastCompletedDate: null,
   },
   naitik: {
     tasks: [],
@@ -22,6 +26,9 @@ const getInitialState = (): AppState => ({
     isFinished: false,
     totalCompleted: 0,
     totalAssigned: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    lastCompletedDate: null,
   },
   ambuj: {
     tasks: [],
@@ -30,6 +37,9 @@ const getInitialState = (): AppState => ({
     isFinished: false,
     totalCompleted: 0,
     totalAssigned: 0,
+    currentStreak: 0,
+    maxStreak: 0,
+    lastCompletedDate: null,
   },
   showBack: false,
   connectionStatus: 'connecting',
@@ -44,10 +54,13 @@ const sanitizeUserData = (userData: Partial<UserState>): UserState => {
   return {
     tasks: userData.tasks ?? [],
     previousTasks: userData.previousTasks ?? [],
-    isLocked: userData.isLocked ?? false,
+isLocked: userData.isLocked ?? false,
     isFinished: userData.isFinished ?? false,
     totalCompleted: userData.totalCompleted ?? 0,
     totalAssigned: userData.totalAssigned ?? 0,
+    currentStreak: userData.currentStreak ?? 0,
+    maxStreak: userData.maxStreak ?? 0,
+    lastCompletedDate: userData.lastCompletedDate ?? null,
   };
 };
 
@@ -232,6 +245,7 @@ export const useTaskStore = () => {
 
   const handleActionButton = useCallback((user: User) => {
     const userData = state[user];
+    const today = new Date().toISOString().split('T')[0];
 
     if (!userData.isLocked && userData.tasks.length === 0) {
       toast({
@@ -256,12 +270,34 @@ export const useTaskStore = () => {
       // Finish List
       const completed = userData.tasks.filter(t => t.isCompleted).length;
       const total = userData.tasks.length;
+      const allTasksCompleted = total > 0 && completed === total;
+
+      let newCurrentStreak = userData.currentStreak;
+      let newLastCompletedDate = userData.lastCompletedDate;
+
+      if (allTasksCompleted) {
+        const lastDate = userData.lastCompletedDate ? parseISO(userData.lastCompletedDate) : null;
+        if (lastDate && isYesterday(lastDate)) {
+          newCurrentStreak++; // Continue streak
+        } else if (!lastDate || !isToday(lastDate)) {
+          newCurrentStreak = 1; // Start new streak
+        }
+        newLastCompletedDate = today;
+      } else {
+        newCurrentStreak = 0; // Reset streak
+      }
+      
+      const newMaxStreak = Math.max(userData.maxStreak, newCurrentStreak);
+
       newUserData = {
         ...userData,
         isFinished: true,
         totalCompleted: (userData.totalCompleted ?? 0) + completed,
         totalAssigned: (userData.totalAssigned ?? 0) + total,
         previousTasks: userData.tasks.map(t => ({ text: t.text })), // Save only task text
+        currentStreak: newCurrentStreak,
+        maxStreak: newMaxStreak,
+        lastCompletedDate: newLastCompletedDate,
       };
     } else {
       // Lock List

@@ -24,6 +24,7 @@ import { useTaskStore } from '@/hooks/use-task-store';
 import { TaskList } from './task-list';
 import { ScoreBadge } from './score-badge';
 import { CelebrationOverlay } from './celebration-overlay';
+import { StreakBadge } from './streak-badge';
 
 type TaskCardProps = {
   user: User;
@@ -117,7 +118,14 @@ export function TaskCard({ user }: TaskCardProps) {
   return (
     <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card pl-6 pb-6 pr-6 pt-3 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
       <div className="flex justify-between items-center pb-4 mb-4 border-b flex-shrink-0 pt-2">
-        <h2 className={`text-xl sm:text-2xl font-bold pr-2 ${titleColor}`}>{userName}'s List</h2>
+        <div className="flex items-center gap-2 pr-2">
+          <h2 className={`text-xl sm:text-2xl font-bold ${titleColor}`}>{userName}'s List</h2>
+          <StreakBadge
+            currentStreak={userData.currentStreak}
+            maxStreak={userData.maxStreak}
+            theme={user}
+          />
+        </div>
         <ScoreBadge
           dailyCompleted={userData.tasks.filter(t => t.isCompleted).length}
           dailyTotal={userData.tasks.length}
