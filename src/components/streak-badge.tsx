@@ -25,15 +25,15 @@ export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProp
   const themeClasses = {
     riya: {
       currentText: 'text-orange-500',
-      maxText: 'text-slate-400',
+      maxText: 'text-orange-500',
     },
     naitik: {
       currentText: 'text-orange-500',
-      maxText: 'text-slate-400',
+      maxText: 'text-orange-500',
     },
     ambuj: {
       currentText: 'text-orange-500',
-      maxText: 'text-slate-400',
+      maxText: 'text-orange-500',
     },
   };
   
@@ -50,7 +50,7 @@ export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProp
                 <div
                   className={cn(
                     'flex items-center gap-1 p-1 rounded-full transition-all duration-300',
-                    currentStreak > 0 ? `${currentTheme.currentText}` : currentTheme.maxText,
+                    currentStreak > 0 ? `${currentTheme.currentText}` : 'text-slate-400',
                   )}
                 >
                   <Flame
@@ -65,10 +65,10 @@ export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProp
                 <div
                   className={cn(
                     'flex items-center gap-1 p-1 rounded-full transition-all duration-300',
-                    currentTheme.maxText,
+                    maxStreak > 0 ? currentTheme.maxText : 'text-slate-400',
                   )}
                 >
-                  <Star className="h-5 w-5" fill="currentColor" />
+                  <Star className="h-5 w-5" fill={maxStreak > 0 ? "currentColor" : "none"} />
                   <span className="text-sm font-bold">{maxStreak}</span>
                 </div>
               </div>
