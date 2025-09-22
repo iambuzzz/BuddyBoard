@@ -172,6 +172,26 @@
   .score-back {
     transform: rotateY(180deg);
   }
+
+  /* Streak Badge */
+  .streak-badge-container {
+    perspective: 1000px;
+  }
+  .streak-badge {
+    @apply relative cursor-pointer;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+  }
+  .streak-badge.is-flipped {
+    transform: rotateY(180deg);
+  }
+  .streak-face {
+    @apply absolute inset-0 w-full h-full flex items-center justify-center gap-1;
+    backface-visibility: hidden;
+  }
+  .streak-back {
+    transform: rotateY(180deg);
+  }
   
   .card-glow-riya {
     animation: glow-riya 3s ease-in-out infinite;

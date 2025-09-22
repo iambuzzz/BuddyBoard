@@ -1,8 +1,9 @@
 "use client";
 
-import { Flame } from 'lucide-react';
+import { Flame, Star } from 'lucide-react';
 import type { User } from '@/lib/types';
 import { cn } from '@/lib/utils';
+import { useState } from 'react';
 import {
   Tooltip,
   TooltipContent,
@@ -17,34 +18,29 @@ type StreakBadgeProps = {
 };
 
 export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProps) {
-  const hasCurrentStreak = currentStreak > 0;
-  const displayValue = hasCurrentStreak ? currentStreak : maxStreak;
-  const tooltipText = hasCurrentStreak
-    ? `You're on a ${currentStreak}-day streak!`
-    : `Your longest streak was ${maxStreak} days.`;
+  const [isFlipped, setIsFlipped] = useState(false);
 
-  if (displayValue === 0) {
+  if (currentStreak === 0 && maxStreak === 0) {
     return null;
   }
   
+  const handleToggle = () => setIsFlipped(!isFlipped);
+
   const themeClasses = {
     riya: {
-      text: 'text-orange-500',
-      glow: 'shadow-[0_0_12px_2px_rgba(249,115,22,0.5)]',
-      fadedText: 'text-slate-400',
-      fadedGlow: 'shadow-[0_0_12px_2px_rgba(148,163,184,0.3)]',
+      currentText: 'text-orange-500',
+      currentGlow: 'shadow-[0_0_12px_2px_rgba(249,115,22,0.5)]',
+      maxText: 'text-slate-400',
     },
     naitik: {
-      text: 'text-orange-500',
-      glow: 'shadow-[0_0_12px_2px_rgba(249,115,22,0.5)]',
-      fadedText: 'text-slate-400',
-      fadedGlow: 'shadow-[0_0_12px_2px_rgba(148,163,184,0.3)]',
+      currentText: 'text-orange-500',
+      currentGlow: 'shadow-[0_0_12px_2px_rgba(249,115,22,0.5)]',
+      maxText: 'text-slate-400',
     },
     ambuj: {
-      text: 'text-orange-500',
-      glow: 'shadow-[0_0_12px_2px_rgba(249,115,22,0.5)]',
-      fadedText: 'text-slate-400',
-      fadedGlow: 'shadow-[0_0_12px_2px_rgba(148,163,184,0.3)]',
+      currentText: 'text-orange-500',
+      currentGlow: 'shadow-[0_0_12px_2px_rgba(249,115,22,0.5)]',
+      maxText: 'text-slate-400',
     },
   };
   
@@ -54,23 +50,40 @@ export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProp
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <div
-            className={cn(
-              'flex items-center gap-1 p-1 rounded-full transition-all duration-300',
-              hasCurrentStreak
-                ? `${currentTheme.text} ${currentTheme.glow}`
-                : currentTheme.fadedText
-            )}
-          >
-            <Flame
-              className="h-5 w-5"
-              fill={hasCurrentStreak ? 'currentColor' : 'none'}
-            />
-            <span className="text-sm font-bold">{displayValue}</span>
+          <div className="streak-badge-container h-7 w-12" onClick={handleToggle} title="Click to toggle streak">
+            <div className={`streak-badge w-full h-full ${isFlipped ? 'is-flipped' : ''}`}>
+              {/* Front Face: Current Streak */}
+              <div className="streak-face streak-front">
+                <div
+                  className={cn(
+                    'flex items-center gap-1 p-1 rounded-full transition-all duration-300',
+                    currentStreak > 0 ? `${currentTheme.currentText} ${currentTheme.currentGlow}` : currentTheme.maxText,
+                  )}
+                >
+                  <Flame
+                    className="h-5 w-5"
+                    fill={currentStreak > 0 ? 'currentColor' : 'none'}
+                  />
+                  <span className="text-sm font-bold">{currentStreak}</span>
+                </div>
+              </div>
+              {/* Back Face: Max Streak */}
+              <div className="streak-face streak-back">
+                <div
+                  className={cn(
+                    'flex items-center gap-1 p-1 rounded-full transition-all duration-300',
+                    currentTheme.maxText,
+                  )}
+                >
+                  <Star className="h-5 w-5" fill="none" />
+                  <span className="text-sm font-bold">{maxStreak}</span>
+                </div>
+              </div>
+            </div>
           </div>
         </TooltipTrigger>
         <TooltipContent>
-          <p>{tooltipText}</p>
+          <p>{isFlipped ? `Longest streak: ${maxStreak} days` : `Current streak: ${currentStreak} days`}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
