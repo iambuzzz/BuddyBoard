@@ -20,10 +20,6 @@ type StreakBadgeProps = {
 export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProps) {
   const [isFlipped, setIsFlipped] = useState(false);
 
-  if (currentStreak === 0 && maxStreak === 0) {
-    return null;
-  }
-  
   const handleToggle = () => setIsFlipped(!isFlipped);
 
   const themeClasses = {
