@@ -17,6 +17,7 @@ const getInitialState = (): AppState => ({
     currentStreak: 0,
     maxStreak: 0,
     lockedAt: null,
+    lastLockedAt: null,
   },
   naitik: {
     tasks: [],
@@ -28,6 +29,7 @@ const getInitialState = (): AppState => ({
     currentStreak: 0,
     maxStreak: 0,
     lockedAt: null,
+    lastLockedAt: null,
   },
   ambuj: {
     tasks: [],
@@ -39,6 +41,7 @@ const getInitialState = (): AppState => ({
     currentStreak: 0,
     maxStreak: 0,
     lockedAt: null,
+    lastLockedAt: null,
   },
   showBack: false,
   connectionStatus: 'connecting',
@@ -60,6 +63,7 @@ const sanitizeUserData = (userData: Partial<UserState>): UserState => {
     currentStreak: userData.currentStreak ?? 0,
     maxStreak: userData.maxStreak ?? 0,
     lockedAt: userData.lockedAt ?? null,
+    lastLockedAt: userData.lastLockedAt ?? null,
   };
 };
 
@@ -295,13 +299,24 @@ export const useTaskStore = () => {
         previousTasks: userData.tasks.map(t => ({ text: t.text })),
         currentStreak: newCurrentStreak,
         maxStreak: newMaxStreak,
+        lastLockedAt: userData.lockedAt,
       };
     } else {
       // Action: Lock List
+      let currentStreak = userData.currentStreak;
+      if (userData.lastLockedAt) {
+        const timeSinceLastLock = now - userData.lastLockedAt;
+        const brokeStreak = timeSinceLastLock > 36 * 60 * 60 * 1000;
+        if (brokeStreak) {
+            currentStreak = 0;
+        }
+      }
+
       newUserData = {
         ...userData,
         isLocked: true,
         lockedAt: now,
+        currentStreak: currentStreak
       };
     }
     const newState = { ...state, [user]: newUserData, lastUpdater: user };

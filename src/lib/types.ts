@@ -21,6 +21,7 @@ export interface UserState {
   currentStreak: number;
   maxStreak: number;
   lockedAt: number | null; // Timestamp when the list was locked
+  lastLockedAt: number | null; // Timestamp of the previously locked list
 }
 
 export type AppState = {
