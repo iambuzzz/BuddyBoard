@@ -20,7 +20,7 @@ export interface UserState {
   totalAssigned: number;
   currentStreak: number;
   maxStreak: number;
-  lastCompletedDate: string | null;
+  lockedAt: number | null; // Timestamp when the list was locked
 }
 
 export type AppState = {
