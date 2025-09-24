@@ -280,11 +280,17 @@ export const useTaskStore = () => {
         if (lastDate && isYesterday(lastDate)) {
           newCurrentStreak++; // Continue streak
         } else if (!lastDate || !isToday(lastDate)) {
-          newCurrentStreak = 1; // Start new streak
+          newCurrentStreak = 1; // Start or reset streak
         }
+        // If it's already today, the streak is maintained but not incremented again.
         newLastCompletedDate = today;
       } else {
-        newCurrentStreak = 0; // Reset streak
+        // If not all tasks are completed, check if the last completion was not today.
+        // If the last completion was yesterday or before, the streak is broken.
+        const lastDate = userData.lastCompletedDate ? parseISO(userData.lastCompletedDate) : null;
+        if (!lastDate || !isToday(lastDate)) {
+          newCurrentStreak = 0;
+        }
       }
       
       const newMaxStreak = Math.max(userData.maxStreak, newCurrentStreak);
