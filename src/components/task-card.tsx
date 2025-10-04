@@ -186,6 +186,7 @@ export function TaskCard({ user }: TaskCardProps) {
           <CelebrationOverlay
             completed={userData.tasks.filter(t => t.isCompleted).length}
             total={userData.tasks.length}
+            totalTimeSpent={userData.tasks.reduce((acc, task) => acc + task.timeSpent, 0)}
             onNewList={() => startNewList(user)}
             onRestorePrevious={() => restorePreviousList(user)}
             canRestore={!!userData.previousTasks && userData.previousTasks.length > 0}
