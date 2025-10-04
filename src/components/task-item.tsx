@@ -55,7 +55,7 @@ const TaskTimer = ({ task, onToggleTimer, theme, isLocked }: { task: Task; onTog
   if (task.isCompleted) {
     if (task.timeSpent > 0) {
       return (
-        <div className="flex items-center gap-1 text-sm text-emerald-600 font-medium mr-2">
+        <div className="flex items-center gap-1 text-sm text-emerald-600 font-medium md:mr-2">
           <Timer className="h-4 w-4" />
           <span>{formatTime(task.timeSpent)}</span>
         </div>
@@ -65,7 +65,7 @@ const TaskTimer = ({ task, onToggleTimer, theme, isLocked }: { task: Task; onTog
   }
 
   return (
-    <div className={cn("flex items-center gap-1 text-sm mr-2", timerColor)}>
+    <div className={cn("flex items-center gap-1 text-sm md:mr-2", timerColor)}>
        <Timer className="h-4 w-4" />
        <span>{formatTime(displayTime)}</span>
        {isLocked && (
@@ -130,44 +130,46 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
         )}
       </div>
 
-      {isEditing ? (
-        <input
-          ref={inputRef}
-          type="text"
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onBlur={handleSave}
-          onKeyDown={handleKeyDown}
-          className="flex-grow bg-white border border-slate-300 rounded px-2 py-1 text-base"
-        />
-      ) : (
-        <>
-          <span className="task-text flex-grow break-all">
-            {task.text}
-          </span>
-          <TaskTimer task={task} onToggleTimer={() => onToggleTimer(task.id)} theme={theme} isLocked={isLocked}/>
-          {!isLocked && (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                className={`h-8 w-8 text-slate-400 ${editBtnHoverClass}`}
-                onClick={() => setIsEditing(true)}
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
-               <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-slate-400 hover:text-destructive"
-                onClick={() => onDelete(task.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </>
-          )}
-        </>
-      )}
+      <div className="flex-grow flex flex-col md:flex-row md:items-center justify-between min-w-0">
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            onBlur={handleSave}
+            onKeyDown={handleKeyDown}
+            className="flex-grow bg-white border border-slate-300 rounded px-2 py-1 text-base min-w-0"
+          />
+        ) : (
+          <>
+            <span className="task-text break-all md:self-center">{task.text}</span>
+            <div className="flex items-center justify-end flex-shrink-0">
+              <TaskTimer task={task} onToggleTimer={() => onToggleTimer(task.id)} theme={theme} isLocked={isLocked}/>
+              {!isLocked && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-8 w-8 text-slate-400 ${editBtnHoverClass}`}
+                    onClick={() => setIsEditing(true)}
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-slate-400 hover:text-destructive"
+                    onClick={() => onDelete(task.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </>
+              )}
+            </div>
+          </>
+        )}
+      </div>
     </li>
   );
 }
