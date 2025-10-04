@@ -26,7 +26,6 @@ import { TaskList } from './task-list';
 import { ScoreBadge } from './score-badge';
 import { CelebrationOverlay } from './celebration-overlay';
 import { StreakBadge } from './streak-badge';
-import { Progress } from './ui/progress';
 
 type TaskCardProps = {
   user: User;
@@ -135,7 +134,7 @@ export function TaskCard({ user }: TaskCardProps) {
   
   const getActionButtonIcon = () => {
     if (undoState.active) {
-      return <RotateCcw className="w-4 h-4 mr-2" />;
+      return <RotateCcw className="w-4 h-4 mr-2 animate-spin" />;
     }
     if (userData.isFinished) return <Plus className="w-4 h-4 mr-2" />;
     if (userData.isLocked) return <Check className="w-4 h-4 mr-2" />;
@@ -157,11 +156,13 @@ export function TaskCard({ user }: TaskCardProps) {
     : user === 'naitik' ? 'bg-[--naitik-primary] hover:bg-cyan-500' 
     : 'bg-[--ambuj-primary] hover:bg-emerald-500';
 
-  const actionBtnStyle = undoState.active 
-    ? 'bg-amber-500 hover:bg-amber-600'
+  const actionBtnStyle = undoState.active && user === 'riya' ? 'bg-violet-400 hover:bg-violet-500'
+    : undoState.active && user === 'naitik' ? 'bg-cyan-400 hover:bg-cyan-500'
+    : undoState.active && user === 'ambuj' ? 'bg-emerald-400 hover:bg-emerald-500'
     : user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' 
     : user === 'naitik' ? 'bg-[--naitik-primary] hover:bg-cyan-500' 
     : 'bg-[--ambuj-primary] hover:bg-emerald-500';
+
 
   const ringStyle = user === 'riya' ? 'focus-visible:ring-[--riya-primary]' 
     : user === 'naitik' ? 'focus-visible:ring-[--naitik-primary]' 
@@ -233,14 +234,11 @@ export function TaskCard({ user }: TaskCardProps) {
       <div className="flex flex-col gap-2 mt-6 flex-shrink-0">
          <Button
             onClick={undoState.active ? handleCancelUndo : triggerUndo}
-            className={`w-full font-semibold transition py-3 text-base h-auto ${actionBtnStyle} ${ringStyle}`}
+            className={`w-full font-semibold transition py-3 text-base h-auto text-white ${actionBtnStyle} ${ringStyle}`}
           >
             {getActionButtonIcon()}
             {getActionButtonText()}
           </Button>
-          {undoState.active && (
-             <Progress value={(undoState.countdown / 5) * 100} className="h-1" />
-          )}
       </div>
 
       <AnimatePresence>
@@ -282,3 +280,5 @@ export function TaskCard({ user }: TaskCardProps) {
     </Card>
   );
 }
+
+  
