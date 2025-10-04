@@ -115,12 +115,12 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
 
   return (
     <li
-      className={`task-item flex items-center p-3 rounded-lg bg-slate-50 transition-colors ${
+      className={`task-item flex p-3 rounded-lg bg-slate-50 transition-colors ${
         task.isCompleted ? 'completed' : 'hover:bg-slate-100'
       }`}
     >
       <div
-        className={`mr-3 flex-shrink-0 ${isLocked && !task.isCompleted ? 'cursor-pointer' : 'cursor-default'}`}
+        className={`mr-3 flex-shrink-0 pt-0.5 ${isLocked && !task.isCompleted ? 'cursor-pointer' : 'cursor-default'}`}
         onClick={() => isLocked && onToggle(task.id)}
       >
         {task.isCompleted ? (
