@@ -1,11 +1,12 @@
+
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Lock, Check, AlertTriangle } from 'lucide-react';
+import { Plus, Lock, Check, AlertTriangle, RotateCcw } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import {
   AlertDialog,
@@ -25,6 +26,7 @@ import { TaskList } from './task-list';
 import { ScoreBadge } from './score-badge';
 import { CelebrationOverlay } from './celebration-overlay';
 import { StreakBadge } from './streak-badge';
+import { Progress } from './ui/progress';
 
 type TaskCardProps = {
   user: User;
@@ -45,6 +47,53 @@ export function TaskCard({ user }: TaskCardProps) {
 
   const [showLockWarning, setShowLockWarning] = useState(false);
   const [taskToAdd, setTaskToAdd] = useState('');
+  const [undoState, setUndoState] = useState<{
+    active: boolean;
+    countdown: number;
+  }>({ active: false, countdown: 5 });
+
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
+  }, []);
+
+  const triggerUndo = () => {
+    if (undoState.active) {
+      handleCancelUndo();
+      return;
+    }
+
+    if (!state[user].isLocked && state[user].tasks.length === 0) {
+      handleActionButton(user); // Directly call to show the toast
+      return;
+    }
+
+    setUndoState({ active: true, countdown: 5 });
+
+    timerRef.current = setInterval(() => {
+      setUndoState(prev => {
+        if (prev.countdown <= 1) {
+          clearInterval(timerRef.current!);
+          handleActionButton(user);
+          return { active: false, countdown: 5 };
+        }
+        return { ...prev, countdown: prev.countdown - 1 };
+      });
+    }, 1000);
+  };
+
+  const handleCancelUndo = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+    }
+    setUndoState({ active: false, countdown: 5 });
+  };
+
 
   const userData = state[user];
   const userName = user.charAt(0).toUpperCase() + user.slice(1);
@@ -76,12 +125,18 @@ export function TaskCard({ user }: TaskCardProps) {
   };
 
   const getActionButtonText = () => {
+    if (undoState.active) {
+      return `Undo (${undoState.countdown})`;
+    }
     if (userData.isFinished) return 'Start New List';
     if (userData.isLocked) return 'Finish List';
     return 'Lock-In Tasks';
   };
   
   const getActionButtonIcon = () => {
+    if (undoState.active) {
+      return <RotateCcw className="w-4 h-4 mr-2" />;
+    }
     if (userData.isFinished) return <Plus className="w-4 h-4 mr-2" />;
     if (userData.isLocked) return <Check className="w-4 h-4 mr-2" />;
     return <Lock className="w-4 h-4 mr-2" />;
@@ -101,9 +156,13 @@ export function TaskCard({ user }: TaskCardProps) {
   const addBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' 
     : user === 'naitik' ? 'bg-[--naitik-primary] hover:bg-cyan-500' 
     : 'bg-[--ambuj-primary] hover:bg-emerald-500';
-  const actionBtnStyle = user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' 
+
+  const actionBtnStyle = undoState.active 
+    ? 'bg-amber-500 hover:bg-amber-600'
+    : user === 'riya' ? 'bg-[--riya-primary] hover:bg-violet-500' 
     : user === 'naitik' ? 'bg-[--naitik-primary] hover:bg-cyan-500' 
     : 'bg-[--ambuj-primary] hover:bg-emerald-500';
+
   const ringStyle = user === 'riya' ? 'focus-visible:ring-[--riya-primary]' 
     : user === 'naitik' ? 'focus-visible:ring-[--naitik-primary]' 
     : 'focus-visible:ring-[--ambuj-primary]';
@@ -171,14 +230,17 @@ export function TaskCard({ user }: TaskCardProps) {
         </ScrollArea>
       </div>
       
-      <div className="flex gap-2 mt-6 flex-shrink-0">
+      <div className="flex flex-col gap-2 mt-6 flex-shrink-0">
          <Button
-            onClick={() => handleActionButton(user)}
+            onClick={undoState.active ? handleCancelUndo : triggerUndo}
             className={`w-full font-semibold transition py-3 text-base h-auto ${actionBtnStyle} ${ringStyle}`}
           >
             {getActionButtonIcon()}
             {getActionButtonText()}
           </Button>
+          {undoState.active && (
+             <Progress value={(undoState.countdown / 5) * 100} className="h-1" />
+          )}
       </div>
 
       <AnimatePresence>
