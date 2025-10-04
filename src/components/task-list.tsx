@@ -12,12 +12,13 @@ type TaskListProps = {
   onToggle: (id: string) => void;
   onUpdate: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
+  onToggleTimer: (id: string) => void;
   theme: User;
   onRestore: () => void;
   canRestore: boolean;
 };
 
-export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, theme, onRestore, canRestore }: TaskListProps) {
+export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, onToggleTimer, theme, onRestore, canRestore }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="text-center text-slate-400 p-8 flex flex-col items-center gap-4">
@@ -46,6 +47,7 @@ export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, theme,
           onToggle={onToggle}
           onUpdate={onUpdate}
           onDelete={onDelete}
+          onToggleTimer={onToggleTimer}
           theme={theme}
         />
       ))}

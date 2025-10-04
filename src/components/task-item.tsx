@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { Circle, CheckCircle2, Edit, Trash2 } from 'lucide-react';
+import { Circle, CheckCircle2, Edit, Trash2, Play, Pause, Timer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 import type { Task, User } from '@/lib/types';
 
@@ -12,10 +13,72 @@ type TaskItemProps = {
   onToggle: (id: string) => void;
   onUpdate: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
+  onToggleTimer: (id: string) => void;
   theme: User;
 };
 
-export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, theme }: TaskItemProps) {
+const formatTime = (totalSeconds: number) => {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  return `${hours > 0 ? `${hours}:` : ''}${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+};
+
+const TaskTimer = ({ task, onToggleTimer, theme, isLocked }: { task: Task; onToggleTimer: () => void; theme: User, isLocked: boolean }) => {
+  const [displayTime, setDisplayTime] = useState(task.timeSpent);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout | undefined;
+    if (task.timerState === 'running') {
+      interval = setInterval(() => {
+        const now = Date.now();
+        const elapsed = (now - (task.timerStartedAt || now)) / 1000;
+        setDisplayTime(task.timeSpent + elapsed);
+      }, 1000);
+    } else {
+      setDisplayTime(task.timeSpent);
+    }
+    return () => clearInterval(interval);
+  }, [task.timerState, task.timeSpent, task.timerStartedAt]);
+
+  const timerColor = task.timerState === 'running' ? (
+    theme === 'riya' ? 'text-violet-500' :
+    theme === 'naitik' ? 'text-cyan-500' :
+    'text-emerald-500'
+  ) : 'text-slate-400';
+
+  const timerButtonHover = 
+    theme === 'riya' ? 'hover:text-violet-600' :
+    theme === 'naitik' ? 'hover:text-cyan-600' :
+    'hover:text-emerald-600';
+
+  if (task.isCompleted) {
+    if (task.timeSpent > 0) {
+      return (
+        <div className="flex items-center gap-1 text-sm text-emerald-600 font-medium mr-2">
+          <Timer className="h-4 w-4" />
+          <span>{formatTime(task.timeSpent)}</span>
+        </div>
+      );
+    }
+    return null;
+  }
+
+  return (
+    <div className={cn("flex items-center gap-1 text-sm mr-2", timerColor)}>
+       <Timer className="h-4 w-4" />
+       <span>{formatTime(displayTime)}</span>
+       {isLocked && (
+        <Button variant="ghost" size="icon" className={`h-8 w-8 ${timerColor} ${timerButtonHover}`} onClick={onToggleTimer}>
+          {task.timerState === 'running' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+        </Button>
+       )}
+    </div>
+  );
+};
+
+
+export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggleTimer, theme }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(task.text);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -82,12 +145,13 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, theme }
           <span className="task-text flex-grow break-all">
             {task.text}
           </span>
+          <TaskTimer task={task} onToggleTimer={() => onToggleTimer(task.id)} theme={theme} isLocked={isLocked}/>
           {!isLocked && (
             <>
               <Button
                 variant="ghost"
                 size="icon"
-                className={`h-8 w-8 ml-auto text-slate-400 ${editBtnHoverClass}`}
+                className={`h-8 w-8 text-slate-400 ${editBtnHoverClass}`}
                 onClick={() => setIsEditing(true)}
               >
                 <Edit className="h-4 w-4" />

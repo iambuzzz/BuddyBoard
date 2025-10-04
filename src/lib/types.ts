@@ -5,6 +5,9 @@ export interface Task {
   text: string;
   isCompleted: boolean;
   createdAt: number;
+  timeSpent: number; // in seconds
+  timerState: 'stopped' | 'running' | 'paused';
+  timerStartedAt: number | null;
 }
 
 export interface PreviousTask {

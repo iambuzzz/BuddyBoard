@@ -37,6 +37,7 @@ export function TaskCard({ user }: TaskCardProps) {
     updateTask,
     deleteTask,
     toggleTask,
+    toggleTimer,
     handleActionButton,
     startNewList,
     restorePreviousList,
@@ -160,6 +161,7 @@ export function TaskCard({ user }: TaskCardProps) {
             tasks={userData.tasks}
             isLocked={userData.isLocked || userData.isFinished}
             onToggle={(taskId) => toggleTask(user, taskId)}
+            onToggleTimer={(taskId) => toggleTimer(user, taskId)}
             onUpdate={(taskId, newText) => updateTask(user, taskId, newText)}
             onDelete={(taskId) => deleteTask(user, taskId)}
             theme={user}

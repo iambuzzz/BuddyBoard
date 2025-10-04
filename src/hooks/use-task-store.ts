@@ -51,10 +51,14 @@ const getInitialState = (): AppState => ({
 const APP_STATE_DOC_ID = 'riyalTodoState';
 const APP_STATE_COLLECTION_ID = 'app';
 
-// Helper to ensure user data has default values
 const sanitizeUserData = (userData: Partial<UserState>): UserState => {
   return {
-    tasks: userData.tasks ?? [],
+    tasks: (userData.tasks ?? []).map(t => ({
+      ...t,
+      timeSpent: t.timeSpent ?? 0,
+      timerState: t.timerState ?? 'stopped',
+      timerStartedAt: t.timerStartedAt ?? null,
+    })),
     previousTasks: userData.previousTasks ?? [],
     isLocked: userData.isLocked ?? false,
     isFinished: userData.isFinished ?? false,
@@ -87,7 +91,6 @@ export const useTaskStore = () => {
 
         setState(prevState => ({ ...prevState, ...sanitizedData, connectionStatus: 'connected' }));
       }
-      // THE DANGEROUS 'ELSE' BLOCK THAT CAUSED DATA DELETION HAS BEEN REMOVED.
     }, (error) => {
       console.error("Error fetching data from Firestore:", error);
       toast({ title: 'Error', description: 'Could not connect to the database.', variant: 'destructive'});
@@ -113,9 +116,7 @@ export const useTaskStore = () => {
   const updateFirestore = useCallback(async (newState: AppState) => {
     const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
     try {
-      // Create a new object for Firestore without the client-side state
       const { showBack, connectionStatus, ...stateToSync } = newState;
-
       await setDoc(docRef, stateToSync, { merge: true });
     } catch (error) {
       console.error("Failed to update state to Firestore", error);
@@ -133,6 +134,9 @@ export const useTaskStore = () => {
       text,
       isCompleted: false,
       createdAt: Date.now(),
+      timeSpent: 0,
+      timerState: 'stopped',
+      timerStartedAt: null,
     };
     const userState = state[user];
     const newTasks = [...userState.tasks, newTask].sort((a, b) => a.createdAt - b.createdAt);
@@ -179,14 +183,66 @@ export const useTaskStore = () => {
     setState(newState);
     updateFirestore(newState);
   }, [state, updateFirestore]);
+  
+  const toggleTimer = useCallback((user: User, taskId: string) => {
+    const userState = state[user];
+    const now = Date.now();
+    const newTasks = userState.tasks.map(task => {
+      if (task.id === taskId) {
+        if (task.timerState === 'running') {
+          // Pause timer
+          const elapsed = (now - (task.timerStartedAt || now)) / 1000;
+          return {
+            ...task,
+            timerState: 'paused' as 'paused',
+            timeSpent: task.timeSpent + elapsed,
+            timerStartedAt: null,
+          };
+        } else {
+          // Start or resume timer
+          return {
+            ...task,
+            timerState: 'running' as 'running',
+            timerStartedAt: now,
+          };
+        }
+      }
+      return task;
+    });
+
+    const newState = { ...state, [user]: { ...userState, tasks: newTasks }, lastUpdater: user };
+    setState(newState);
+    updateFirestore(newState);
+  }, [state, updateFirestore]);
+
 
   const toggleTask = useCallback((user: User, taskId: string) => {
     if (!state[user].isLocked) return;
 
     const userState = state[user];
-    const newTasks = userState.tasks.map(t =>
-      t.id === taskId ? { ...t, isCompleted: !t.isCompleted } : t
-    );
+    const now = Date.now();
+    const newTasks = userState.tasks.map(t => {
+      if (t.id === taskId) {
+        const isCompleting = !t.isCompleted;
+        let finalTimeSpent = t.timeSpent;
+
+        if (isCompleting && t.timerState === 'running') {
+          // If task is completed while timer is running, stop it and add elapsed time.
+          const elapsed = (now - (t.timerStartedAt || now)) / 1000;
+          finalTimeSpent += elapsed;
+        }
+        
+        return {
+          ...t,
+          isCompleted: isCompleting,
+          timerState: isCompleting ? 'stopped' : t.timerState,
+          timeSpent: finalTimeSpent,
+          timerStartedAt: isCompleting ? null : t.timerStartedAt,
+        };
+      }
+      return t;
+    });
+
     const newState = {
       ...state,
       [user]: {
@@ -231,6 +287,9 @@ export const useTaskStore = () => {
       text: task.text,
       isCompleted: false,
       createdAt: Date.now(),
+      timeSpent: 0,
+      timerState: 'stopped',
+      timerStartedAt: null,
     }));
 
     const newState = {
@@ -332,6 +391,7 @@ export const useTaskStore = () => {
     updateTask,
     deleteTask,
     toggleTask,
+    toggleTimer,
     handleActionButton,
     startNewList,
     restorePreviousList,
