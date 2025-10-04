@@ -55,7 +55,7 @@ const TaskTimer = ({ task, onToggleTimer, theme, isLocked }: { task: Task; onTog
   if (task.isCompleted) {
     if (task.timeSpent > 0) {
       return (
-        <div className="flex items-center gap-1 text-sm text-emerald-600 font-medium md:mr-2">
+        <div className="flex items-center gap-1 text-sm text-emerald-600 font-medium sm:mr-2">
           <Timer className="h-4 w-4" />
           <span>{formatTime(task.timeSpent)}</span>
         </div>
@@ -65,7 +65,7 @@ const TaskTimer = ({ task, onToggleTimer, theme, isLocked }: { task: Task; onTog
   }
 
   return (
-    <div className={cn("flex items-center gap-1 text-sm md:mr-2", timerColor)}>
+    <div className={cn("flex items-center gap-1 text-sm sm:mr-2", timerColor)}>
        <Timer className="h-4 w-4" />
        <span>{formatTime(displayTime)}</span>
        {isLocked && (
@@ -130,7 +130,7 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
         )}
       </div>
 
-      <div className="flex-grow flex flex-col md:flex-row md:items-center justify-between min-w-0">
+      <div className="flex-grow flex flex-col sm:flex-row sm:items-center justify-between min-w-0">
         {isEditing ? (
           <input
             ref={inputRef}
@@ -143,7 +143,7 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
           />
         ) : (
           <>
-            <span className="task-text break-all md:self-center">{task.text}</span>
+            <span className="task-text break-all sm:self-center">{task.text}</span>
             <div className="flex items-center justify-end flex-shrink-0">
               <TaskTimer task={task} onToggleTimer={() => onToggleTimer(task.id)} theme={theme} isLocked={isLocked}/>
               {!isLocked && (
