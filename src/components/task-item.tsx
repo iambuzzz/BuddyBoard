@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
-import { Circle, CheckCircle2, Edit, Trash2, Play, Pause, Timer } from 'lucide-react';
+import { Circle, CheckCircle2, Edit, Trash2, Play, Pause, Timer, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -58,6 +58,9 @@ const TaskTimer = ({ task, onToggleTimer, theme, isLocked }: { task: Task; onTog
         <div className="flex items-center gap-1 text-sm text-emerald-600 font-medium sm:mr-2">
           <Timer className="h-4 w-4" />
           <span>{formatTime(task.timeSpent)}</span>
+          <div className="flex items-center justify-center h-8 w-8">
+            <Check className="h-4 w-4 text-emerald-500" />
+          </div>
         </div>
       );
     }
@@ -144,7 +147,7 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
         ) : (
           <>
             <span className="task-text break-all sm:self-center">{task.text}</span>
-            <div className="flex items-center justify-end flex-shrink-0">
+            <div className="flex items-center justify-end sm:justify-start flex-shrink-0">
               <TaskTimer task={task} onToggleTimer={() => onToggleTimer(task.id)} theme={theme} isLocked={isLocked}/>
               {!isLocked && (
                 <>
