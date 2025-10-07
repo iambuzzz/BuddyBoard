@@ -225,19 +225,26 @@ export const useTaskStore = () => {
       if (t.id === taskId) {
         const isCompleting = !t.isCompleted;
         let finalTimeSpent = t.timeSpent;
+        let timerState = t.timerState;
+        let timerStartedAt = t.timerStartedAt;
 
-        if (isCompleting && t.timerState === 'running') {
-          // If task is completed while timer is running, stop it and add elapsed time.
-          const elapsed = (now - (t.timerStartedAt || now)) / 1000;
-          finalTimeSpent += elapsed;
+        if (isCompleting) {
+          if (t.timerState === 'running') {
+            // If task is completed while timer is running, stop it and add elapsed time.
+            const elapsed = (now - (t.timerStartedAt || now)) / 1000;
+            finalTimeSpent += elapsed;
+          }
+          // Always stop the timer when completing a task
+          timerState = 'stopped';
+          timerStartedAt = null;
         }
         
         return {
           ...t,
           isCompleted: isCompleting,
-          timerState: isCompleting ? 'stopped' : t.timerState,
           timeSpent: finalTimeSpent,
-          timerStartedAt: isCompleting ? null : t.timerStartedAt,
+          timerState,
+          timerStartedAt,
         };
       }
       return t;
