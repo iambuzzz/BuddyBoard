@@ -15,6 +15,7 @@ type TaskItemProps = {
   onDelete: (id: string) => void;
   onToggleTimer: (id: string) => void;
   theme: User;
+  isCurrentUserCard: boolean;
 };
 
 const formatTime = (totalSeconds: number) => {
@@ -24,7 +25,7 @@ const formatTime = (totalSeconds: number) => {
   return `${hours > 0 ? `${hours}:` : ''}${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const TaskTimer = ({ task, onToggleTimer, theme, isLocked }: { task: Task; onToggleTimer: () => void; theme: User, isLocked: boolean }) => {
+const TaskTimer = ({ task, onToggleTimer, theme, isLocked, isCurrentUserCard }: { task: Task; onToggleTimer: () => void; theme: User, isLocked: boolean, isCurrentUserCard: boolean }) => {
   const [displayTime, setDisplayTime] = useState(task.timeSpent);
 
   useEffect(() => {
@@ -71,7 +72,7 @@ const TaskTimer = ({ task, onToggleTimer, theme, isLocked }: { task: Task; onTog
     <div className={cn("flex items-center gap-1 text-sm sm:mr-2", timerColor)}>
        <Timer className="h-4 w-4" />
        <span>{formatTime(displayTime)}</span>
-       {isLocked && (
+       {isLocked && isCurrentUserCard && (
         <Button variant="ghost" size="icon" className={`h-8 w-8 ${timerColor} ${timerButtonHover}`} onClick={onToggleTimer}>
           {task.timerState === 'running' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </Button>
@@ -81,7 +82,7 @@ const TaskTimer = ({ task, onToggleTimer, theme, isLocked }: { task: Task; onTog
 };
 
 
-export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggleTimer, theme }: TaskItemProps) {
+export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggleTimer, theme, isCurrentUserCard }: TaskItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [text, setText] = useState(task.text);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -116,6 +117,8 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
     }
   };
 
+  const canToggle = isLocked && isCurrentUserCard && !task.isCompleted;
+
   return (
     <li
       className={`task-item flex p-3 rounded-lg bg-slate-50 transition-colors ${
@@ -123,8 +126,8 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
       }`}
     >
       <div
-        className={`mr-3 flex-shrink-0 pt-0.5 ${isLocked && !task.isCompleted ? 'cursor-pointer' : 'cursor-default'}`}
-        onClick={() => isLocked && onToggle(task.id)}
+        className={`mr-3 flex-shrink-0 pt-0.5 ${canToggle ? 'cursor-pointer' : 'cursor-default'}`}
+        onClick={() => canToggle && onToggle(task.id)}
       >
         {task.isCompleted ? (
           <CheckCircle2 className="text-emerald-500" />
@@ -148,8 +151,8 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
           <>
             <span className="task-text break-all sm:self-center">{task.text}</span>
             <div className="flex items-center justify-end sm:justify-start flex-shrink-0">
-              <TaskTimer task={task} onToggleTimer={() => onToggleTimer(task.id)} theme={theme} isLocked={isLocked}/>
-              {!isLocked && (
+              <TaskTimer task={task} onToggleTimer={() => onToggleTimer(task.id)} theme={theme} isLocked={isLocked} isCurrentUserCard={isCurrentUserCard}/>
+              {!isLocked && isCurrentUserCard && (
                 <>
                   <Button
                     variant="ghost"

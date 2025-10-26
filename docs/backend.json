@@ -1,0 +1,78 @@
+{
+  "entities": {
+    "Task": {
+      "title": "Task",
+      "description": "Represents a single task item.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "isCompleted": { "type": "boolean" },
+        "createdAt": { "type": "number", "description": "Timestamp" },
+        "timeSpent": { "type": "number", "description": "in seconds" },
+        "timerState": { "type": "string", "enum": ["stopped", "running", "paused"] },
+        "timerStartedAt": { "type": "number", "description": "Timestamp or null" }
+      },
+      "required": ["id", "text", "isCompleted", "createdAt"]
+    },
+    "PreviousTask": {
+      "title": "Previous Task",
+      "description": "A simplified task object for historical records.",
+      "type": "object",
+      "properties": {
+        "text": { "type": "string" }
+      },
+      "required": ["text"]
+    },
+    "UserState": {
+      "title": "User State",
+      "description": "The complete state for a single user's task list.",
+      "type": "object",
+      "properties": {
+        "tasks": { "type": "array", "items": { "$ref": "#/entities/Task" } },
+        "previousTasks": { "type": "array", "items": { "$ref": "#/entities/PreviousTask" } },
+        "isLocked": { "type": "boolean" },
+        "isFinished": { "type": "boolean" },
+        "totalCompleted": { "type": "number" },
+        "totalAssigned": { "type": "number" },
+        "currentStreak": { "type": "number" },
+        "maxStreak": { "type": "number" },
+        "lockedAt": { "type": "number", "description": "Timestamp or null" },
+        "lastLockedAt": { "type": "number", "description": "Timestamp or null" }
+      }
+    },
+    "AppState": {
+      "title": "App State",
+      "description": "The entire state of the application, containing all user data.",
+      "type": "object",
+      "properties": {
+        "riya": { "$ref": "#/entities/UserState" },
+        "naitik": { "$ref": "#/entities/UserState" },
+        "ambuj": { "$ref": "#/entities/UserState" },
+        "lastUpdater": { "type": "string", "enum": ["riya", "naitik", "ambuj"] }
+      }
+    },
+    "UserRole": {
+      "title": "User Role",
+      "description": "Maps a Firebase Auth UID to a list name.",
+      "type": "object",
+      "properties": {
+        "listName": { "type": "string", "enum": ["riya", "naitik", "ambuj"] }
+      },
+      "required": ["listName"]
+    }
+  },
+  "auth": {
+    "providers": ["email"]
+  },
+  "firestore": {
+    "/riyalTodoState/app": {
+      "schema": { "$ref": "#/entities/AppState" },
+      "description": "A single document containing the state for all users."
+    },
+    "/user_roles/{userId}": {
+      "schema": { "$ref": "#/entities/UserRole" },
+      "description": "Maps a user's UID to their corresponding list name (e.g., 'riya')."
+    }
+  }
+}

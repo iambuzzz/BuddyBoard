@@ -1,10 +1,11 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 export const metadata: Metadata = {
-  title: 'RiyalTodo',
-  description: 'Daily Dash for Riya & Naitik',
+  title: 'TaskFlipper',
+  description: 'Daily Dash for Riya, Ambuj & Naitik',
   manifest: '/manifest.json',
 };
 
@@ -31,8 +32,10 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon.svg" />
       </head>
       <body className="font-body antialiased overflow-y-scroll">
-        {children}
-        <Toaster />
+        <FirebaseClientProvider>
+          {children}
+          <Toaster />
+        </FirebaseClientProvider>
       </body>
     </html>
   );

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useRef } from 'react';
@@ -21,6 +20,7 @@ import {
 
 import type { User } from '@/lib/types';
 import { useTaskStore } from '@/hooks/use-task-store';
+import { useUser } from '@/firebase/auth/use-user';
 
 import { TaskList } from './task-list';
 import { ScoreBadge } from './score-badge';
@@ -32,6 +32,7 @@ type TaskCardProps = {
 };
 
 export function TaskCard({ user }: TaskCardProps) {
+  const { listName } = useUser();
   const {
     state,
     addTask,
@@ -52,6 +53,8 @@ export function TaskCard({ user }: TaskCardProps) {
   }>({ active: false, countdown: 5 });
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  const isCurrentUserCard = listName === user;
 
   useEffect(() => {
     return () => {
@@ -108,6 +111,8 @@ export function TaskCard({ user }: TaskCardProps) {
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!isCurrentUserCard) return;
+
     const form = e.currentTarget;
     const input = form.elements.namedItem('task-input') as HTMLInputElement;
     const text = input.value.trim();
@@ -201,14 +206,14 @@ export function TaskCard({ user }: TaskCardProps) {
         <Input
           type="text"
           name="task-input"
-          placeholder="Add Task.."
+          placeholder={isCurrentUserCard ? "Add Task.." : `This is ${userName}'s list`}
           className={`bg-white/80 border-slate-300 transition focus:border-transparent ${ringStyle}`}
-          disabled={userData.isFinished}
+          disabled={userData.isFinished || !isCurrentUserCard}
         />
         <Button
           type="submit"
           className={`text-white font-bold p-3 rounded-lg shadow-md transition transform hover:scale-105 ${addBtnStyle}`}
-          disabled={userData.isFinished}
+          disabled={userData.isFinished || !isCurrentUserCard}
           aria-label="Add task"
         >
           <Plus />
@@ -227,6 +232,7 @@ export function TaskCard({ user }: TaskCardProps) {
             theme={user}
             onRestore={() => restorePreviousList(user)}
             canRestore={!!userData.previousTasks && userData.previousTasks.length > 0}
+            isCurrentUserCard={isCurrentUserCard}
           />
         </ScrollArea>
       </div>
@@ -235,6 +241,7 @@ export function TaskCard({ user }: TaskCardProps) {
          <Button
             onClick={undoState.active ? handleCancelUndo : triggerUndo}
             className={`w-full font-semibold transition py-3 text-base h-auto text-white ${actionBtnStyle} ${ringStyle}`}
+            disabled={!isCurrentUserCard}
           >
             {getActionButtonIcon()}
             {getActionButtonText()}
@@ -280,5 +287,3 @@ export function TaskCard({ user }: TaskCardProps) {
     </Card>
   );
 }
-
-  

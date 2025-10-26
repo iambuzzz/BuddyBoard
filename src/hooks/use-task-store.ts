@@ -2,9 +2,13 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import type { AppState, User, Task, UserState, PreviousTask } from '@/lib/types';
+import type { AppState, User, Task, UserState } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
+import { useUser } from '@/firebase/auth/use-user';
+import { FirestoreError } from 'firebase/firestore';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 const getInitialState = (): AppState => ({
   riya: {
@@ -48,8 +52,8 @@ const getInitialState = (): AppState => ({
   lastUpdater: null,
 });
 
-const APP_STATE_DOC_ID = 'riyalTodoState';
-const APP_STATE_COLLECTION_ID = 'app';
+const APP_STATE_DOC_ID = 'app';
+const APP_STATE_COLLECTION_ID = 'riyalTodoState';
 
 const sanitizeUserData = (userData: Partial<UserState>): UserState => {
   return {
@@ -74,8 +78,11 @@ const sanitizeUserData = (userData: Partial<UserState>): UserState => {
 export const useTaskStore = () => {
   const [state, setState] = useState<AppState>(getInitialState());
   const { toast } = useToast();
+  const { user: authUser, listName } = useUser();
 
   useEffect(() => {
+    if (!authUser) return;
+
     const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
     
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
@@ -90,45 +97,74 @@ export const useTaskStore = () => {
         };
 
         setState(prevState => ({ ...prevState, ...sanitizedData, connectionStatus: 'connected' }));
+      } else {
+        // If the document doesn't exist, create it.
+        setDoc(docRef, getInitialState());
       }
-    }, (error) => {
-      console.error("Error fetching data from Firestore:", error);
-      toast({ title: 'Error', description: 'Could not connect to the database.', variant: 'destructive'});
-      setState(prevState => ({ ...prevState, connectionStatus: 'error' }));
+    }, (serverError: FirestoreError) => {
+      if (serverError.code === 'permission-denied') {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      } else {
+        console.error("Error fetching data from Firestore:", serverError);
+        toast({ title: 'Error', description: 'Could not connect to the database.', variant: 'destructive'});
+        setState(prevState => ({ ...prevState, connectionStatus: 'error' }));
+      }
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, [authUser, toast]);
 
   useEffect(() => {
-    if (typeof window === 'undefined' || !('setAppBadge' in navigator)) return;
+    if (typeof window === 'undefined' || !('setAppBadge' in navigator) || !listName) return;
 
     const lastUpdater = state.lastUpdater;
-    const currentViewUser = state.showBack ? 'naitik' : 'riya';
-
-    if (lastUpdater && lastUpdater !== currentViewUser) {
+    
+    if (lastUpdater && lastUpdater !== listName) {
       navigator.setAppBadge(1).catch(error => console.error('Failed to set app badge:', error));
     } else {
       navigator.clearAppBadge().catch(error => console.error('Failed to clear app badge:', error));
     }
-  }, [state.lastUpdater, state.showBack]);
+  }, [state.lastUpdater, listName]);
   
-  const updateFirestore = useCallback(async (newState: AppState) => {
-    const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
-    try {
-      const { showBack, connectionStatus, ...stateToSync } = newState;
-      await setDoc(docRef, stateToSync, { merge: true });
-    } catch (error) {
-      console.error("Failed to update state to Firestore", error);
-      toast({ title: 'Sync Error', description: 'Failed to save changes.', variant: 'destructive' });
+  const updateFirestore = useCallback(async (updatePayload: object) => {
+    if (!listName) {
+      toast({ title: 'Authentication Error', description: 'Cannot save changes. User not identified.', variant: 'destructive' });
+      return;
     }
-  }, [toast]);
+    
+    const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
+    
+    try {
+      await updateDoc(docRef, {
+        ...updatePayload,
+        lastUpdater: listName,
+      });
+    } catch (error) {
+      const serverError = error as FirestoreError;
+       if (serverError.code === 'permission-denied') {
+        const permissionError = new FirestorePermissionError({
+            path: docRef.path,
+            operation: 'update',
+            requestResourceData: updatePayload,
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      } else {
+        console.error("Failed to update state to Firestore", error);
+        toast({ title: 'Sync Error', description: 'Failed to save changes.', variant: 'destructive' });
+      }
+    }
+  }, [toast, listName]);
 
   const switchUser = useCallback(() => {
     setState(prevState => ({ ...prevState, showBack: !prevState.showBack }));
   }, []);
 
   const addTask = useCallback((user: User, text: string) => {
+    if (user !== listName) return;
     const newTask: Task = {
       id: crypto.randomUUID(),
       text,
@@ -140,103 +176,83 @@ export const useTaskStore = () => {
     };
     const userState = state[user];
     const newTasks = [...userState.tasks, newTask].sort((a, b) => a.createdAt - b.createdAt);
-    const newState = {
-      ...state,
-      [user]: {
-        ...userState,
-        tasks: newTasks,
-      },
-      lastUpdater: user,
-    };
-    setState(newState);
-    updateFirestore(newState);
-  }, [state, updateFirestore]);
+    const newUserData = { ...userState, tasks: newTasks };
+
+    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    updateFirestore({ [`${user}`]: newUserData });
+  }, [state, updateFirestore, listName]);
 
   const updateTask = useCallback((user: User, taskId: string, newText: string) => {
+    if (user !== listName) return;
     const userState = state[user];
     const newTasks = userState.tasks.map(t =>
       t.id === taskId ? { ...t, text: newText } : t
     );
-    const newState = {
-      ...state,
-      [user]: {
-        ...userState,
-        tasks: newTasks,
-      },
-      lastUpdater: user,
-    };
-    setState(newState);
-    updateFirestore(newState);
-  }, [state, updateFirestore]);
+    const newUserData = { ...userState, tasks: newTasks };
+    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    updateFirestore({ [`${user}.tasks`]: newTasks });
+  }, [state, updateFirestore, listName]);
 
   const deleteTask = useCallback((user: User, taskId: string) => {
+    if (user !== listName) return;
     const userState = state[user];
     const newTasks = userState.tasks.filter(t => t.id !== taskId);
-    const newState = {
-      ...state,
-      [user]: {
-        ...userState,
-        tasks: newTasks,
-      },
-      lastUpdater: user,
-    };
-    setState(newState);
-    updateFirestore(newState);
-  }, [state, updateFirestore]);
+    const newUserData = { ...userState, tasks: newTasks };
+    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    updateFirestore({ [`${user}.tasks`]: newTasks });
+  }, [state, updateFirestore, listName]);
   
   const toggleTimer = useCallback((user: User, taskId: string) => {
+    if (user !== listName) return;
     const userState = state[user];
     const now = Date.now();
+    let updatedTask: Task | undefined;
+
     const newTasks = userState.tasks.map(task => {
       if (task.id === taskId) {
         if (task.timerState === 'running') {
-          // Pause timer
           const elapsed = (now - (task.timerStartedAt || now)) / 1000;
-          return {
+          updatedTask = {
             ...task,
             timerState: 'paused' as 'paused',
             timeSpent: task.timeSpent + elapsed,
             timerStartedAt: null,
           };
         } else {
-          // Start or resume timer
-          return {
+          updatedTask = {
             ...task,
             timerState: 'running' as 'running',
             timerStartedAt: now,
           };
         }
+        return updatedTask;
       }
       return task;
     });
 
-    const newState = { ...state, [user]: { ...userState, tasks: newTasks }, lastUpdater: user };
-    setState(newState);
-    updateFirestore(newState);
-  }, [state, updateFirestore]);
-
+    const newUserData = { ...userState, tasks: newTasks };
+    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    updateFirestore({ [`${user}.tasks`]: newTasks });
+  }, [state, updateFirestore, listName]);
 
   const toggleTask = useCallback((user: User, taskId: string) => {
-    if (!state[user].isLocked) return;
-
+    if (user !== listName || !state[user].isLocked) return;
+    
     const userState = state[user];
     const now = Date.now();
+    
     const newTasks = userState.tasks.map(t => {
       if (t.id === taskId) {
         const isCompleting = !t.isCompleted;
         let finalTimeSpent = t.timeSpent;
-        let timerState = t.timerState;
-        let timerStartedAt = t.timerStartedAt;
+        let timerState: 'stopped' | 'running' | 'paused' = t.timerState;
 
+        if (isCompleting && t.timerState === 'running') {
+          const elapsed = (now - (t.timerStartedAt || now)) / 1000;
+          finalTimeSpent += elapsed;
+        }
         if (isCompleting) {
-          if (t.timerState === 'running') {
-            // If task is completed while timer is running, stop it and add elapsed time.
-            const elapsed = (now - (t.timerStartedAt || now)) / 1000;
-            finalTimeSpent += elapsed;
-          }
-          // Always stop the timer when completing a task
           timerState = 'stopped';
-          timerStartedAt = null;
         }
         
         return {
@@ -244,42 +260,33 @@ export const useTaskStore = () => {
           isCompleted: isCompleting,
           timeSpent: finalTimeSpent,
           timerState,
-          timerStartedAt,
+          timerStartedAt: isCompleting ? null : t.timerStartedAt,
         };
       }
       return t;
     });
 
-    const newState = {
-      ...state,
-      [user]: {
-        ...userState,
-        tasks: newTasks,
-      },
-      lastUpdater: user,
-    };
-    setState(newState);
-    updateFirestore(newState);
-  }, [state, updateFirestore]);
+    const newUserData = { ...userState, tasks: newTasks };
+    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    updateFirestore({ [`${user}.tasks`]: newTasks });
+  }, [state, updateFirestore, listName]);
 
   const startNewList = useCallback((user: User) => {
+    if (user !== listName) return;
     const userState = state[user];
-    const newState = {
-      ...state,
-      [user]: {
-        ...userState,
-        tasks: [],
-        isLocked: false,
-        isFinished: false,
-        lockedAt: null,
-      },
-      lastUpdater: user,
+    const newUserData = {
+      ...userState,
+      tasks: [],
+      isLocked: false,
+      isFinished: false,
+      lockedAt: null,
     };
-    setState(newState);
-    updateFirestore(newState);
-  }, [state, updateFirestore]);
+    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    updateFirestore({ [`${user}`]: newUserData });
+  }, [state, updateFirestore, listName]);
 
   const restorePreviousList = useCallback((user: User) => {
+    if (user !== listName) return;
     const userState = state[user];
     if (!userState.previousTasks || userState.previousTasks.length === 0) {
       toast({
@@ -299,22 +306,19 @@ export const useTaskStore = () => {
       timerStartedAt: null,
     }));
 
-    const newState = {
-      ...state,
-      [user]: {
-        ...userState,
-        tasks: restoredTasks,
-        isLocked: false,
-        isFinished: false,
-        lockedAt: null,
-      },
-      lastUpdater: user,
+    const newUserData = {
+      ...userState,
+      tasks: restoredTasks,
+      isLocked: false,
+      isFinished: false,
+      lockedAt: null,
     };
-    setState(newState);
-    updateFirestore(newState);
-  }, [state, updateFirestore, toast]);
+    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    updateFirestore({ [`${user}`]: newUserData });
+  }, [state, updateFirestore, toast, listName]);
 
   const handleActionButton = useCallback((user: User) => {
+    if (user !== listName) return;
     const userData = state[user];
     const now = Date.now();
 
@@ -327,19 +331,16 @@ export const useTaskStore = () => {
       return;
     }
   
-    let newUserData;
+    let newUserData: Partial<UserState>;
 
     if (userData.isFinished) {
-      // Action: Start New List
       newUserData = {
-        ...userData,
         tasks: [],
         isLocked: false,
         isFinished: false,
         lockedAt: null,
       };
     } else if (userData.isLocked) {
-      // Action: Finish List
       const completedCount = userData.tasks.filter(t => t.isCompleted).length;
       const totalTasks = userData.tasks.length;
       const allTasksCompleted = totalTasks > 0 && completedCount === totalTasks;
@@ -348,27 +349,22 @@ export const useTaskStore = () => {
       const within24Hours = timeSinceLock <= 24 * 60 * 60 * 1000;
 
       let newCurrentStreak = userData.currentStreak;
-
       if (allTasksCompleted && within24Hours) {
         newCurrentStreak++;
       } else {
         newCurrentStreak = 0;
       }
       
-      const newMaxStreak = Math.max(userData.maxStreak, newCurrentStreak);
-
       newUserData = {
-        ...userData,
         isFinished: true,
         totalCompleted: (userData.totalCompleted ?? 0) + completedCount,
         totalAssigned: (userData.totalAssigned ?? 0) + totalTasks,
         previousTasks: userData.tasks.map(t => ({ text: t.text })),
         currentStreak: newCurrentStreak,
-        maxStreak: newMaxStreak,
+        maxStreak: Math.max(userData.maxStreak, newCurrentStreak),
         lastLockedAt: userData.lockedAt,
       };
     } else {
-      // Action: Lock List
       let currentStreak = userData.currentStreak;
       if (userData.lastLockedAt) {
         const timeSinceLastLock = now - userData.lastLockedAt;
@@ -377,18 +373,13 @@ export const useTaskStore = () => {
             currentStreak = 0;
         }
       }
-
-      newUserData = {
-        ...userData,
-        isLocked: true,
-        lockedAt: now,
-        currentStreak: currentStreak
-      };
+      newUserData = { isLocked: true, lockedAt: now, currentStreak: currentStreak };
     }
-    const newState = { ...state, [user]: newUserData, lastUpdater: user };
-    setState(newState);
-    updateFirestore(newState);
-  }, [state, toast, updateFirestore]);
+    
+    const finalUserData = { ...userData, ...newUserData };
+    setState(prevState => ({ ...prevState, [user]: finalUserData, lastUpdater: user }));
+    updateFirestore({ [`${user}`]: finalUserData });
+  }, [state, toast, updateFirestore, listName]);
   
 
   return {

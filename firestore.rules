@@ -1,0 +1,46 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Allow reading user roles to map UID to a list name
+    match /user_roles/{userId} {
+      allow read: if request.auth != null;
+      // Lock down role creation to prevent users from assigning themselves roles.
+      // In a real app, you'd manage this with a Cloud Function or admin panel.
+      allow write: if false; 
+    }
+    
+    // Rules for the single shared document
+    match /riyalTodoState/app {
+      // Any authenticated user can read the entire document
+      allow read: if request.auth != null;
+      
+      // Allow updates only if the user is modifying their own data segment
+      allow update: if request.auth != null
+                    && get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName != null
+                    && (
+                      (
+                        get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName == 'riya'
+                        && request.resource.data.naitik == resource.data.naitik
+                        && request.resource.data.ambuj == resource.data.ambuj
+                      ) ||
+                      (
+                        get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName == 'naitik'
+                        && request.resource.data.riya == resource.data.riya
+                        && request.resource.data.ambuj == resource.data.ambuj
+                      ) ||
+                      (
+                        get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName == 'ambuj'
+                        && request.resource.data.riya == resource.data.riya
+                        && request.resource.data.naitik == resource.data.naitik
+                      )
+                    )
+                    // Ensure the lastUpdater field is being set correctly
+                    && request.resource.data.lastUpdater == get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName;
+
+      // Only allow creation if the document doesn't exist
+      allow create: if !exists(/databases/$(database)/documents/riyalTodoState/app);
+    }
+  }
+}

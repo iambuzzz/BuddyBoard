@@ -16,14 +16,15 @@ type TaskListProps = {
   theme: User;
   onRestore: () => void;
   canRestore: boolean;
+  isCurrentUserCard: boolean;
 };
 
-export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, onToggleTimer, theme, onRestore, canRestore }: TaskListProps) {
+export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, onToggleTimer, theme, onRestore, canRestore, isCurrentUserCard }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <div className="text-center text-slate-400 p-8 flex flex-col items-center gap-4">
         <span>Add a task to begin!</span>
-        {canRestore && !isLocked && (
+        {canRestore && !isLocked && isCurrentUserCard && (
            <Button
             variant="outline"
             className="text-slate-500 border-slate-300 hover:bg-slate-50 hover:text-slate-600"
@@ -49,6 +50,7 @@ export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, onTogg
           onDelete={onDelete}
           onToggleTimer={onToggleTimer}
           theme={theme}
+          isCurrentUserCard={isCurrentUserCard}
         />
       ))}
     </ul>

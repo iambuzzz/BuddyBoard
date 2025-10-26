@@ -1,5 +1,3 @@
-import type { P, PD } from 'patch-package/dist/patch/parse';
-
 export interface Task {
   id: string;
   text: string;
@@ -38,3 +36,7 @@ export type AppState = {
 };
 
 export type User = 'riya' | 'naitik' | 'ambuj';
+
+export type UserRole = {
+  listName: User;
+};
