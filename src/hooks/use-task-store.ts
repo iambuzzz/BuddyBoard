@@ -143,14 +143,11 @@ export const useTaskStore = () => {
     
     const docRef = doc(firestore, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
     
-    try {
-      await updateDoc(docRef, {
-        ...updatePayload,
-        lastUpdater: listName,
-      });
-    } catch (error) {
-      const serverError = error as FirestoreError;
-       if (serverError.code === 'permission-denied') {
+    updateDoc(docRef, {
+      ...updatePayload,
+      lastUpdater: listName,
+    }).catch((error: FirestoreError) => {
+       if (error.code === 'permission-denied') {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
             operation: 'update',
@@ -161,7 +158,7 @@ export const useTaskStore = () => {
         console.error("Failed to update state to Firestore", error);
         toast({ title: 'Sync Error', description: 'Failed to save changes.', variant: 'destructive' });
       }
-    }
+    });
   }, [toast, listName, firestore]);
 
   const switchUser = useCallback(() => {
@@ -181,10 +178,13 @@ export const useTaskStore = () => {
     };
     const userState = state[user];
     const newTasks = [...userState.tasks, newTask].sort((a, b) => a.createdAt - b.createdAt);
-    const newUserData = { ...userState, tasks: newTasks };
-
-    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
-    updateFirestore({ [`${user}`]: newUserData });
+    
+    setState(prevState => ({
+      ...prevState,
+      [user]: { ...userState, tasks: newTasks },
+      lastUpdater: user
+    }));
+    updateFirestore({ [`${user}.tasks`]: newTasks });
   }, [state, updateFirestore, listName]);
 
   const updateTask = useCallback((user: User, taskId: string, newText: string) => {
@@ -193,8 +193,12 @@ export const useTaskStore = () => {
     const newTasks = userState.tasks.map(t =>
       t.id === taskId ? { ...t, text: newText } : t
     );
-    const newUserData = { ...userState, tasks: newTasks };
-    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    
+    setState(prevState => ({
+      ...prevState,
+      [user]: { ...userState, tasks: newTasks },
+      lastUpdater: user
+    }));
     updateFirestore({ [`${user}.tasks`]: newTasks });
   }, [state, updateFirestore, listName]);
 
@@ -202,8 +206,12 @@ export const useTaskStore = () => {
     if (user !== listName) return;
     const userState = state[user];
     const newTasks = userState.tasks.filter(t => t.id !== taskId);
-    const newUserData = { ...userState, tasks: newTasks };
-    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    
+    setState(prevState => ({
+      ...prevState,
+      [user]: { ...userState, tasks: newTasks },
+      lastUpdater: user
+    }));
     updateFirestore({ [`${user}.tasks`]: newTasks });
   }, [state, updateFirestore, listName]);
   
@@ -235,8 +243,12 @@ export const useTaskStore = () => {
       return task;
     });
 
-    const newUserData = { ...userState, tasks: newTasks };
-    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    
+    setState(prevState => ({
+      ...prevState,
+      [user]: { ...userState, tasks: newTasks },
+      lastUpdater: user
+    }));
     updateFirestore({ [`${user}.tasks`]: newTasks });
   }, [state, updateFirestore, listName]);
 
@@ -271,8 +283,12 @@ export const useTaskStore = () => {
       return t;
     });
 
-    const newUserData = { ...userState, tasks: newTasks };
-    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    
+    setState(prevState => ({
+      ...prevState,
+      [user]: { ...userState, tasks: newTasks },
+      lastUpdater: user
+    }));
     updateFirestore({ [`${user}.tasks`]: newTasks });
   }, [state, updateFirestore, listName]);
 
@@ -286,7 +302,12 @@ export const useTaskStore = () => {
       isFinished: false,
       lockedAt: null,
     };
-    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    
+    setState(prevState => ({
+      ...prevState,
+      [user]: newUserData,
+      lastUpdater: user
+    }));
     updateFirestore({ [`${user}`]: newUserData });
   }, [state, updateFirestore, listName]);
 
@@ -318,7 +339,12 @@ export const useTaskStore = () => {
       isFinished: false,
       lockedAt: null,
     };
-    setState(prevState => ({ ...prevState, [user]: newUserData, lastUpdater: user }));
+    
+    setState(prevState => ({
+      ...prevState,
+      [user]: newUserData,
+      lastUpdater: user
+    }));
     updateFirestore({ [`${user}`]: newUserData });
   }, [state, updateFirestore, toast, listName]);
 
@@ -382,7 +408,12 @@ export const useTaskStore = () => {
     }
     
     const finalUserData = { ...userData, ...newUserData };
-    setState(prevState => ({ ...prevState, [user]: finalUserData, lastUpdater: user }));
+    
+    setState(prevState => ({
+      ...prevState,
+      [user]: finalUserData,
+      lastUpdater: user
+    }));
     updateFirestore({ [`${user}`]: finalUserData });
   }, [state, toast, updateFirestore, listName]);
   

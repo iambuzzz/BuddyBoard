@@ -37,9 +37,8 @@ const LogoutButton = () => {
 };
 
 export default function Home() {
-  const { user, isLoading, listName } = useUser();
+  const { user, isLoading } = useUser();
   const router = useRouter();
-  const { state } = useTaskStore();
 
   useEffect(() => {
     if (!isLoading && !user) {
