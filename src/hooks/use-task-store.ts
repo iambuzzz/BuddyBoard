@@ -3,12 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { AppState, User, Task, UserState } from '@/lib/types';
-import { doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
+import { doc, onSnapshot, updateDoc, setDoc, FirestoreError } from 'firebase/firestore';
 import { useUser } from '@/firebase/auth/use-user';
-import { FirestoreError } from 'firebase/firestore';
+import { useFirestore } from '@/firebase';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
-import { useFirestore } from '@/firebase';
 
 const getInitialState = (): AppState => ({
   riya: {
@@ -112,8 +111,8 @@ export const useTaskStore = () => {
       } else {
         console.error("Error fetching data from Firestore:", serverError);
         toast({ title: 'Error', description: 'Could not connect to the database.', variant: 'destructive'});
-        setState(prevState => ({ ...prevState, connectionStatus: 'error' }));
       }
+      setState(prevState => ({ ...prevState, connectionStatus: 'error' }));
     });
 
     return () => unsubscribe();
@@ -143,19 +142,22 @@ export const useTaskStore = () => {
     
     const docRef = doc(firestore, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
     
-    updateDoc(docRef, {
+    const dataToUpdate = {
       ...updatePayload,
       lastUpdater: listName,
-    }).catch((error: FirestoreError) => {
-       if (error.code === 'permission-denied') {
+    };
+
+    updateDoc(docRef, dataToUpdate)
+      .catch((serverError: FirestoreError) => {
+       if (serverError.code === 'permission-denied') {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
             operation: 'update',
-            requestResourceData: updatePayload,
+            requestResourceData: dataToUpdate,
         });
         errorEmitter.emit('permission-error', permissionError);
       } else {
-        console.error("Failed to update state to Firestore", error);
+        console.error("Failed to update state to Firestore", serverError);
         toast({ title: 'Sync Error', description: 'Failed to save changes.', variant: 'destructive' });
       }
     });
@@ -182,7 +184,6 @@ export const useTaskStore = () => {
     setState(prevState => ({
       ...prevState,
       [user]: { ...userState, tasks: newTasks },
-      lastUpdater: user
     }));
     updateFirestore({ [`${user}.tasks`]: newTasks });
   }, [state, updateFirestore, listName]);
@@ -197,7 +198,6 @@ export const useTaskStore = () => {
     setState(prevState => ({
       ...prevState,
       [user]: { ...userState, tasks: newTasks },
-      lastUpdater: user
     }));
     updateFirestore({ [`${user}.tasks`]: newTasks });
   }, [state, updateFirestore, listName]);
@@ -210,7 +210,6 @@ export const useTaskStore = () => {
     setState(prevState => ({
       ...prevState,
       [user]: { ...userState, tasks: newTasks },
-      lastUpdater: user
     }));
     updateFirestore({ [`${user}.tasks`]: newTasks });
   }, [state, updateFirestore, listName]);
@@ -247,7 +246,6 @@ export const useTaskStore = () => {
     setState(prevState => ({
       ...prevState,
       [user]: { ...userState, tasks: newTasks },
-      lastUpdater: user
     }));
     updateFirestore({ [`${user}.tasks`]: newTasks });
   }, [state, updateFirestore, listName]);
@@ -287,7 +285,6 @@ export const useTaskStore = () => {
     setState(prevState => ({
       ...prevState,
       [user]: { ...userState, tasks: newTasks },
-      lastUpdater: user
     }));
     updateFirestore({ [`${user}.tasks`]: newTasks });
   }, [state, updateFirestore, listName]);
@@ -306,7 +303,6 @@ export const useTaskStore = () => {
     setState(prevState => ({
       ...prevState,
       [user]: newUserData,
-      lastUpdater: user
     }));
     updateFirestore({ [`${user}`]: newUserData });
   }, [state, updateFirestore, listName]);
@@ -343,7 +339,6 @@ export const useTaskStore = () => {
     setState(prevState => ({
       ...prevState,
       [user]: newUserData,
-      lastUpdater: user
     }));
     updateFirestore({ [`${user}`]: newUserData });
   }, [state, updateFirestore, toast, listName]);
@@ -412,7 +407,6 @@ export const useTaskStore = () => {
     setState(prevState => ({
       ...prevState,
       [user]: finalUserData,
-      lastUpdater: user
     }));
     updateFirestore({ [`${user}`]: finalUserData });
   }, [state, toast, updateFirestore, listName]);
