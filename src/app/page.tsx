@@ -9,15 +9,18 @@ import { useTaskStore } from '@/hooks/use-task-store';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { ArrowUp, LogOut } from 'lucide-react';
-import { getAuth, signOut } from 'firebase/auth';
+import { signOut } from 'firebase/auth';
+import { useAuth } from '@/firebase';
 
 const LogoutButton = () => {
-  const auth = getAuth();
+  const auth = useAuth();
   const router = useRouter();
 
   const handleLogout = async () => {
-    await signOut(auth);
-    router.push('/login');
+    if (auth) {
+      await signOut(auth);
+      router.push('/login');
+    }
   };
 
   return (

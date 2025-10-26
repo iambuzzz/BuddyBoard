@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
+import { useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -20,10 +20,20 @@ export default function LoginPage() {
   const [listName, setListName] = useState<User | ''>('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const auth = getAuth();
+  const auth = useAuth();
+  const firestore = useFirestore();
   const { toast } = useToast();
 
   const handleAuthAction = async (isSignUp: boolean) => {
+    if (!auth || !firestore) {
+      toast({
+        title: 'Error',
+        description: 'Firebase not initialized. Please try again later.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (isSignUp && !listName) {
       toast({
         title: 'Error',
@@ -39,7 +49,7 @@ export default function LoginPage() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         // Map UID to listName in user_roles collection
-        await setDoc(doc(db, 'user_roles', user.uid), { listName });
+        await setDoc(doc(firestore, 'user_roles', user.uid), { listName });
         toast({ title: 'Success', description: 'Account created successfully!' });
       } else {
         await signInWithEmailAndPassword(auth, email, password);

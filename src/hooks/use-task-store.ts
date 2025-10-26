@@ -3,12 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import type { AppState, User, Task, UserState } from '@/lib/types';
-import { db } from '@/lib/firebase';
 import { doc, onSnapshot, updateDoc, setDoc } from 'firebase/firestore';
 import { useUser } from '@/firebase/auth/use-user';
 import { FirestoreError } from 'firebase/firestore';
 import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
+import { useFirestore } from '@/firebase';
 
 const getInitialState = (): AppState => ({
   riya: {
@@ -79,11 +79,12 @@ export const useTaskStore = () => {
   const [state, setState] = useState<AppState>(getInitialState());
   const { toast } = useToast();
   const { user: authUser, listName } = useUser();
+  const firestore = useFirestore();
 
   useEffect(() => {
-    if (!authUser) return;
+    if (!authUser || !firestore) return;
 
-    const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
+    const docRef = doc(firestore, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
     
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
@@ -116,7 +117,7 @@ export const useTaskStore = () => {
     });
 
     return () => unsubscribe();
-  }, [authUser, toast]);
+  }, [authUser, firestore, toast]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || !('setAppBadge' in navigator) || !listName) return;
@@ -135,8 +136,12 @@ export const useTaskStore = () => {
       toast({ title: 'Authentication Error', description: 'Cannot save changes. User not identified.', variant: 'destructive' });
       return;
     }
+    if (!firestore) {
+      toast({ title: 'Firestore Error', description: 'Database not available.', variant: 'destructive' });
+      return;
+    }
     
-    const docRef = doc(db, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
+    const docRef = doc(firestore, APP_STATE_COLLECTION_ID, APP_STATE_DOC_ID);
     
     try {
       await updateDoc(docRef, {
@@ -157,7 +162,7 @@ export const useTaskStore = () => {
         toast({ title: 'Sync Error', description: 'Failed to save changes.', variant: 'destructive' });
       }
     }
-  }, [toast, listName]);
+  }, [toast, listName, firestore]);
 
   const switchUser = useCallback(() => {
     setState(prevState => ({ ...prevState, showBack: !prevState.showBack }));
