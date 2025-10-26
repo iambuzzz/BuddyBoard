@@ -1,87 +1,110 @@
 /**
- * @fileoverview Firestore Security Rules for riyalTodoState application.
+ * @fileoverview Firestore Security Rules for Riya's Todo App.
  *
  * Core Philosophy:
- * This ruleset enforces a role-based access control model, where users are assigned to a specific
- * list (riya, naitik, or ambuj) and can only modify the part of the global application state
- * associated with their list. It also enforces user-ownership for the `user_roles` collection,
- * where each user can only manage their own role mapping.
+ * This ruleset enforces a strict user-ownership model for user-specific data
+ * stored within a shared "app" document.  Each user (riya, naitik, ambuj)
+ * has a dedicated section within the app document that only they can modify.
+ * A user_roles collection is used to map Firebase UIDs to list names.
  *
  * Data Structure:
- * - `/riyalTodoState/app`: A single document containing the entire application state,
- *   structured with separate UserState objects for 'riya', 'naitik', and 'ambuj'.
- * - `/user_roles/{userId}`: Documents mapping a user's UID to their list name.
+ * - /riyalTodoState/app:  A single document containing the entire application state,
+ *   including nested UserState objects for each user.
+ * - /user_roles/{userId}: Documents mapping a user's Firebase UID to their list name.
  *
  * Key Security Decisions:
- * - The `AppState` document at `/riyalTodoState/app` is secured using role-based access
- *   control. Only authenticated users whose role matches the `lastUpdater` field can update the document.
- * - User roles are managed in the `/user_roles/{userId}` collection, where each user can
- *   only create, update, or delete their own role document.
- * - Data shape validation is minimized to allow for rapid prototyping, focusing primarily on
- *   authorization and relational integrity checks.
+ * - Users can only modify their own UserState within the app document.
+ * - Listing of documents in /user_roles is disallowed for privacy.
+ * - Data shape is not strictly enforced beyond authorization fields in this prototyping phase.
  *
  * Denormalization for Authorization:
- *  - The `lastUpdater` field within the `/riyalTodoState/app` document is critical for authorization.
- *    Updates are only allowed if the user's role matches this field. This avoids the need for
- *    complex queries or joins during security rule evaluation.
- *  - The `/user_roles/{userId}` collection links a user's UID to their role, ensuring that only
- *    authorized users can modify the application state related to their specific list.
+ * - The `lastUpdater` field in the `/riyalTodoState/app` document is used for
+ *   authorization, ensuring that only the user identified in this field can
+ *   modify their section of the document.
+ *
+ * Structural Segregation:
+ * - Private user data and shared application data are stored in separate
+ *   sections of the Firestore database to maintain clear access control boundaries.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Secures the global application state document.
+     * @description Checks if the user is signed in.
+     * @return {boolean} True if the user is signed in, false otherwise.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * @description Checks if the authenticated user's list name matches the given list name.
+     * @param {string} listName - The list name to compare against.
+     * @return {boolean} True if the user's list name matches, false otherwise.
+     */
+    function isListOwner(listName) {
+        return isSignedIn() && get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName == listName;
+    }
+
+    /**
+     * @description Determines if the current user is authorized to update the application state.
+     * @param {string} listName The name of the list being updated.
+     * @return {boolean} True if the user is authorized, false otherwise.
+     */
+    function canUpdateAppState(listName) {
+      return request.auth.uid != null && isListOwner(listName) && request.resource.data.lastUpdater == listName;
+    }
+
+    /**
+     * @description Checks if the user is the owner of the user role document.
+     * @param {string} userId The user ID.
+     * @return {boolean} True if the user is the owner, false otherwise.
+     */
+    function isOwner(userId) {
+        return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * @description Checks if the user is the existing owner of the user role document.
+     * @param {string} userId The user ID.
+     * @return {boolean} True if the user is the owner and the resource exists, false otherwise.
+     */
+    function isExistingOwner(userId) {
+        return isOwner(userId) && resource != null;
+    }
+
+
+    /**
+     * @description Rules for the /riyalTodoState/app document.
      * @path /riyalTodoState/app
-     * @allow (update) User with role 'riya' updates the document when lastUpdater is 'riya'.
-     * @deny (update) User with role 'naitik' attempts to update the document when lastUpdater is 'riya'.
-     * @principle Enforces role-based access control for updates to the global application state.
+     * @allow (update) Signed-in user 'riya' can update the document if request.resource.data.lastUpdater == 'riya'.
+     * @deny (update) Signed-in user 'naitik' cannot update the document if request.resource.data.lastUpdater != 'naitik'.
+     * @principle Enforces user-specific updates to the application state.
      */
     match /riyalTodoState/app {
       allow get: if true;
       allow list: if false;
       allow create: if false;
-      allow update: if isSignedIn() && isAuthorizedUpdater(request.auth.uid, resource.data.lastUpdater);
+      allow update: if canUpdateAppState(request.resource.data.lastUpdater);
       allow delete: if false;
     }
 
     /**
-     * @description Secures user role documents, allowing each user to manage their own role.
+     * @description Rules for the /user_roles/{userId} documents.
      * @path /user_roles/{userId}
-     * @allow (create) User creates their own role mapping.
-     * @allow (update) User updates their own role mapping.
-     * @allow (delete) User deletes their own role mapping.
-     * @deny (create) User attempts to create a role mapping for another user.
-     * @principle Enforces user-ownership for managing role assignments.
+     * @allow (create) Signed-in user can create their own user role document.
+     * @allow (update) Signed-in user can update their own user role document.
+     * @deny (create) Signed-in user cannot create a user role document for another user.
+     * @deny (update) Signed-in user cannot update a user role document for another user.
+     * @principle Enforces document ownership for writes; restricts listing for privacy.
      */
     match /user_roles/{userId} {
       allow get: if isOwner(userId);
       allow list: if false;
-      allow create: if isSignedIn() && isOwner(userId);
-      allow update: if isSignedIn() && isExistingOwner(userId);
-      allow delete: if isSignedIn() && isExistingOwner(userId);
-    }
-
-    // Helper functions
-    function isSignedIn() {
-      return request.auth != null;
-    }
-
-    function isOwner(userId) {
-      return request.auth.uid == userId;
-    }
-
-    function isExistingOwner(userId) {
-      return isOwner(userId) && resource != null;
-    }
-
-    function getUserRole(userId) {
-      return get(/databases/$(database)/documents/user_roles/$(userId)).data.listName;
-    }
-
-    function isAuthorizedUpdater(userId, lastUpdater) {
-      return getUserRole(userId) == lastUpdater;
+      allow create: if isOwner(userId);
+      allow update: if isExistingOwner(userId);
+      allow delete: if isExistingOwner(userId);
     }
   }
 }

@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore'; 
 import { useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -68,8 +68,10 @@ export default function LoginPage() {
     }
   };
 
+  
+
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff] p-4">
+    <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff] p-4 relative">
       <Tabs defaultValue="login" className="w-[400px]">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="login">Login</TabsTrigger>
@@ -122,7 +124,8 @@ export default function LoginPage() {
                   <SelectContent>
                     <SelectItem value="riya">Riya</SelectItem>
                     <SelectItem value="naitik">Naitik</SelectItem>
-                    <SelectItem value="ambuj">Ambuj</SelectItem>
+                    {/* --- TYPO FIX KIYA GAYA --- */}
+                    <SelectItem value="ambuj">Ambuj</SelectItem> 
                   </SelectContent>
                 </Select>
               </div>
@@ -135,6 +138,8 @@ export default function LoginPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      
+  
     </div>
   );
-}
+};
