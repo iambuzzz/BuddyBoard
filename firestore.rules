@@ -1,46 +1,81 @@
+/**
+ * @file Firestore Security Rules
+ * @version 2
+ *
+ * @Core Philosophy
+ * This ruleset enforces a role-based access control model. Each user is assigned to a specific "list" (riya, naitik, or ambuj) which determines which section of the application state they can modify. Reads are public for the /riyalTodoState/app document, but writes are restricted to users who match the "lastUpdater" field. User roles are stored in /user_roles/{userId} documents, which map a user's UID to their list name.
+ *
+ * @Data Structure
+ * - /riyalTodoState/app: Contains the entire application state, including user-specific data nested under the keys "riya", "naitik", and "ambuj".
+ * - /user_roles/{userId}: Maps a user's Firebase Auth UID to their list name (e.g., "riya").
+ *
+ * @Key Security Decisions
+ * - Read access to the /riyalTodoState/app document is public.
+ * - Write access to the /riyalTodoState/app document is limited to users who match the lastUpdater field.
+ * - The /user_roles collection is used to map user IDs to list names, ensuring consistent access control.
+ * - Listing users in /user_roles is disallowed.
+ *
+ * @Denormalization for Authorization
+ * The `lastUpdater` field within the `/riyalTodoState/app` document is critically important for authorization. It allows writes to be restricted to the specific user whose data is being updated.
+ *
+ * @Structural Segregation
+ * The application state is structured such that user-specific data is nested under dedicated keys ("riya", "naitik", "ambuj") within the `/riyalTodoState/app` document. This segregation enables focused access control rules.
+ */
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Allow reading user roles to map UID to a list name
-    match /user_roles/{userId} {
-      allow read: if request.auth != null;
-      // Lock down role creation to prevent users from assigning themselves roles.
-      // In a real app, you'd manage this with a Cloud Function or admin panel.
-      allow write: if false; 
-    }
-    
-    // Rules for the single shared document
-    match /riyalTodoState/app {
-      // Any authenticated user can read the entire document
-      allow read: if request.auth != null;
-      
-      // Allow updates only if the user is modifying their own data segment
-      allow update: if request.auth != null
-                    && get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName != null
-                    && (
-                      (
-                        get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName == 'riya'
-                        && request.resource.data.naitik == resource.data.naitik
-                        && request.resource.data.ambuj == resource.data.ambuj
-                      ) ||
-                      (
-                        get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName == 'naitik'
-                        && request.resource.data.riya == resource.data.riya
-                        && request.resource.data.ambuj == resource.data.ambuj
-                      ) ||
-                      (
-                        get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName == 'ambuj'
-                        && request.resource.data.riya == resource.data.riya
-                        && request.resource.data.naitik == resource.data.naitik
-                      )
-                    )
-                    // Ensure the lastUpdater field is being set correctly
-                    && request.resource.data.lastUpdater == get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName;
 
-      // Only allow creation if the document doesn't exist
-      allow create: if !exists(/databases/$(database)/documents/riyalTodoState/app);
+    /**
+     * @description Allows anyone to read the application state, but restricts writes to the user matching the `lastUpdater` field.
+     * @path /riyalTodoState/app
+     * @allow (get, list) Authenticated or unauthenticated user can read application state.
+     * @allow (update) Authenticated user "riya" can update application state IF `request.auth.uid` matches the `riya` user role AND request contains the correct `lastUpdater`.
+     * @deny (create) No one can create the document, it should already exist.
+     * @deny (delete) No one can delete the document.
+     * @principle Allows open reads, but restricts writes to the appropriate user, validating ownership via the `lastUpdater` field.
+     */
+    match /riyalTodoState/app {
+      allow get, list: if true;
+      allow create: if false;
+      allow update: if request.auth != null && getUserRole(request.auth.uid).data.listName == request.resource.data.lastUpdater;
+      allow delete: if false;
+    }
+
+    /**
+     * @description Maps a user's UID to their list name. Allows creating a role only if the UID in the path matches the authenticated user's UID.
+     * @path /user_roles/{userId}
+     * @allow (create) Authenticated user "riya" can create their own role IF `request.auth.uid == userId`.
+     * @allow (get) Authenticated user "riya" can get their own role IF `request.auth.uid == userId`.
+     * @allow (update) Authenticated user "riya" can update their own role IF `request.auth.uid == userId`.
+     * @allow (delete) Authenticated user "riya" can delete their own role IF `request.auth.uid == userId`.
+     * @deny (create) Authenticated user "riya" cannot create a role for another user.
+     * @deny (get) Authenticated user "riya" cannot get another user's role.
+     * @principle Enforces document ownership for writes, restricting access to a user's own role document.
+     */
+    match /user_roles/{userId} {
+      allow get: if isSignedIn() && isOwner(userId);
+      allow list: if false;
+      allow create: if isSignedIn() && isOwner(userId);
+      allow update: if isSignedIn() && isExistingOwner(userId);
+      allow delete: if isSignedIn() && isExistingOwner(userId);
+    }
+
+    // --- Helper Functions ---
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    function getUserRole(userId) {
+      return get(/databases/$(database)/documents/user_roles/$(userId));
     }
   }
 }
