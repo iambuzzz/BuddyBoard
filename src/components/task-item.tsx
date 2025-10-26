@@ -117,7 +117,7 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
     }
   };
 
-  const canToggle = isLocked && isCurrentUserCard && !task.isCompleted;
+  const canToggle = isLocked && isCurrentUserCard;
 
   return (
     <li
