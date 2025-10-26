@@ -1,67 +1,69 @@
 /**
- * @file Firestore Security Rules
- * @version 2
+ * @fileoverview Firestore Security Rules for riyalTodoState application.
  *
- * @Core Philosophy
- * This ruleset enforces a role-based access control model. Each user is assigned to a specific "list" (riya, naitik, or ambuj) which determines which section of the application state they can modify. Reads are public for the /riyalTodoState/app document, but writes are restricted to users who match the "lastUpdater" field. User roles are stored in /user_roles/{userId} documents, which map a user's UID to their list name.
+ * Core Philosophy:
+ * This ruleset enforces a role-based access control model, where users are assigned to a specific
+ * list (riya, naitik, or ambuj) and can only modify the part of the global application state
+ * associated with their list. It also enforces user-ownership for the `user_roles` collection,
+ * where each user can only manage their own role mapping.
  *
- * @Data Structure
- * - /riyalTodoState/app: Contains the entire application state, including user-specific data nested under the keys "riya", "naitik", and "ambuj".
- * - /user_roles/{userId}: Maps a user's Firebase Auth UID to their list name (e.g., "riya").
+ * Data Structure:
+ * - `/riyalTodoState/app`: A single document containing the entire application state,
+ *   structured with separate UserState objects for 'riya', 'naitik', and 'ambuj'.
+ * - `/user_roles/{userId}`: Documents mapping a user's UID to their list name.
  *
- * @Key Security Decisions
- * - Read access to the /riyalTodoState/app document is public.
- * - Write access to the /riyalTodoState/app document is limited to users who match the lastUpdater field.
- * - The /user_roles collection is used to map user IDs to list names, ensuring consistent access control.
- * - Listing users in /user_roles is disallowed.
+ * Key Security Decisions:
+ * - The `AppState` document at `/riyalTodoState/app` is secured using role-based access
+ *   control. Only authenticated users whose role matches the `lastUpdater` field can update the document.
+ * - User roles are managed in the `/user_roles/{userId}` collection, where each user can
+ *   only create, update, or delete their own role document.
+ * - Data shape validation is minimized to allow for rapid prototyping, focusing primarily on
+ *   authorization and relational integrity checks.
  *
- * @Denormalization for Authorization
- * The `lastUpdater` field within the `/riyalTodoState/app` document is critically important for authorization. It allows writes to be restricted to the specific user whose data is being updated.
- *
- * @Structural Segregation
- * The application state is structured such that user-specific data is nested under dedicated keys ("riya", "naitik", "ambuj") within the `/riyalTodoState/app` document. This segregation enables focused access control rules.
+ * Denormalization for Authorization:
+ *  - The `lastUpdater` field within the `/riyalTodoState/app` document is critical for authorization.
+ *    Updates are only allowed if the user's role matches this field. This avoids the need for
+ *    complex queries or joins during security rule evaluation.
+ *  - The `/user_roles/{userId}` collection links a user's UID to their role, ensuring that only
+ *    authorized users can modify the application state related to their specific list.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
     /**
-     * @description Allows anyone to read the application state, but restricts writes to the user matching the `lastUpdater` field.
+     * @description Secures the global application state document.
      * @path /riyalTodoState/app
-     * @allow (get, list) Authenticated or unauthenticated user can read application state.
-     * @allow (update) Authenticated user "riya" can update application state IF `request.auth.uid` matches the `riya` user role AND request contains the correct `lastUpdater`.
-     * @deny (create) No one can create the document, it should already exist.
-     * @deny (delete) No one can delete the document.
-     * @principle Allows open reads, but restricts writes to the appropriate user, validating ownership via the `lastUpdater` field.
+     * @allow (update) User with role 'riya' updates the document when lastUpdater is 'riya'.
+     * @deny (update) User with role 'naitik' attempts to update the document when lastUpdater is 'riya'.
+     * @principle Enforces role-based access control for updates to the global application state.
      */
     match /riyalTodoState/app {
-      allow get, list: if true;
+      allow get: if true;
+      allow list: if false;
       allow create: if false;
-      allow update: if request.auth != null && getUserRole(request.auth.uid).data.listName == request.resource.data.lastUpdater;
+      allow update: if isSignedIn() && isAuthorizedUpdater(request.auth.uid, resource.data.lastUpdater);
       allow delete: if false;
     }
 
     /**
-     * @description Maps a user's UID to their list name. Allows creating a role only if the UID in the path matches the authenticated user's UID.
+     * @description Secures user role documents, allowing each user to manage their own role.
      * @path /user_roles/{userId}
-     * @allow (create) Authenticated user "riya" can create their own role IF `request.auth.uid == userId`.
-     * @allow (get) Authenticated user "riya" can get their own role IF `request.auth.uid == userId`.
-     * @allow (update) Authenticated user "riya" can update their own role IF `request.auth.uid == userId`.
-     * @allow (delete) Authenticated user "riya" can delete their own role IF `request.auth.uid == userId`.
-     * @deny (create) Authenticated user "riya" cannot create a role for another user.
-     * @deny (get) Authenticated user "riya" cannot get another user's role.
-     * @principle Enforces document ownership for writes, restricting access to a user's own role document.
+     * @allow (create) User creates their own role mapping.
+     * @allow (update) User updates their own role mapping.
+     * @allow (delete) User deletes their own role mapping.
+     * @deny (create) User attempts to create a role mapping for another user.
+     * @principle Enforces user-ownership for managing role assignments.
      */
     match /user_roles/{userId} {
-      allow get: if isSignedIn() && isOwner(userId);
+      allow get: if isOwner(userId);
       allow list: if false;
       allow create: if isSignedIn() && isOwner(userId);
       allow update: if isSignedIn() && isExistingOwner(userId);
       allow delete: if isSignedIn() && isExistingOwner(userId);
     }
 
-    // --- Helper Functions ---
-
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
@@ -75,7 +77,11 @@ service cloud.firestore {
     }
 
     function getUserRole(userId) {
-      return get(/databases/$(database)/documents/user_roles/$(userId));
+      return get(/databases/$(database)/documents/user_roles/$(userId)).data.listName;
+    }
+
+    function isAuthorizedUpdater(userId, lastUpdater) {
+      return getUserRole(userId) == lastUpdater;
     }
   }
 }

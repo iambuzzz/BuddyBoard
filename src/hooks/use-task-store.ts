@@ -99,9 +99,19 @@ export const useTaskStore = () => {
         setState(prevState => ({ ...prevState, ...sanitizedData, connectionStatus: 'connected' }));
       } else {
         // If the document doesn't exist, create it.
-        setDoc(docRef, getInitialState());
+        setDoc(docRef, getInitialState()).catch((serverError: FirestoreError) => {
+          if (serverError.code === 'permission-denied') {
+            const permissionError = new FirestorePermissionError({
+                path: docRef.path,
+                operation: 'create',
+                requestResourceData: getInitialState()
+            });
+            errorEmitter.emit('permission-error', permissionError);
+          }
+        });
       }
     }, (serverError: FirestoreError) => {
+      setState(prevState => ({ ...prevState, connectionStatus: 'error' }));
       if (serverError.code === 'permission-denied') {
         const permissionError = new FirestorePermissionError({
             path: docRef.path,
@@ -112,7 +122,6 @@ export const useTaskStore = () => {
         console.error("Error fetching data from Firestore:", serverError);
         toast({ title: 'Error', description: 'Could not connect to the database.', variant: 'destructive'});
       }
-      setState(prevState => ({ ...prevState, connectionStatus: 'error' }));
     });
 
     return () => unsubscribe();
