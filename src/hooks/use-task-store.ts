@@ -381,11 +381,8 @@ export const useTaskStore = () => {
       const totalTasks = userData.tasks.length;
       const allTasksCompleted = totalTasks > 0 && completedCount === totalTasks;
       
-      const timeSinceLock = userData.lockedAt ? now - userData.lockedAt : Infinity;
-      const within24Hours = timeSinceLock <= 24 * 60 * 60 * 1000;
-
       let newCurrentStreak = userData.currentStreak;
-      if (allTasksCompleted && within24Hours) {
+      if (allTasksCompleted) {
         newCurrentStreak++;
       } else {
         newCurrentStreak = 0;
@@ -404,7 +401,7 @@ export const useTaskStore = () => {
       let currentStreak = userData.currentStreak;
       if (userData.lastLockedAt) {
         const timeSinceLastLock = now - userData.lastLockedAt;
-        const brokeStreak = timeSinceLastLock > 36 * 60 * 60 * 1000;
+        const brokeStreak = timeSinceLastLock > 48 * 60 * 60 * 1000;
         if (brokeStreak) {
             currentStreak = 0;
         }
