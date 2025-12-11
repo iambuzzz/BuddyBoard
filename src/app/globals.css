@@ -202,4 +202,20 @@
   .card-glow-ambuj {
     animation: glow-ambuj 3s ease-in-out infinite;
   }
+  
+  .touch-pan-y {
+    touch-action: pan-y !important;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    pointer-events: auto !important;
+    user-select: auto !important;
+    -webkit-user-select: auto !important;
+  }
+
+  .task-list-container {
+    position: relative;
+    z-index: 10;
+    overflow-y: auto !important;
+  }
 }

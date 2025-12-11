@@ -221,7 +221,7 @@ export function TaskCard({ user }: TaskCardProps) {
       </form>
 
       <div className="flex-grow min-h-0">
-        <ScrollArea className="h-full task-list-container" style={{ scrollbarGutter: 'stable', touchAction: 'pan-y' }}>
+        <ScrollArea className="h-full task-list-container touch-pan-y" style={{ scrollbarGutter: 'stable' }}>
           <TaskList
             tasks={userData.tasks}
             isLocked={userData.isLocked || userData.isFinished}
