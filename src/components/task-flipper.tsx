@@ -115,10 +115,10 @@ export function TaskFlipper() {
         whileTap={{ cursor: 'grabbing' }}
       >
         <div className={`app-flip-card ${state.showBack ? 'is-back' : ''}`}>
-          <div className="app-face front">
+          <div className="app-face front" style={{ pointerEvents: state.showBack ? 'none' : 'auto' }}>
             <TaskCard user="riya" />
           </div>
-          <div className="app-face back">
+          <div className="app-face back" style={{ pointerEvents: state.showBack ? 'auto' : 'none' }}>
             <TaskCard user="naitik" />
           </div>
         </div>
