@@ -115,7 +115,12 @@
   }
   .app-face.back {
     transform: rotateY(180deg);
+    pointer-events: none; /* Disable pointer events on the back face by default */
   }
+  .app-flip-card.is-back .app-face.back {
+    pointer-events: auto; /* Enable pointer events only when it's the visible face */
+  }
+
 
   /* Task Item */
   .task-item.completed {
