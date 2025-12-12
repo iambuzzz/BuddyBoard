@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore'; 
+import { doc, setDoc } from 'firebase/firestore'; 
 import { useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,18 +11,47 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { User } from '@/lib/types';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [listName, setListName] = useState<User | ''>('');
+  const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
+
+  // Helper to create an empty task list for a new user
+  const createInitialTaskList = async (userId: string) => {
+    if (!firestore) return;
+    const taskListRef = doc(firestore, 'task_lists', userId);
+    await setDoc(taskListRef, {
+      tasks: [],
+      previousTasks: [],
+      isLocked: false,
+      isFinished: false,
+      totalCompleted: 0,
+      totalAssigned: 0,
+      currentStreak: 0,
+      maxStreak: 0,
+      lockedAt: null,
+      lastLockedAt: null,
+      pairedWith: null,
+    });
+  };
+
+  // Helper to create a user profile
+  const createUserProfile = async (userId: string, email: string, displayName: string) => {
+    if (!firestore) return;
+    const userProfileRef = doc(firestore, 'users', userId);
+    await setDoc(userProfileRef, {
+      uid: userId,
+      email: email,
+      displayName: displayName,
+      cardTheme: 'default', // Default theme
+    });
+  };
 
   const handleAuthAction = async (isSignUp: boolean) => {
     if (!auth || !firestore) {
@@ -33,11 +62,11 @@ export default function LoginPage() {
       });
       return;
     }
-
-    if (isSignUp && !listName) {
+    
+    if (isSignUp && (!displayName || !email || !password)) {
       toast({
         title: 'Error',
-        description: 'Please select a list name to associate with your account.',
+        description: 'Please fill out all fields to sign up.',
         variant: 'destructive',
       });
       return;
@@ -46,12 +75,19 @@ export default function LoginPage() {
     setLoading(true);
     try {
       if (isSignUp) {
+        // --- New User Signup ---
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        // Map UID to listName in user_roles collection
-        await setDoc(doc(firestore, 'user_roles', user.uid), { listName });
-        toast({ title: 'Success', description: 'Account created successfully!' });
+        
+        // Create user profile and initial task list in parallel
+        await Promise.all([
+          createUserProfile(user.uid, user.email!, displayName),
+          createInitialTaskList(user.uid)
+        ]);
+
+        toast({ title: 'Success', description: 'Account created successfully! Welcome.' });
       } else {
+        // --- Existing User Login ---
         await signInWithEmailAndPassword(auth, email, password);
         toast({ title: 'Success', description: 'Logged in successfully!' });
       }
@@ -67,8 +103,6 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-
-  
 
   return (
     <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff] p-4 relative">
@@ -103,10 +137,14 @@ export default function LoginPage() {
         <TabsContent value="signup">
           <Card>
             <CardHeader>
-              <CardTitle>Sign Up</CardTitle>
-              <CardDescription>Create a new account to start managing your tasks.</CardDescription>
+              <CardTitle>Create an Account</CardTitle>
+              <CardDescription>Start your productivity journey with a new account.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+               <div className="space-y-2">
+                <Label htmlFor="signup-name">Your Name</Label>
+                <Input id="signup-name" type="text" placeholder="John Doe" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="signup-email">Email</Label>
                 <Input id="signup-email" type="email" placeholder="m@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -114,20 +152,6 @@ export default function LoginPage() {
               <div className="space-y-2">
                 <Label htmlFor="signup-password">Password</Label>
                 <Input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="list-name">Your List Name</Label>
-                 <Select onValueChange={(value: User) => setListName(value)} value={listName}>
-                  <SelectTrigger id="list-name">
-                    <SelectValue placeholder="Select your list" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="riya">Riya</SelectItem>
-                    <SelectItem value="naitik">Naitik</SelectItem>
-                    {/* --- TYPO FIX KIYA GAYA --- */}
-                    <SelectItem value="ambuj">Ambuj</SelectItem> 
-                  </SelectContent>
-                </Select>
               </div>
             </CardContent>
             <CardFooter>
@@ -138,8 +162,6 @@ export default function LoginPage() {
           </Card>
         </TabsContent>
       </Tabs>
-      
-  
     </div>
   );
 };
