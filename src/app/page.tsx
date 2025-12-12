@@ -284,7 +284,7 @@ unsubProfile = onSnapshot(profileRef, (profileSnap) => {
     
     return (
         <div className="h-full w-full flex items-center justify-center p-4">
-            <div className="w-full max-w-4xl h-[80vh] min-h-[600px]">
+            <div className="w-full max-w-4xl h-full">
                 <PairedTaskCard
                     user1={currentUserData}
                     user2={partnerData}
@@ -411,7 +411,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
 
                 return (
                     <div key={key} className="h-screen w-full snap-start flex items-center justify-center p-4">
-                        <div className="w-full max-w-4xl h-[80vh] min-h-[600px]">
+                        <div className="w-full max-w-4xl h-full">
                             {isPair ? (
                                 (() => {
                                     const [user1, user2] = item;
@@ -505,7 +505,7 @@ export default function Home() {
     }
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl h-[80vh] min-h-[600px]">
+        <div className="w-full max-w-4xl h-full">
             <SoloView userId={user.uid} profile={profile} />
         </div>
       </div>
