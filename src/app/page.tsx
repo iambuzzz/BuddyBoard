@@ -400,61 +400,66 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
     }
 
     return (
-        <div className="w-full h-full space-y-8 overflow-y-auto pb-8 snap-y snap-mandatory">
+        <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory">
             {displayItems.map((item, index) => {
                 const isPair = Array.isArray(item);
-                if (isPair) {
-                    const [user1, user2] = item;
-                    const state1 = userStates[user1.uid];
-                    const state2 = userStates[user2.uid];
-                    const isCurrentUserInPair = user1.uid === currentUserId || user2.uid === currentUserId;
-                    const isCurrentUserPrimary = isCurrentUserInPair && user1.uid === currentUserId;
+                
+                return (
+                    <div key={isPair ? item[0].uid : item.uid} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center">
+                        <div className="w-full h-full flex items-center justify-center">
+                            {isPair ? (
+                                (() => {
+                                    const [user1, user2] = item;
+                                    const state1 = userStates[user1.uid];
+                                    const state2 = userStates[user2.uid];
+                                    const isCurrentUserInPair = user1.uid === currentUserId || user2.uid === currentUserId;
+                                    const isCurrentUserPrimary = isCurrentUserInPair && user1.uid === currentUserId;
 
-                    if (!state1 || !state2) {
-                        return (
-                             <div key={user1.uid} className="h-full w-full max-w-4xl mx-auto flex-shrink-0 snap-center px-4 flex items-center">
-                                <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
-                                   <div className="flex flex-col items-center gap-4 text-slate-500">
-                                        <Loader2 className="h-6 w-6 animate-spin" />
-                                        <p>Loading {user1.displayName} & {user2.displayName}'s tasks...</p>
-                                    </div>
-                                </div>
-                            </div>
-                        )
-                    }
-                    return (
-                        <div key={user1.uid} className="h-full w-full flex-shrink-0 snap-center flex items-center">
-                             <PairedTaskCard
-                                user1={{ profile: user1, state: state1 }}
-                                user2={{ profile: user2, state: state2 }}
-                                isCurrentUserThePrimary={isCurrentUserPrimary}
-                            />
-                        </div>
-                    )
-                } else {
-                    const member = item;
-                    const userState = userStates[member.uid];
-                    return (
-                        <div key={member.uid} className="h-full w-full flex-shrink-0 snap-center flex items-center">
-                            <div className="w-full max-w-4xl mx-auto px-4">
-                                {userState ? (
-                                    <TaskCard 
-                                        userState={userState}
-                                        userProfile={member}
-                                        userId={member.uid}
-                                    />
-                                ) : (
-                                    <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl aspect-[9/16] max-h-[80vh]">
-                                    <div className="flex flex-col items-center gap-4 text-slate-500">
-                                            <Loader2 className="h-6 w-6 animate-spin" />
-                                            <p>Loading {member.displayName}'s tasks...</p>
+                                    if (!state1 || !state2) {
+                                        return (
+                                            <div className="h-full w-full max-w-4xl mx-auto flex items-center justify-center bg-slate-100 rounded-2xl">
+                                                <div className="flex flex-col items-center gap-4 text-slate-500">
+                                                    <Loader2 className="h-6 w-6 animate-spin" />
+                                                    <p>Loading {user1.displayName} & {user2.displayName}'s tasks...</p>
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+                                    return (
+                                        <PairedTaskCard
+                                            user1={{ profile: user1, state: state1 }}
+                                            user2={{ profile: user2, state: state2 }}
+                                            isCurrentUserThePrimary={isCurrentUserPrimary}
+                                        />
+                                    );
+                                })()
+                            ) : (
+                                (() => {
+                                    const member = item as UserProfile;
+                                    const userState = userStates[member.uid];
+                                    return (
+                                        <div className="w-full max-w-4xl mx-auto px-4 h-full flex items-center">
+                                            {userState ? (
+                                                <TaskCard 
+                                                    userState={userState}
+                                                    userProfile={member}
+                                                    userId={member.uid}
+                                                />
+                                            ) : (
+                                                <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl aspect-[9/16] max-h-[80vh]">
+                                                    <div className="flex flex-col items-center gap-4 text-slate-500">
+                                                        <Loader2 className="h-6 w-6 animate-spin" />
+                                                        <p>Loading {member.displayName}'s tasks...</p>
+                                                    </div>
+                                                </div>
+                                            )}
                                         </div>
-                                    </div>
-                                )}
-                            </div>
+                                    );
+                                })()
+                            )}
                         </div>
-                    );
-                }
+                    </div>
+                );
             })}
         </div>
     );
