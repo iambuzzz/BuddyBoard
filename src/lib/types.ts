@@ -1,4 +1,5 @@
 
+
 // Represents a single task item for any user.
 export interface Task {
   id: string;
@@ -51,6 +52,18 @@ export interface Group {
     members: {
         [uid: string]: 'admin' | 'member';
     };
+}
+
+// Represents a pairing invitation.
+// This is the schema for documents in the `/pair_invitations/{invitationId}` collection.
+export interface PairInvitation {
+    id: string;
+    senderId: string;
+    senderName: string;
+    receiverId: string;
+    receiverName: string;
+    status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+    createdAt: number; // Timestamp
 }
 
 

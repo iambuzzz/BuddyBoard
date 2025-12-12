@@ -74,6 +74,20 @@
         "lockedAt": { "type": "number", "description": "Timestamp or null" },
         "lastLockedAt": { "type": "number", "description": "Timestamp or null" }
       }
+    },
+    "PairInvitation": {
+      "title": "Pair Invitation",
+      "description": "Represents a pairing invitation between two users.",
+      "type": "object",
+      "properties": {
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "receiverName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "declined", "cancelled"] },
+        "createdAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["senderId", "senderName", "receiverId", "receiverName", "status", "createdAt"]
     }
   },
   "auth": {
@@ -91,6 +105,10 @@
     "/task_lists/{userId}": {
       "schema": { "$ref": "#/entities/TaskList" },
       "description": "Stores the private task list for each user."
+    },
+    "/pair_invitations/{invitationId}": {
+        "schema": { "$ref": "#/entities/PairInvitation" },
+        "description": "Stores pairing invitations between users."
     },
     "/riyalTodoState/app": {
       "schema": { "$ref": "#/entities/AppState" },
