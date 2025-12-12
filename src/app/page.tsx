@@ -79,12 +79,11 @@ const CreateProfile = () => {
         const batch = writeBatch(firestore);
 
         const userProfileRef = doc(firestore, 'users', user.uid);
-        const newUserProfile: Omit<UserProfile, 'groupId'> = {
+        const newUserProfile: Omit<UserProfile, 'groupId' | 'pairedWith'> = {
             uid: user.uid,
             email: user.email!,
             displayName: displayName.trim(),
             cardTheme: 'riya',
-            pairedWith: null,
         };
         batch.set(userProfileRef, newUserProfile);
 
@@ -237,7 +236,7 @@ const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partn
     }
 
     const userToSwitch = showBack ? currentUserData.profile.displayName : partnerData.profile.displayName;
-    const themeForSwitchButton = (showBack ? currentUserData.profile.cardTheme : partnerData.profile.cardTheme) || 'riya';
+    const themeForSwitchButton = (showBack ? partnerData.profile.cardTheme : currentUserData.profile.cardTheme) || 'riya';
 
     const getButtonThemeClass = (theme: string) => {
         switch(theme) {
