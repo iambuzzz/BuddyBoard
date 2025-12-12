@@ -281,7 +281,7 @@ unsubProfile = onSnapshot(profileRef, (profileSnap) => {
     }
     
     return (
-        <div className="h-full w-full flex items-center justify-center px-4">
+        <div className="h-full w-full flex items-center justify-center p-4">
             <div className="w-full max-w-4xl h-[80vh] min-h-[600px]">
                 <PairedTaskCard
                     user1={currentUserData}
@@ -502,7 +502,7 @@ export default function Home() {
       return <PairedView currentUserId={user.uid} partnerId={partnerId} />;
     }
     return (
-      <div className="h-full w-full flex items-center justify-center px-4">
+      <div className="h-full w-full flex items-center justify-center p-4">
         <div className="w-full max-w-4xl h-[80vh] min-h-[600px]">
             <SoloView userId={user.uid} profile={profile} />
         </div>
