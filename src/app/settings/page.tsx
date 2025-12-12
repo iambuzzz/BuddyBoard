@@ -417,7 +417,7 @@ export default function SettingsPage() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><LinkIcon /> Pairing Management</CardTitle>
                 <CardDescription>
-                  {profile?.groupId ? 'Pair up with a member of your group.' : 'Send an invitation to another user to pair up.'}
+                  {profile?.groupId ? 'You are in a group, so pairing is managed within the group view.' : 'Send an invitation to another user to pair up.'}
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -585,7 +585,7 @@ export default function SettingsPage() {
                       <FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" placeholder="Enter current password" {...field} /></FormControl><FormDescription>Required only if you want to change your password.</FormDescription><FormMessage /></FormItem>
                   )} />
                   <FormField control={profileForm.control} name="newPassword" render={({ field }) => (
-                      <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormMessage>
+                      <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormItem>
                   )} />
                   <Button type="submit" disabled={isSaving}>
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
