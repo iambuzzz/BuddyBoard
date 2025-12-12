@@ -236,22 +236,22 @@ export default function SettingsPage() {
 
     try {
       const groupsRef = collection(firestore, 'groups');
-      const q = query(groupsRef, where('invitationCode', '==', data.invitationCode), where('members.' + user.uid, '==', null));
+      const q = query(groupsRef, where('invitationCode', '==', data.invitationCode));
       const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
 
       if (querySnapshot.empty) {
-        const checkExistingQuery = query(groupsRef, where('invitationCode', '==', data.invitationCode));
-        const checkExistingSnapshot = await getDocs(checkExistingQuery);
-        if (!checkExistingSnapshot.empty) {
-          toast({ title: 'Already a Member', description: 'You are already a member of this group.', variant: 'destructive' });
-        } else {
-          toast({ title: 'Invalid Code', description: 'No group found with that invitation code.', variant: 'destructive' });
-        }
+        toast({ title: 'Invalid Code', description: 'No group found with that invitation code.', variant: 'destructive' });
         return;
       }
       
       const groupDoc = querySnapshot.docs[0];
       const groupData = groupDoc.data() as Group;
+
+      if (groupData.members[user.uid]) {
+        toast({ title: 'Already a Member', description: 'You are already a member of this group.', variant: 'destructive' });
+        return;
+      }
+
       const batch = writeBatch(firestore);
 
       const groupRef = doc(firestore, 'groups', groupDoc.id);

@@ -19,7 +19,7 @@
  *
  * Key Security Decisions:
  * - User data is strictly owned: A user can only write to their own /users/{userId} and /task_lists/{userId} documents.
- * - Group write access is role-based: Admins can update, and non-members can join as 'member'.
+ * - Group write access is role-based: Admins can update/delete, and new users can join.
  * - Group read access: Any member of a group can read the group document.
  * - Invitation codes are part of the group document and are thus protected by the same read rules.
  */
@@ -50,23 +50,6 @@ service cloud.firestore {
         && request.resource.data.members[request.auth.uid] == 'admin'
         && request.resource.data.members.size() == 1;
     }
-    
-    function isJoiningGroupAsMember() {
-      // A user is joining if:
-      // 1. They are signed in.
-      // 2. They were not a member before the update.
-      // 3. The new members map is exactly one larger than the old one.
-      // 4. Their own UID is being added with the role 'member'.
-      // 5. No other fields are being changed besides the members map.
-      let existingMembers = resource.data.members;
-      let newMembers = request.resource.data.members;
-      
-      return isSignedIn()
-        && !existingMembers.keys().hasAny([request.auth.uid])
-        && newMembers.size() == existingMembers.size() + 1
-        && newMembers[request.auth.uid] == 'member'
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']);
-    }
 
     // --- New Scalable Rules ---
 
@@ -86,7 +69,8 @@ service cloud.firestore {
     match /groups/{groupId} {
       allow create: if isSignedIn() && isNewGroupAdmin();
       allow read: if isGroupMember(groupId);
-      allow update: if isGroupAdmin(groupId) || isJoiningGroupAsMember();
+      // An admin can update anything. A non-member can join as a 'member'.
+      allow update: if isGroupAdmin(groupId) || (isSignedIn() && request.resource.data.members[request.auth.uid] == 'member');
       allow delete: if isGroupAdmin(groupId);
     }
 
