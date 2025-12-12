@@ -495,6 +495,7 @@ export default function Home() {
   
   const partnerId = profile.pairedWith;
   const groupId = profile.groupId;
+  const isSoloView = !partnerId && !groupId;
 
   const renderContent = () => {
     if (groupId) {
@@ -514,7 +515,7 @@ export default function Home() {
 
   return (
     <main className="h-screen w-full flex flex-col items-center bg-[#e3eeff] relative overflow-hidden">
-      <ActionButtons />
+      {isSoloView && <ActionButtons />}
       <div className="w-full h-full flex-grow">
         {renderContent()}
       </div>
@@ -522,5 +523,4 @@ export default function Home() {
   );
 }
 
-    
     
