@@ -22,11 +22,12 @@ import {
 } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { doc, updateDoc, setDoc, getDoc, writeBatch, collection, query, where, getDocs, onSnapshot, DocumentData, QuerySnapshot, serverTimestamp, addDoc, deleteDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { useFirestore, useAuth } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Loader2, ArrowLeft, Copy, Users, UserPlus, LogOut as LogOutIcon, Crown, Link as LinkIcon, Link2Off, Send, X, Check } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { Group, UserProfile, PairInvitation } from '@/lib/types';
@@ -76,6 +77,11 @@ const pairInviteSchema = z.object({
 });
 type PairInviteValues = z.infer<typeof pairInviteSchema>;
 
+type GroupConflictInfo = {
+    invitation: PairInvitation;
+    senderProfile: UserProfile;
+};
+
 
 export default function SettingsPage() {
   const { user, profile, isLoading: isUserLoading, refetch } = useUser();
@@ -92,6 +98,8 @@ export default function SettingsPage() {
   const [receivedInvites, setReceivedInvites] = useState<PairInvitation[]>([]);
   const [isPairingLoading, setIsPairingLoading] = useState(true);
   const [pairedPartner, setPairedPartner] = useState<UserProfile | null>(null);
+
+  const [groupConflict, setGroupConflict] = useState<GroupConflictInfo | null>(null);
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -265,6 +273,7 @@ export default function SettingsPage() {
 
         await batch.commit();
         toast({ title: 'Group Created!', description: `Successfully created ${data.groupName}.` });
+        createGroupForm.reset();
         refetch();
     } catch (error: any) {
         console.error("Error creating group:", error);
@@ -319,6 +328,7 @@ export default function SettingsPage() {
 
           await batch.commit();
           toast({ title: 'Joined Group!', description: `You have successfully joined ${groupData.name}.` });
+          joinGroupForm.reset();
           refetch();
       } catch (error: any) {
           toast({ title: 'Error Joining Group', description: error.message || 'Failed to join group.', variant: 'destructive' });
@@ -406,32 +416,95 @@ export default function SettingsPage() {
     } finally { setIsSaving(false); }
   }
 
-  async function handleInvitationAction(invitation: PairInvitation, action: 'accept' | 'decline' | 'cancel') {
-    if (!user || !firestore) return;
-    setIsSaving(true);
-
-    const invRef = doc(firestore, 'pair_invitations', invitation.id);
-
-    if (action === 'accept') {
+    const executePairing = useCallback(async (invitation: PairInvitation, resolution: 'leave' | 'join' | 'invite' | 'none' = 'none') => {
+        if (!user || !firestore || !profile) return;
+        setIsSaving(true);
+    
         const batch = writeBatch(firestore);
-        batch.update(invRef, { status: 'accepted' });
-        batch.update(doc(firestore, 'users', invitation.senderId), { pairedWith: invitation.receiverId });
-        batch.update(doc(firestore, 'users', invitation.receiverId), { pairedWith: invitation.senderId });
-        try { 
-            await batch.commit(); 
-            toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` }); 
-            refetch(); // This re-fetches the user profile and updates the UI
-        } 
-        catch (e) { console.error(e); toast({ title: 'Error', description: 'Could not accept invitation.', variant: 'destructive' }); }
-    } else if (action === 'decline') {
-        try { await updateDoc(invRef, { status: 'declined' }); toast({ title: "Invitation Declined" }); }
-        catch (e) { toast({ title: 'Error', description: 'Could not decline invitation.', variant: 'destructive' }); }
-    } else if (action === 'cancel') {
-        try { await deleteDoc(invRef); toast({ title: "Invitation Cancelled" }); }
-        catch (e) { toast({ title: 'Error', description: 'Could not cancel invitation.', variant: 'destructive' }); }
+        const invRef = doc(firestore, 'pair_invitations', invitation.id);
+        const senderRef = doc(firestore, 'users', invitation.senderId);
+        const receiverRef = doc(firestore, 'users', invitation.receiverId);
+        
+        try {
+            if (resolution === 'leave') {
+                // Receiver leaves their current group
+                batch.update(receiverRef, { groupId: null });
+            } else if (resolution === 'join') {
+                // Receiver leaves their group and joins sender's group
+                const senderDoc = await getDoc(senderRef);
+                const senderProfile = senderDoc.data() as UserProfile;
+                if (senderProfile.groupId) {
+                    batch.update(receiverRef, { groupId: senderProfile.groupId });
+                    batch.update(doc(firestore, 'groups', senderProfile.groupId), { [`members.${user.uid}`]: 'member' });
+                }
+            } else if (resolution === 'invite') {
+                // Sender joins receiver's group
+                if (profile.groupId) {
+                    batch.update(senderRef, { groupId: profile.groupId });
+                    batch.update(doc(firestore, 'groups', profile.groupId), { [`members.${invitation.senderId}`]: 'member' });
+                }
+            }
+    
+            // Finalize pairing
+            batch.update(invRef, { status: 'accepted' });
+            batch.update(senderRef, { pairedWith: invitation.receiverId });
+            batch.update(receiverRef, { pairedWith: invitation.senderId });
+    
+            await batch.commit();
+            toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` });
+            refetch();
+        } catch (e: any) {
+            console.error("Error executing pairing:", e);
+            toast({ title: 'Error', description: 'Could not complete pairing action.', variant: 'destructive' });
+        } finally {
+            setIsSaving(false);
+            setGroupConflict(null);
+        }
+    }, [user, firestore, profile, refetch, toast]);
+
+
+    async function handleInvitationAction(invitation: PairInvitation, action: 'accept' | 'decline' | 'cancel') {
+        if (!user || !firestore || !profile) return;
+        
+        if (action === 'accept') {
+            setIsSaving(true);
+            const senderProfileSnap = await getDoc(doc(firestore, 'users', invitation.senderId));
+            if (!senderProfileSnap.exists()) {
+                toast({ title: 'Error', description: 'Could not find the sender\'s profile.', variant: 'destructive' });
+                setIsSaving(false);
+                return;
+            }
+            const senderProfile = senderProfileSnap.data() as UserProfile;
+
+            // Check for group conflict
+            if (profile.groupId && profile.groupId !== senderProfile.groupId) {
+                // Conflict: Receiver is in a group, sender is not or in a different one.
+                setGroupConflict({ invitation, senderProfile });
+                setIsSaving(false); // Stop here, wait for user choice from dialog
+                return;
+            } else if (senderProfile.groupId && !profile.groupId) {
+                 // Conflict: Sender is in a group, receiver is not.
+                setGroupConflict({ invitation, senderProfile });
+                setIsSaving(false);
+                return;
+            }
+            // No conflict, proceed directly
+            await executePairing(invitation, 'none');
+
+        } else if (action === 'decline') {
+            setIsSaving(true);
+            const invRef = doc(firestore, 'pair_invitations', invitation.id);
+            try { await updateDoc(invRef, { status: 'declined' }); toast({ title: "Invitation Declined" }); }
+            catch (e) { toast({ title: 'Error', description: 'Could not decline invitation.', variant: 'destructive' }); }
+            finally { setIsSaving(false); }
+        } else if (action === 'cancel') {
+            setIsSaving(true);
+            const invRef = doc(firestore, 'pair_invitations', invitation.id);
+            try { await deleteDoc(invRef); toast({ title: "Invitation Cancelled" }); }
+            catch (e) { toast({ title: 'Error', description: 'Could not cancel invitation.', variant: 'destructive' }); }
+            finally { setIsSaving(false); }
+        }
     }
-    setIsSaving(false);
-  }
 
   async function onUnpair() {
     if (!user || !firestore || !profile?.pairedWith) return;
@@ -478,7 +551,7 @@ export default function SettingsPage() {
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><LinkIcon /> Pairing Management</CardTitle>
                 <CardDescription>
-                  {profile?.groupId ? 'You are in a group, so pairing is managed within the group view.' : 'Send an invitation to another user to pair up.'}
+                  {profile?.groupId ? 'You are in a group. Pairing with users outside your group may affect your group membership.' : 'Send an invitation to another user to pair up.'}
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -613,6 +686,45 @@ export default function SettingsPage() {
     )
   }
 
+  const renderGroupConflictDialog = () => {
+    if (!groupConflict) return null;
+    const { invitation, senderProfile } = groupConflict;
+    const senderIsInGroup = !!senderProfile.groupId;
+    const receiverIsInGroup = !!profile?.groupId;
+
+    return (
+        <AlertDialog open={!!groupConflict} onOpenChange={() => setGroupConflict(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Group Conflict Detected</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        You and {senderProfile.displayName} are in different groups. To pair up, you need to be in the same group. Please choose an option:
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-col gap-2">
+                    {receiverIsInGroup && (
+                        <Button variant="outline" onClick={() => executePairing(invitation, 'leave')}>
+                            Leave My Group & Pair
+                        </Button>
+                    )}
+                    {senderIsInGroup && (
+                         <Button variant="outline" onClick={() => executePairing(invitation, 'join')}>
+                            Join {senderProfile.displayName}'s Group & Pair
+                        </Button>
+                    )}
+                     {receiverIsInGroup && (
+                        <Button variant="default" onClick={() => executePairing(invitation, 'invite')}>
+                            Invite {senderProfile.displayName} to My Group & Pair
+                        </Button>
+                    )}
+                    <AlertDialogCancel onClick={() => setGroupConflict(null)}>Cancel</AlertDialogCancel>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+  };
+
+
   return (
      <div className="min-h-screen w-full flex flex-col items-center bg-[#e3eeff] p-4 pb-12">
        <div className="w-full max-w-md space-y-8">
@@ -661,9 +773,9 @@ export default function SettingsPage() {
 
         {renderGroupManagement()}
 
+        {renderGroupConflictDialog()}
+
        </div>
     </div>
   );
 }
-
-    
