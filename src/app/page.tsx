@@ -29,7 +29,7 @@ const ActionButtons = () => {
   };
 
   return (
-    <div className="absolute top-4 right-4 flex items-center gap-2 z-50">
+    <div className="flex items-center gap-2 z-50">
       <Link href="/settings">
         <Button
           variant="ghost"
@@ -204,7 +204,8 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardPro
     
     return (
         <div className="flex flex-col h-full">
-            <div className="flex justify-center mb-4">
+            <div className="flex justify-between items-center mb-4">
+                 <div className="w-40"></div>
                  <Button
                     onClick={() => setShowBack(p => !p)}
                     className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
@@ -213,6 +214,9 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardPro
                     <RefreshCw className="h-4 w-4" />
                     <span>Switch to {hiddenUser.profile.displayName}</span>
                 </Button>
+                <div className="w-40 flex justify-end">
+                    <ActionButtons />
+                </div>
             </div>
             <div className="app-flip-shell flex-grow">
                 <div className={`app-flip-card ${showBack ? 'is-back' : ''}`}>
@@ -506,7 +510,10 @@ export default function Home() {
     }
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl h-full">
+        <div className="w-full max-w-4xl h-full relative">
+            <div className="absolute top-0 right-0 z-10">
+                <ActionButtons />
+            </div>
             <SoloView userId={user.uid} profile={profile} />
         </div>
       </div>
@@ -515,12 +522,9 @@ export default function Home() {
 
   return (
     <main className="h-screen w-full flex flex-col items-center bg-[#e3eeff] relative overflow-hidden">
-      {isSoloView && <ActionButtons />}
       <div className="w-full h-full flex-grow">
         {renderContent()}
       </div>
     </main>
   );
 }
-
-    
