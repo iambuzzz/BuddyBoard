@@ -417,7 +417,11 @@ export default function SettingsPage() {
         batch.update(invRef, { status: 'accepted' });
         batch.update(doc(firestore, 'users', invitation.senderId), { pairedWith: invitation.receiverId });
         batch.update(doc(firestore, 'users', invitation.receiverId), { pairedWith: invitation.senderId });
-        try { await batch.commit(); toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` }); refetch(); } 
+        try { 
+            await batch.commit(); 
+            toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` }); 
+            refetch(); // This re-fetches the user profile and updates the UI
+        } 
         catch (e) { console.error(e); toast({ title: 'Error', description: 'Could not accept invitation.', variant: 'destructive' }); }
     } else if (action === 'decline') {
         try { await updateDoc(invRef, { status: 'declined' }); toast({ title: "Invitation Declined" }); }
