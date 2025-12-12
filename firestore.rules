@@ -54,12 +54,19 @@ service cloud.firestore {
     }
     
     function isJoiningGroupAsMember() {
-      // Check if the user is adding themselves to the members map with the 'member' role.
-      // Assumes the user is not already in the group (resource.data).
+      // A user is joining if:
+      // 1. They are signed in.
+      // 2. They are not already a member (checked by checking diff).
+      // 3. The new members map is exactly one larger than the old one.
+      // 4. The user's UID is in the new members map with the role 'member'.
+      // 5. No other fields are being changed.
       let existingMembers = resource.data.members;
       let newMembers = request.resource.data.members;
-      return newMembers.size() == existingMembers.size() + 1 
-        && newMembers[request.auth.uid] == 'member';
+      
+      return isSignedIn()
+        && newMembers.size() == existingMembers.size() + 1
+        && newMembers[request.auth.uid] == 'member'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']);
     }
 
     // --- New Scalable Rules ---
