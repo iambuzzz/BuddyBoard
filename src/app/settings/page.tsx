@@ -541,7 +541,7 @@ export default function SettingsPage() {
               <Form {...createGroupForm}>
                 <form onSubmit={createGroupForm.handleSubmit(onCreateGroup)} className="flex items-start gap-2">
                    <FormField control={createGroupForm.control} name="groupName" render={({ field }) => (
-                        <FormItem className="flex-grow"><FormControl><Input placeholder="My Awesome Group" {...field} /></FormControl><FormMessage /></Item>
+                        <FormItem className="flex-grow"><FormControl><Input placeholder="My Awesome Group" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                   <Button type="submit" disabled={isSaving}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Create'}</Button>
                 </form>
