@@ -12,14 +12,12 @@ import { adminFirestore } from '@/firebase/admin';
 import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
-// Define the input schema for the joinGroup flow
 const JoinGroupInputSchema = z.object({
   userId: z.string().describe('The UID of the user trying to join the group.'),
   invitationCode: z.string().describe('The invitation code for the group.'),
 });
-export type JoinGroupInput = z.infer<typeof JoinGroupInputSchema>;
+type JoinGroupInput = z.infer<typeof JoinGroupInputSchema>;
 
-// Define the output schema for the joinGroup flow
 const JoinGroupOutputSchema = z.object({
   success: z.boolean(),
   message: z.string().optional(),
@@ -84,8 +82,6 @@ const joinGroupFlow = ai.defineFlow(
   }
 );
 
-
-// Export a wrapper function for client-side usage
 export async function joinGroup(input: JoinGroupInput): Promise<JoinGroupOutput> {
   return joinGroupFlow(input);
 }
