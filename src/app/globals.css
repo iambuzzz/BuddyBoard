@@ -70,7 +70,7 @@
     scroll-behavior: smooth;
   }
   body {
-    @apply bg-background text-slate-700;
+    @apply bg-background;
     min-height: 100vh;
     background-color: #e3eeff;
     overflow-y: auto;
@@ -150,12 +150,12 @@
   }
   .theme-naitik .task-list-container::-webkit-scrollbar-thumb {
     background-color: var(--naitik-primary);
-    border-radius: 9-999px;
+    border-radius: 9999px;
     border: 2px solid hsl(var(--muted));
   }
   .theme-ambuj .task-list-container::-webkit-scrollbar-thumb {
     background-color: var(--ambuj-primary);
-    border-radius: 9-999px;
+    border-radius: 9999px;
     border: 2px solid hsl(var(--muted));
   }
 
