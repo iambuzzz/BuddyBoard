@@ -36,11 +36,11 @@ service cloud.firestore {
     }
 
     function isGroupMember(groupId) {
-      return isSignedIn() && resource.data.members[request.auth.uid] != null;
+      return isSignedIn() && get(/databases/$(database)/documents/groups/$(groupId)).data.members[request.auth.uid] != null;
     }
 
     function isGroupAdmin(groupId) {
-      return isSignedIn() && resource.data.members[request.auth.uid] == 'admin';
+      return isSignedIn() && get(/databases/$(database)/documents/groups/$(groupId)).data.members[request.auth.uid] == 'admin';
     }
     
     function isNewGroupAdmin(groupId) {
@@ -52,7 +52,8 @@ service cloud.firestore {
     // User can create and update their own profile. Anyone can read profiles.
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
     }
     
     // User can create and manage their own private task list.
@@ -68,8 +69,7 @@ service cloud.firestore {
     match /groups/{groupId} {
       allow create: if isSignedIn() && isNewGroupAdmin(groupId);
       allow read: if isGroupMember(groupId);
-      allow update: if isGroupAdmin(groupId) || 
-                       (isSignedIn() && request.resource.data.members[request.auth.uid] == 'member');
+      allow update: if isGroupAdmin(groupId) || (isSignedIn() && request.resource.data.members[request.auth.uid] == 'member');
       allow delete: if isGroupAdmin(groupId);
     }
 
