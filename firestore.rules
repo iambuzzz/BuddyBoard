@@ -44,21 +44,27 @@ service cloud.firestore {
     }
     
     function isNewGroupAdmin(groupId) {
-      return isSignedIn() && request.resource.data.members[request.auth.uid] == 'admin';
+      // Check if the user is making themselves the admin in a new group creation.
+      // - The group must not exist yet (resource == null)
+      // - The new members map must contain the user with 'admin' role.
+      // - The user must be the only member.
+      return resource == null 
+        && request.resource.data.members[request.auth.uid] == 'admin'
+        && request.resource.data.members.size() == 1;
     }
     
     function isJoiningGroupAsMember() {
       // Check if the user is adding themselves to the members map with the 'member' role.
-      // Assumes the user is not already in the group.
+      // Assumes the user is not already in the group (resource.data).
       let existingMembers = resource.data.members;
       let newMembers = request.resource.data.members;
-      // Ensure only one new member is being added, and it is the current user.
-      return newMembers.size() == existingMembers.size() + 1 && newMembers[request.auth.uid] == 'member';
+      return newMembers.size() == existingMembers.size() + 1 
+        && newMembers[request.auth.uid] == 'member';
     }
 
     // --- New Scalable Rules ---
 
-    // User can create and update their own profile. Anyone can read profiles.
+    // User can create and update their own profile. Any signed-in user can read profiles.
     match /users/{userId} {
       allow read: if isSignedIn();
       allow create: if isOwner(userId);
@@ -71,8 +77,8 @@ service cloud.firestore {
     }
     
     // Group Rules:
-    // - Anyone signed in can try to create a group, but they must make themselves admin.
-    // - Admins can update. Users can join (update) if they are adding themselves as a member.
+    // - A user can create a group only if they make themselves the sole admin.
+    // - Admins can update. A non-member can join by adding themselves as a 'member'.
     // - Only members can read a group's details.
     // - Only admins can delete a group.
     match /groups/{groupId} {
