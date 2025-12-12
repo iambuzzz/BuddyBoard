@@ -31,7 +31,7 @@ export default function RootLayout({
         <link rel="icon" href="/icon.svg" sizes="any" type="image/svg+xml" />
         <link rel="apple-touch-icon" href="/icon.svg" />
       </head>
-      <body className="font-body antialiased overflow-y-scroll">
+      <body className="font-body antialiased">
         <FirebaseClientProvider>
           {children}
           <Toaster />

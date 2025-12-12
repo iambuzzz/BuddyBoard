@@ -3,7 +3,7 @@
 
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Loader2, LogOut, Settings } from 'lucide-react';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,7 @@ import { signOut } from 'firebase/auth';
 import { useAuth, useFirestore } from '@/firebase';
 import type { UserState, UserProfile, Group } from '@/lib/types';
 import Link from 'next/link';
-import { collection, doc, onSnapshot, query, where, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, where, writeBatch } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -89,7 +89,7 @@ const CreateProfile = () => {
 
         // 2. Create initial task list
         const taskListRef = doc(firestore, 'task_lists', user.uid);
-        const newTaskList: UserState = {
+        const newTaskList: Omit<UserState, 'pairedWith'> = {
             tasks: [],
             previousTasks: [],
             isLocked: false,
@@ -100,14 +100,13 @@ const CreateProfile = () => {
             maxStreak: 0,
             lockedAt: null,
             lastLockedAt: null,
-            pairedWith: null,
         };
         batch.set(taskListRef, newTaskList);
 
         try {
             await batch.commit();
             toast({ title: "Welcome!", description: "Your profile has been created."});
-            refetch?.(); // Refetch the user data to get the new profile
+            refetch(); // Refetch the user data to get the new profile
         } catch (error: any) {
             console.error("Error creating profile:", error);
             toast({ title: "Error", description: "Could not create your profile. Please try again.", variant: "destructive" });
@@ -184,74 +183,66 @@ const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile })
 const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId: string }) => {
     const firestore = useFirestore();
     const [members, setMembers] = useState<UserProfile[]>([]);
-    const [userStates, setUserStates] = useState<Record<string, UserState>>({});
+    const [userStates, setUserStates] = useState<Record<string, UserState | null>>({});
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (!firestore || !groupId) return;
-
+    
+        setIsLoading(true);
         const groupRef = doc(firestore, 'groups', groupId);
-        
+    
         const unsubGroup = onSnapshot(groupRef, async (groupSnap) => {
             if (!groupSnap.exists()) {
-                // This might happen if the user leaves the group
                 setIsLoading(false);
                 return;
             }
-
+    
             const groupData = groupSnap.data() as Group;
             const memberUids = Object.keys(groupData.members);
-
+    
             if (memberUids.length === 0) {
                 setMembers([]);
                 setUserStates({});
                 setIsLoading(false);
                 return;
             }
-
-            const usersQuery = query(collection(firestore, 'users'), where('uid', 'in', memberUids));
-            const unsubUsers = onSnapshot(usersQuery, (usersSnap) => {
-                const fetchedMembers = usersSnap.docs.map(d => d.data() as UserProfile);
-
-                fetchedMembers.sort((a, b) => {
-                    if (a.uid === currentUserId) return -1;
-                    if (b.uid === currentUserId) return 1;
-                    return a.displayName.localeCompare(b.displayName);
-                });
-                
-                setMembers(fetchedMembers);
-
-                const taskListeners = fetchedMembers.map(member => 
-                    onSnapshot(doc(firestore, 'task_lists', member.uid), (taskSnap) => {
-                         setUserStates(prev => ({
-                            ...prev,
-                            [member.uid]: taskSnap.exists() ? (taskSnap.data() as UserState) : null,
-                        }));
-                    })
-                );
-
-                return () => taskListeners.forEach(unsub => unsub());
-            });
-            
-            return () => unsubUsers();
-        });
-
-        return () => unsubGroup();
-
-    }, [firestore, groupId, currentUserId]);
     
-     useEffect(() => {
-        if (members.length > 0 && Object.keys(userStates).length >= members.length) {
-            // Check if all fetched members have a corresponding state (even if null)
-            const allStatesAccountedFor = members.every(m => Object.prototype.hasOwnProperty.call(userStates, m.uid));
-            if (allStatesAccountedFor) {
-              setIsLoading(false);
+            // Fetch member profiles
+            const usersQuery = query(collection(firestore, 'users'), where('uid', 'in', memberUids));
+            const usersSnap = await usersSnap; // Typo fix: getDocs
+            const fetchedMembers = usersSnap.docs.map(d => d.data() as UserProfile);
+
+            fetchedMembers.sort((a, b) => {
+                if (a.uid === currentUserId) return -1;
+                if (b.uid === currentUserId) return 1;
+                return a.displayName.localeCompare(b.displayName);
+            });
+            setMembers(fetchedMembers);
+
+            // Subscribe to task lists for each member
+            const unsubscribers = fetchedMembers.map(member => {
+                const taskListRef = doc(firestore, 'task_lists', member.uid);
+                return onSnapshot(taskListRef, (taskSnap) => {
+                    setUserStates(prev => ({
+                        ...prev,
+                        [member.uid]: taskSnap.exists() ? taskSnap.data() as UserState : null
+                    }));
+                });
+            });
+
+             // Check if all data is loaded
+            if(fetchedMembers.length > 0) {
+                setIsLoading(false);
             }
-        } else if (members.length === 0 && !isLoading) {
-            // Handled in the group snapshot listener, but as a fallback
-            setIsLoading(false);
-        }
-     }, [members, userStates, isLoading]);
+    
+            return () => {
+                unsubscribers.forEach(unsub => unsub());
+            };
+        });
+    
+        return () => unsubGroup();
+    }, [firestore, groupId, currentUserId]);
 
 
     if (isLoading) {
@@ -264,34 +255,46 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
              </div>
         );
     }
+    
+    // Fallback if loading is false but there are no members yet
+    if (members.length === 0) {
+        return (
+            <div className="h-full w-full flex items-center justify-center">
+                <p>This group has no members.</p>
+            </div>
+        )
+    }
 
     return (
         <div className="w-full h-full space-y-8 overflow-y-auto pb-8 snap-y snap-mandatory">
-            {members.map(member => (
-                <div key={member.uid} className="h-full w-full max-w-md mx-auto flex-shrink-0 snap-start">
-                    {userStates[member.uid] ? (
-                        <TaskCard 
-                            userState={userStates[member.uid]!}
-                            userProfile={member}
-                            userId={member.uid}
-                        />
-                    ) : (
-                        <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
-                           <div className="flex flex-col items-center gap-4 text-slate-500">
-                                <Loader2 className="h-6 w-6 animate-spin" />
-                                <p>Loading {member.displayName}'s tasks...</p>
+            {members.map(member => {
+                const userState = userStates[member.uid];
+                return (
+                    <div key={member.uid} className="h-full w-full max-w-md mx-auto flex-shrink-0 snap-start">
+                        {userState ? (
+                            <TaskCard 
+                                userState={userState}
+                                userProfile={member}
+                                userId={member.uid}
+                            />
+                        ) : (
+                            <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
+                               <div className="flex flex-col items-center gap-4 text-slate-500">
+                                    <Loader2 className="h-6 w-6 animate-spin" />
+                                    <p>Loading {member.displayName}'s tasks...</p>
+                                </div>
                             </div>
-                        </div>
-                    )}
-                </div>
-            ))}
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 };
 
 
 export default function Home() {
-  const { user, profile, isLoading: isUserLoading } = useUser();
+  const { user, profile, isLoading: isUserLoading, refetch } = useUser();
   const router = useRouter();
   
   useEffect(() => {
@@ -326,5 +329,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
