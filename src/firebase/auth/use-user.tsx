@@ -38,6 +38,8 @@ export const useUser = (): UserHookState => {
     }
 
     if (user) {
+      // Set loading to true when starting to fetch a profile
+      setUserState(prevState => ({ ...prevState, user, isLoading: true }));
       const userProfileRef = doc(firestore, 'users', user.uid);
       const userProfileSnap = await getDoc(userProfileRef);
       
@@ -53,19 +55,19 @@ export const useUser = (): UserHookState => {
   }, [auth, firestore]);
 
   useEffect(() => {
+    if (!auth) return;
     const unsubscribe = onAuthStateChanged(auth, (user) => {
         fetchUserProfile(user);
     });
     return () => unsubscribe();
   }, [auth, fetchUserProfile]);
 
-  const refetch = () => {
-      if(auth?.currentUser) {
-          fetchUserProfile(auth.currentUser);
-      }
-  }
+  const refetch = useCallback(() => {
+    if(auth?.currentUser) {
+        fetchUserProfile(auth.currentUser);
+    }
+  }, [auth, fetchUserProfile]);
+
 
   return { ...userState, refetch };
 };
-
-    
