@@ -298,13 +298,13 @@ export default function SettingsPage() {
     if (!user || !firestore || !profile) return;
     setIsSaving(true);
     try {
-        if (data.email === user.email) {
+        if (data.email.toLowerCase() === user.email?.toLowerCase()) {
             toast({ title: "Cannot invite yourself", variant: 'destructive'});
             setIsSaving(false);
             return;
         }
         const usersRef = collection(firestore, 'users');
-        const q = query(usersRef, where("email", "==", data.email));
+        const q = query(usersRef, where("email", "==", data.email.toLowerCase()));
         const querySnapshot = await getDocs(q);
 
         if (querySnapshot.empty) {
@@ -604,3 +604,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
