@@ -93,10 +93,14 @@ export default function LoginPage() {
       }
       router.push('/');
     } catch (error: any) {
-      console.error(error);
+      let description = error.message || 'An unknown error occurred.';
+      if (error.code === 'auth/invalid-credential') {
+        description = 'Invalid email or password. Please try again.';
+      }
+      
       toast({
         title: 'Authentication Error',
-        description: error.message || 'An error occurred.',
+        description: description,
         variant: 'destructive',
       });
     } finally {
