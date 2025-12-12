@@ -67,16 +67,15 @@
     @apply border-border;
   }
   html {
-    scroll-snap-type: y mandatory;
+    scroll-behavior: smooth;
   }
   body {
     @apply bg-background text-slate-700;
     min-height: 100vh;
     background-color: #e3eeff;
   }
-  .snap-section {
-    scroll-snap-align: start;
-    scroll-snap-stop: always;
+  .snap-center {
+    scroll-snap-align: center;
   }
 }
 
@@ -156,7 +155,7 @@
   /* Score Badge */
   .score-badge-container {
     perspective: 1000px;
-    height: 3rem;
+    height: 2.25rem;
   }
   .score-badge {
     position: relative;
@@ -167,7 +166,7 @@
     transform: rotateY(180deg);
   }
   .score-face {
-    @apply absolute inset-0 w-full h-full flex items-center justify-center gap-2;
+    @apply absolute inset-0 w-full h-full flex items-center justify-center gap-2 px-3;
     backface-visibility: hidden;
   }
   .score-back {

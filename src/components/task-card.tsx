@@ -299,7 +299,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const effectiveTheme = cardTheme as 'riya' | 'naitik' | 'ambuj';
 
   return (
-    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card pl-6 pb-6 pr-6 pt-3 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
+    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card p-6 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
       <AnimatePresence>
         {userState.isFinished && (
           <CelebrationOverlay
@@ -313,9 +313,9 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
           />
         )}
       </AnimatePresence>
-      <div className="flex justify-between items-center pb-4 mb-4 border-b flex-shrink-0 pt-2">
-        <div className="flex items-center gap-2 pr-2">
-            <h2 className={`text-xl sm:text-2xl font-bold ${titleColor}`}>{userName}'s Tasks</h2>
+      <header className="flex justify-between items-center pb-4 mb-4 border-b">
+        <div className="flex items-center gap-3">
+            <h2 className={`text-2xl font-bold ${titleColor}`}>{userName}</h2>
             <StreakBadge
                 currentStreak={userState.currentStreak}
                 maxStreak={userState.maxStreak}
@@ -330,13 +330,13 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
           isLocked={userState.isLocked || userState.isFinished}
           theme={effectiveTheme}
         />
-      </div>
+      </header>
 
       <form onSubmit={handleSubmit} className="flex gap-2 mb-4 flex-shrink-0">
         <Input
           type="text"
           name="task-input"
-          placeholder={isCurrentUserCard ? "Add Task.." : `This is ${userName}'s list`}
+          placeholder={isCurrentUserCard ? "Add a task..." : `This is ${userName}'s list`}
           className={`bg-white/80 border-slate-300 transition focus:border-transparent ${ringStyle}`}
           disabled={userState.isFinished || !isCurrentUserCard}
         />

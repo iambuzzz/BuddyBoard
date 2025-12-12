@@ -29,7 +29,7 @@ const ActionButtons = () => {
   };
 
   return (
-    <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
+    <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
       <Link href="/settings">
         <Button
           variant="ghost"
@@ -256,7 +256,6 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
         );
     }
     
-    // Fallback if loading is false but there are no members yet
     if (members.length === 0) {
         return (
             <div className="h-full w-full flex items-center justify-center">
@@ -270,7 +269,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             {members.map(member => {
                 const userState = userStates[member.uid];
                 return (
-                    <div key={member.uid} className="h-full w-full max-w-md mx-auto flex-shrink-0 snap-start">
+                    <div key={member.uid} className="h-full w-full max-w-md mx-auto flex-shrink-0 snap-center px-4">
                         {userState ? (
                             <TaskCard 
                                 userState={userState}
@@ -312,21 +311,20 @@ export default function Home() {
   }
 
   if (!user || !profile) {
-    // This case should be covered by the useEffect redirect, but as a fallback
     return <LoadingScreen />;
   }
 
   return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-[#e3eeff] p-4 relative overflow-hidden">
+    <main className="h-screen w-full flex flex-col items-center justify-center bg-[#e3eeff] relative overflow-hidden">
       <ActionButtons />
       {profile.groupId ? (
         <GroupView groupId={profile.groupId} currentUserId={user.uid} />
       ) : (
-        <div className="h-full w-full max-w-md mx-auto">
+        <div className="h-full w-full max-w-md mx-auto flex items-center justify-center px-4">
             <SoloView userId={user.uid} profile={profile} />
         </div>
       )}
-    </div>
+    </main>
   );
 }
 
