@@ -23,18 +23,17 @@ service cloud.firestore {
       allow read, write: if isSignedIn();
     }
 
-    // --- Legacy Read-Only Rules ---
+    // --- Legacy Rules ---
+    // Re-enabled writes for the legacy app so it remains functional.
 
-    // The original app state is now read-only to preserve history.
     match /riyalTodoState/app {
-      allow read: if true;
-      allow write: if false; // Prevent any modification
+      allow read, write: if isSignedIn();
     }
     
-    // The original user roles are now read-only.
+    // The original user roles are kept for reference but are not actively used.
     match /user_roles/{userId} {
       allow read: if true;
-      allow write: if false; // Prevent any modification
+      allow write: if false; 
     }
   }
 }
