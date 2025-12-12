@@ -11,7 +11,7 @@ import { signOut } from 'firebase/auth';
 import { useAuth, useFirestore } from '@/firebase';
 import type { UserState, UserProfile, Group } from '@/lib/types';
 import Link from 'next/link';
-import { collection, doc, onSnapshot, query, where, writeBatch } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, where, writeBatch, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -210,7 +210,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
     
             // Fetch member profiles
             const usersQuery = query(collection(firestore, 'users'), where('uid', 'in', memberUids));
-            const usersSnap = await usersSnap; // Typo fix: getDocs
+            const usersSnap = await getDocs(usersQuery);
             const fetchedMembers = usersSnap.docs.map(d => d.data() as UserProfile);
 
             fetchedMembers.sort((a, b) => {
@@ -329,3 +329,5 @@ export default function Home() {
     </div>
   );
 }
+
+    
