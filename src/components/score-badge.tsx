@@ -2,7 +2,6 @@
 
 import { Trophy } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { User } from '@/lib/types';
 
 type ScoreBadgeProps = {
   dailyCompleted: number;
@@ -10,7 +9,7 @@ type ScoreBadgeProps = {
   lifetimeCompleted: number;
   lifetimeTotal: number;
   isLocked: boolean;
-  theme: User;
+  theme: 'riya' | 'naitik' | 'ambuj' | 'default';
 };
 
 export function ScoreBadge({

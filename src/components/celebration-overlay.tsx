@@ -3,7 +3,6 @@
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { History, Plus, Timer } from 'lucide-react';
-import { User } from '@/lib/types';
 
 type CelebrationOverlayProps = {
   completed: number;
@@ -12,7 +11,7 @@ type CelebrationOverlayProps = {
   onNewList: () => void;
   onRestorePrevious: () => void;
   canRestore: boolean;
-  theme: User;
+  theme: 'riya' | 'naitik' | 'ambuj' | 'default'; // Added default
 };
 
 const formatTotalTime = (totalSeconds: number) => {
@@ -46,7 +45,7 @@ export function CelebrationOverlay({ completed, total, totalTimeSpent, onNewList
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-10 flex flex-col justify-center items-center text-center p-4 rounded-2xl bg-white/80 backdrop-blur-sm"
+      className="absolute inset-0 z-20 flex flex-col justify-center items-center text-center p-4 rounded-2xl bg-white/80 backdrop-blur-sm"
     >
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}

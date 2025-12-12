@@ -2,14 +2,14 @@
 
 import { useState, useEffect, useContext } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
-import { useAuth, useFirestore } from '..';
-import { UserRole, User } from '@/lib/types';
 import { FirebaseContext } from '../provider';
+import { doc, getDoc } from 'firebase/firestore';
+import type { UserProfile } from '@/lib/types';
+
 
 type UserState = {
   user: FirebaseUser | null;
-  listName: User | null;
+  profile: UserProfile | null;
   isLoading: boolean;
 };
 
@@ -22,30 +22,30 @@ export const useUser = (): UserState => {
   
   const [userState, setUserState] = useState<UserState>({
     user: null,
-    listName: null,
+    profile: null,
     isLoading: true,
   });
 
   useEffect(() => {
     if (!auth || !firestore) {
-      setUserState({ user: null, listName: null, isLoading: false });
+      setUserState({ user: null, profile: null, isLoading: false });
       return;
     };
 
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       if (user) {
-        const userRoleRef = doc(firestore, 'user_roles', user.uid);
-        const userRoleSnap = await getDoc(userRoleRef);
+        const userProfileRef = doc(firestore, 'users', user.uid);
+        const userProfileSnap = await getDoc(userProfileRef);
         
-        if (userRoleSnap.exists()) {
-          const userRole = userRoleSnap.data() as UserRole;
-          setUserState({ user, listName: userRole.listName, isLoading: false });
+        if (userProfileSnap.exists()) {
+          const userProfile = userProfileSnap.data() as UserProfile;
+          setUserState({ user, profile: userProfile, isLoading: false });
         } else {
           // Handle case where user exists in Auth but not in user_roles
-          setUserState({ user, listName: null, isLoading: false });
+          setUserState({ user, profile: null, isLoading: false });
         }
       } else {
-        setUserState({ user: null, listName: null, isLoading: false });
+        setUserState({ user: null, profile: null, isLoading: false });
       }
     });
 

@@ -1,7 +1,6 @@
 "use client";
 
 import { Flame, Star } from 'lucide-react';
-import type { User } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
 import {
@@ -14,7 +13,7 @@ import {
 type StreakBadgeProps = {
   currentStreak: number;
   maxStreak: number;
-  theme: User;
+  theme: 'riya' | 'naitik' | 'ambuj' | 'default';
 };
 
 export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProps) {
@@ -23,18 +22,10 @@ export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProp
   const handleToggle = () => setIsFlipped(!isFlipped);
 
   const themeClasses = {
-    riya: {
-      currentText: 'text-orange-500',
-      maxText: 'text-orange-500',
-    },
-    naitik: {
-      currentText: 'text-orange-500',
-      maxText: 'text-orange-500',
-    },
-    ambuj: {
-      currentText: 'text-orange-500',
-      maxText: 'text-orange-500',
-    },
+    riya: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
+    naitik: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
+    ambuj: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
+    default: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
   };
   
   const currentTheme = themeClasses[theme];

@@ -5,7 +5,7 @@ import { Circle, CheckCircle2, Edit, Trash2, Play, Pause, Timer, Check } from 'l
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-import type { Task, User } from '@/lib/types';
+import type { Task } from '@/lib/types';
 
 type TaskItemProps = {
   task: Task;
@@ -14,7 +14,7 @@ type TaskItemProps = {
   onUpdate: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
   onToggleTimer: (id: string) => void;
-  theme: User;
+  theme: 'riya' | 'naitik' | 'ambuj' | 'default';
   isCurrentUserCard: boolean;
 };
 
@@ -25,7 +25,7 @@ const formatTime = (totalSeconds: number) => {
   return `${hours > 0 ? `${hours}:` : ''}${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const TaskTimer = ({ task, onToggleTimer, theme, isLocked, isCurrentUserCard }: { task: Task; onToggleTimer: () => void; theme: User, isLocked: boolean, isCurrentUserCard: boolean }) => {
+const TaskTimer = ({ task, onToggleTimer, theme, isLocked, isCurrentUserCard }: { task: Task; onToggleTimer: () => void; theme: 'riya' | 'naitik' | 'ambuj' | 'default', isLocked: boolean, isCurrentUserCard: boolean }) => {
   const [displayTime, setDisplayTime] = useState(task.timeSpent);
 
   useEffect(() => {
