@@ -37,11 +37,13 @@ export interface UserProfile {
     displayName: string;
     email: string;
     cardTheme: string; // e.g., 'default', 'periwinkle', 'lavender'
+    groupId?: string | null; // ID of the group the user belongs to
 }
 
 // Represents a group of users.
 // This is the schema for documents in the `/groups/{groupId}` collection.
 export interface Group {
+    id: string;
     name: string;
     invitationCode: string;
     createdBy: string; // UID of the user who created the group
