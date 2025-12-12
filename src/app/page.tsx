@@ -36,7 +36,7 @@ const LogoutButton = () => {
 };
 
 export default function Home() {
-  const { user, isLoading: isUserLoading } = useUser();
+  const { user, profile, isLoading: isUserLoading } = useUser();
   const router = useRouter();
   const firestore = useFirestore();
 
@@ -80,7 +80,7 @@ export default function Home() {
       <LogoutButton />
       <div className="h-full w-full max-w-md mx-auto">
         {userState ? (
-          <TaskCard userState={userState} userId={user.uid} />
+          <TaskCard userState={userState} userProfile={profile} userId={user.uid} />
         ) : (
            <div className="h-full w-full flex items-center justify-center">
              <div className="flex flex-col items-center gap-4 text-slate-500">

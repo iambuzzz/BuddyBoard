@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-import type { UserState, Task, PreviousTask } from '@/lib/types';
+import type { UserState, Task, PreviousTask, UserProfile } from '@/lib/types';
 import { useFirestore, useUser as useAuthUser } from '@/firebase'; // Renamed to avoid conflict
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +30,7 @@ import { StreakBadge } from './streak-badge';
 
 type TaskCardProps = {
   userState: UserState;
+  userProfile: UserProfile | null;
   userId: string;
 };
 
@@ -48,7 +49,7 @@ const getThemeClass = (theme: string | undefined) => {
 };
 
 
-export function TaskCard({ userState, userId }: TaskCardProps) {
+export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const firestore = useFirestore();
   const { user: authUser } = useAuthUser(); // Current authenticated user
   const { toast } = useToast();
@@ -59,11 +60,11 @@ export function TaskCard({ userState, userId }: TaskCardProps) {
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Derive user display info from auth if possible, fallback to a default
-  const userName = authUser?.displayName || 'My';
+  const userName = userProfile?.displayName || 'My';
   const isCurrentUserCard = authUser?.uid === userId;
   
   // Use a default theme, will be customized later
-  const cardTheme = 'default'; 
+  const cardTheme = userProfile?.cardTheme || 'ambuj';
   const themeClass = getThemeClass(cardTheme);
   
   const updateFirestore = useCallback(async (updatePayload: Partial<UserState>) => {
@@ -259,14 +260,45 @@ export function TaskCard({ userState, userId }: TaskCardProps) {
     return <Lock className="w-4 h-4 mr-2" />;
   };
 
-  // Generic theme styles for now
-  const cardBorderStyle = 'border-2 border-[--ambuj-primary]';
-  const glowClass = userState.isLocked ? 'card-glow-ambuj' : '';
-  const addBtnStyle = 'bg-[--ambuj-primary] hover:bg-emerald-500';
-  const actionBtnStyle = undoState.active ? 'bg-emerald-400 hover:bg-emerald-500' : 'bg-[--ambuj-primary] hover:bg-emerald-500';
-  const ringStyle = 'focus-visible:ring-[--ambuj-primary]';
-  const titleColor = 'text-[--ambuj-text]';
-  const confirmButtonStyle = 'bg-emerald-600 hover:bg-emerald-700';
+  const cardBorderStyle =
+    cardTheme === 'riya' ? 'border-2 border-[--riya-primary]' :
+    cardTheme === 'naitik' ? 'border-2 border-[--naitik-primary]' :
+    'border-2 border-[--ambuj-primary]';
+
+  const glowClass =
+    userState.isLocked ? (
+      cardTheme === 'riya' ? 'card-glow-riya' :
+      cardTheme === 'naitik' ? 'card-glow-naitik' :
+      'card-glow-ambuj'
+    ) : '';
+
+  const addBtnStyle =
+    cardTheme === 'riya' ? 'bg-[--riya-primary] hover:bg-purple-500' :
+    cardTheme === 'naitik' ? 'bg-[--naitik-primary] hover:bg-cyan-500' :
+    'bg-[--ambuj-primary] hover:bg-emerald-500';
+
+  const actionBtnStyle = undoState.active ? 'bg-emerald-400 hover:bg-emerald-500' :
+    cardTheme === 'riya' ? 'bg-[--riya-primary] hover:bg-purple-500' :
+    cardTheme === 'naitik' ? 'bg-[--naitik-primary] hover:bg-cyan-500' :
+    'bg-[--ambuj-primary] hover:bg-emerald-500';
+
+  const ringStyle =
+    cardTheme === 'riya' ? 'focus-visible:ring-[--riya-primary]' :
+    cardTheme === 'naitik' ? 'focus-visible:ring-[--naitik-primary]' :
+    'focus-visible:ring-[--ambuj-primary]';
+  
+  const titleColor =
+    cardTheme === 'riya' ? 'text-[--riya-text]' :
+    cardTheme === 'naitik' ? 'text-[--naitik-text]' :
+    'text-[--ambuj-text]';
+
+  const confirmButtonStyle = 
+    cardTheme === 'riya' ? 'bg-purple-600 hover:bg-purple-700' :
+    cardTheme === 'naitik' ? 'bg-cyan-600 hover:bg-cyan-700' :
+    'bg-emerald-600 hover:bg-emerald-700';
+    
+  const effectiveTheme = cardTheme as 'riya' | 'naitik' | 'ambuj';
+
 
   return (
     <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card pl-6 pb-6 pr-6 pt-3 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
@@ -279,7 +311,7 @@ export function TaskCard({ userState, userId }: TaskCardProps) {
             onNewList={startNewList}
             onRestorePrevious={restorePreviousList}
             canRestore={!!userState.previousTasks && userState.previousTasks.length > 0}
-            theme={'ambuj'} // Use default theme for now
+            theme={effectiveTheme}
           />
         )}
       </AnimatePresence>
@@ -289,7 +321,7 @@ export function TaskCard({ userState, userId }: TaskCardProps) {
           <StreakBadge
             currentStreak={userState.currentStreak}
             maxStreak={userState.maxStreak}
-            theme={'ambuj'} // default
+            theme={effectiveTheme}
           />
         </div>
         <ScoreBadge
@@ -298,7 +330,7 @@ export function TaskCard({ userState, userId }: TaskCardProps) {
           lifetimeCompleted={userState.totalCompleted}
           lifetimeTotal={userState.totalAssigned}
           isLocked={userState.isLocked || userState.isFinished}
-          theme={'ambuj'} // default
+          theme={effectiveTheme}
         />
       </div>
 
@@ -329,7 +361,7 @@ export function TaskCard({ userState, userId }: TaskCardProps) {
             onToggleTimer={toggleTimer}
             onUpdate={updateTask}
             onDelete={deleteTask}
-            theme={'ambuj'} // default
+            theme={effectiveTheme}
             onRestore={restorePreviousList}
             canRestore={!!userState.previousTasks && userState.previousTasks.length > 0}
             isCurrentUserCard={isCurrentUserCard}
@@ -339,7 +371,7 @@ export function TaskCard({ userState, userId }: TaskCardProps) {
       
       <div className="flex flex-col gap-2 mt-6 flex-shrink-0">
          <Button
-            onClick={undoState.active ? handleCancelUndo : triggerUndo}
+            onClick={isCurrentUserCard ? (undoState.active ? handleCancelUndo : triggerUndo) : undefined}
             className={`w-full font-semibold transition py-3 text-base h-auto text-white ${actionBtnStyle} ${ringStyle}`}
             disabled={!isCurrentUserCard}
           >

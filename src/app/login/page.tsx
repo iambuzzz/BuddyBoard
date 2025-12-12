@@ -49,7 +49,7 @@ export default function LoginPage() {
       uid: userId,
       email: email,
       displayName: displayName,
-      cardTheme: 'default', // Default theme
+      cardTheme: 'ambuj', // Default theme
     });
   };
 
