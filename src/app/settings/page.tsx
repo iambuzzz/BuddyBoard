@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -427,8 +426,9 @@ export default function SettingsPage() {
         
         try {
             if (resolution === 'leave') {
-                // Receiver leaves their current group
+                // Both users leave their groups to pair.
                 batch.update(receiverRef, { groupId: null });
+                batch.update(senderRef, { groupId: null });
             } else if (resolution === 'join') {
                 // Receiver leaves their group and joins sender's group
                 const senderDoc = await getDoc(senderRef);
@@ -696,20 +696,20 @@ export default function SettingsPage() {
                         You and {senderProfile.displayName} are in different groups. To pair up, you need to be in the same group. Please choose an option:
                     </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="flex-col sm:flex-col sm:gap-2">
-                    {receiverIsInGroup && (
-                        <Button variant="outline" onClick={() => executePairing(invitation, 'leave')}>
-                            Leave My Group & Pair
-                        </Button>
-                    )}
+                <AlertDialogFooter className="flex-col sm:flex-col sm:space-y-2 sm:items-stretch w-full">
+                    {/* This option is always available if there's a conflict */}
+                    <Button variant="outline" onClick={() => executePairing(invitation, 'leave')}>
+                        Both Leave Groups &amp; Pair
+                    </Button>
+
                     {senderIsInGroup && (
                          <Button variant="outline" onClick={() => executePairing(invitation, 'join')}>
-                            Join {senderProfile.displayName}'s Group & Pair
+                            Join {senderProfile.displayName}'s Group &amp; Pair
                         </Button>
                     )}
                      {receiverIsInGroup && (
                         <Button variant="default" onClick={() => executePairing(invitation, 'invite')}>
-                            Invite {senderProfile.displayName} to My Group & Pair
+                            Invite {senderProfile.displayName} to My Group &amp; Pair
                         </Button>
                     )}
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -774,5 +774,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
