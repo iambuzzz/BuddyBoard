@@ -19,6 +19,13 @@ import {
   RadioGroup,
   RadioGroupItem,
 } from '@/components/ui/radio-group';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { useEffect, useState, useMemo } from 'react';
@@ -26,7 +33,7 @@ import { doc, updateDoc, setDoc, getDoc, writeBatch, collection, query, where, g
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { useFirestore, useAuth } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, LogOut as LogOutIcon, Crown } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, LogOut as LogOutIcon, Crown, Link as LinkIcon, Link2Off } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { Group, UserProfile } from '@/lib/types';
 import short from 'short-uuid';
@@ -71,9 +78,14 @@ const groupJoinSchema = z.object({
 });
 type GroupJoinValues = z.infer<typeof groupJoinSchema>;
 
+const pairingSchema = z.object({
+    partnerId: z.string().optional(),
+});
+type PairingValues = z.infer<typeof pairingSchema>;
+
 
 export default function SettingsPage() {
-  const { user, profile, isLoading: isUserLoading } = useUser();
+  const { user, profile, isLoading: isUserLoading, refetch } = useUser();
   const firestore = useFirestore();
   const auth = useAuth();
   const { toast } = useToast();
@@ -104,10 +116,25 @@ export default function SettingsPage() {
     defaultValues: { invitationCode: '' }
   });
 
+  const pairingForm = useForm<PairingValues>({
+      resolver: zodResolver(pairingSchema),
+      defaultValues: { partnerId: '' }
+  });
+
   const userIsAdmin = useMemo(() => {
     if (!group || !user) return false;
     return group.members[user.uid] === 'admin';
   }, [group, user]);
+
+  const otherGroupMembers = useMemo(() => {
+    if (!user) return [];
+    return groupMembers.filter(member => member.uid !== user.uid);
+  }, [groupMembers, user]);
+
+  const pairedPartner = useMemo(() => {
+      if(!profile?.pairedWith) return null;
+      return groupMembers.find(m => m.uid === profile.pairedWith);
+  }, [profile, groupMembers]);
 
   useEffect(() => {
     if (profile) {
@@ -115,8 +142,11 @@ export default function SettingsPage() {
         displayName: profile.displayName || '',
         cardTheme: profile.cardTheme || 'riya',
       });
+      pairingForm.reset({
+        partnerId: profile.pairedWith || '',
+      });
     }
-  }, [profile, profileForm]);
+  }, [profile, pairingForm, profileForm]);
 
   useEffect(() => {
     if (!profile || !firestore) return;
@@ -184,7 +214,7 @@ export default function SettingsPage() {
       } else {
         toast({ title: 'Settings Saved', description: 'Your profile has been updated successfully.' });
       }
-
+      refetch();
     } catch (error: any) {
       console.error('Error updating profile:', error);
       if (error.code === 'auth/invalid-credential') {
@@ -223,6 +253,7 @@ export default function SettingsPage() {
     try {
       await batch.commit();
       toast({ title: 'Group Created!', description: `Successfully created ${data.groupName}.`});
+      refetch();
     } catch (error: any) {
       toast({ title: 'Error', description: 'Could not create group.', variant: 'destructive' });
     } finally {
@@ -241,6 +272,7 @@ export default function SettingsPage() {
 
       if (querySnapshot.empty) {
         toast({ title: 'Invalid Code', description: 'No group found with that invitation code.', variant: 'destructive' });
+        setIsSaving(false);
         return;
       }
       
@@ -249,6 +281,7 @@ export default function SettingsPage() {
 
       if (groupData.members[user.uid]) {
         toast({ title: 'Already a Member', description: 'You are already a member of this group.', variant: 'destructive' });
+        setIsSaving(false);
         return;
       }
 
@@ -262,7 +295,7 @@ export default function SettingsPage() {
 
       await batch.commit();
       toast({ title: 'Joined Group!', description: `You have successfully joined ${groupData.name}.` });
-
+      refetch();
     } catch (error: any) {
       console.error('Error joining group:', error);
       toast({
@@ -280,11 +313,16 @@ export default function SettingsPage() {
     setIsSaving(true);
     const batch = writeBatch(firestore);
 
-    const groupRef = doc(firestore, 'groups', group.id);
     const userProfileRef = doc(firestore, 'users', user.uid);
+    batch.update(userProfileRef, { groupId: null, pairedWith: null });
 
-    batch.update(userProfileRef, { groupId: null });
+    // Unpair the other user if they were paired with the leaving user
+    if(profile?.pairedWith) {
+        const partnerRef = doc(firestore, 'users', profile.pairedWith);
+        batch.update(partnerRef, { pairedWith: null });
+    }
 
+    const groupRef = doc(firestore, 'groups', group.id);
     const newMembers = { ...group.members };
     delete newMembers[user.uid];
 
@@ -301,11 +339,80 @@ export default function SettingsPage() {
     try {
       await batch.commit();
       toast({ title: 'Group Left', description: 'You have successfully left the group.' });
+      refetch();
     } catch (error: any) {
       toast({ title: 'Error', description: 'Failed to leave group.', variant: 'destructive' });
     } finally {
       setIsSaving(false);
     }
+  }
+
+  async function onPairingSubmit(data: PairingValues) {
+    if (!user || !firestore || !profile) return;
+    const { partnerId } = data;
+    
+    // PartnerId can be an empty string if "None" is selected
+    const newPartnerId = partnerId || null;
+
+    setIsSaving(true);
+    const batch = writeBatch(firestore);
+    
+    const currentUserRef = doc(firestore, 'users', user.uid);
+
+    // Unpair the old partner if there was one
+    if (profile.pairedWith) {
+        const oldPartnerRef = doc(firestore, 'users', profile.pairedWith);
+        batch.update(oldPartnerRef, { pairedWith: null });
+    }
+
+    // Set new pairing
+    batch.update(currentUserRef, { pairedWith: newPartnerId });
+    if (newPartnerId) {
+        const newPartnerRef = doc(firestore, 'users', newPartnerId);
+        // Also unpair the new partner from anyone they were previously paired with
+        const newPartnerSnap = await getDoc(newPartnerRef);
+        const newPartnerData = newPartnerSnap.data() as UserProfile;
+        if(newPartnerData.pairedWith) {
+            const oldPartnerOfNewPartnerRef = doc(firestore, 'users', newPartnerData.pairedWith);
+            batch.update(oldPartnerOfNewPartnerRef, { pairedWith: null });
+        }
+        batch.update(newPartnerRef, { pairedWith: user.uid });
+    }
+    
+    try {
+        await batch.commit();
+        toast({ title: 'Pairing Updated!', description: 'Your pairing status has been changed.' });
+        refetch();
+    } catch (error: any) {
+        console.error('Error updating pairing:', error);
+        toast({ title: 'Error', description: 'Could not update pairing.', variant: 'destructive' });
+    } finally {
+        setIsSaving(false);
+    }
+  }
+
+  async function onUnpair() {
+      if (!user || !firestore || !profile?.pairedWith) return;
+      setIsSaving(true);
+      const batch = writeBatch(firestore);
+
+      const currentUserRef = doc(firestore, 'users', user.uid);
+      batch.update(currentUserRef, { pairedWith: null });
+
+      const partnerRef = doc(firestore, 'users', profile.pairedWith);
+      batch.update(partnerRef, { pairedWith: null });
+      
+      try {
+        await batch.commit();
+        toast({ title: 'Unpaired', description: 'You are no longer paired.' });
+        pairingForm.reset({ partnerId: '' });
+        refetch();
+      } catch (error: any) {
+        console.error('Error unpairing:', error);
+        toast({ title: 'Error', description: 'Could not unpair.', variant: 'destructive' });
+      } finally {
+          setIsSaving(false);
+      }
   }
   
   if (isUserLoading) {
@@ -314,6 +421,63 @@ export default function SettingsPage() {
         <Loader2 className="h-12 w-12 animate-spin text-slate-500" />
       </div>
     );
+  }
+
+  const renderPairingManagement = () => {
+      if (!group || otherGroupMembers.length === 0) return null;
+
+      return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><LinkIcon /> Pairing</CardTitle>
+                <CardDescription>Pair up with another group member to see their card on the back of yours.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+                {pairedPartner ? (
+                    <div className="flex items-center justify-between p-3 bg-slate-100 rounded-md">
+                        <p className="font-medium">You are paired with <span className="font-bold">{pairedPartner.displayName}</span>.</p>
+                        <Button variant="destructive" size="sm" onClick={onUnpair} disabled={isSaving}>
+                           {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Link2Off className="h-4 w-4" />}
+                           Unpair
+                        </Button>
+                    </div>
+                ) : (
+                    <Form {...pairingForm}>
+                        <form onSubmit={pairingForm.handleSubmit(onPairingSubmit)} className="space-y-4">
+                            <FormField
+                                control={pairingForm.control}
+                                name="partnerId"
+                                render={({ field }) => (
+                                    <FormItem>
+                                        <FormLabel>Pair with a teammate</FormLabel>
+                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Select a member..." />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem value="">None</SelectItem>
+                                                {otherGroupMembers.map(member => (
+                                                    <SelectItem key={member.uid} value={member.uid} disabled={!!member.pairedWith}>
+                                                        {member.displayName} {member.pairedWith ? '(Already Paired)' : ''}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            <Button type="submit" disabled={isSaving || !pairingForm.formState.isDirty} className="w-full">
+                               {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : 'Update Pairing'}
+                            </Button>
+                        </form>
+                    </Form>
+                )}
+            </CardContent>
+        </Card>
+      );
   }
 
   const renderGroupManagement = () => {
@@ -538,6 +702,8 @@ export default function SettingsPage() {
         </div>
         
         {renderGroupManagement()}
+        
+        {renderPairingManagement()}
 
        </div>
     </div>

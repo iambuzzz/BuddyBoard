@@ -1,3 +1,4 @@
+
 // Represents a single task item for any user.
 export interface Task {
   id: string;
@@ -27,7 +28,6 @@ export interface UserState {
   maxStreak: number;
   lockedAt: number | null; // Timestamp when the list was locked
   lastLockedAt: number | null; // Timestamp of the previously locked list
-  pairedWith?: string | null; // UID of the user on the back of the card
 }
 
 // Represents a user's public profile.
@@ -38,6 +38,7 @@ export interface UserProfile {
     email: string;
     cardTheme: string; // e.g., 'default', 'periwinkle', 'lavender'
     groupId?: string | null; // ID of the group the user belongs to
+    pairedWith?: string | null; // UID of the paired user
 }
 
 // Represents a group of users.

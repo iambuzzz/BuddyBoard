@@ -3,8 +3,8 @@
 
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState, useCallback } from 'react';
-import { Loader2, LogOut, Settings } from 'lucide-react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
+import { Loader2, LogOut, Settings, RefreshCw } from 'lucide-react';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
@@ -16,6 +16,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { AnimatePresence, motion } from 'framer-motion';
 
 const ActionButtons = () => {
   const auth = useAuth();
@@ -29,7 +30,7 @@ const ActionButtons = () => {
   };
 
   return (
-    <div className="absolute top-4 right-4 flex items-center gap-2 z-20">
+    <div className="absolute top-4 right-4 flex items-center gap-2 z-50">
       <Link href="/settings">
         <Button
           variant="ghost"
@@ -77,19 +78,18 @@ const CreateProfile = () => {
 
         const batch = writeBatch(firestore);
 
-        // 1. Create user profile
         const userProfileRef = doc(firestore, 'users', user.uid);
         const newUserProfile: UserProfile = {
             uid: user.uid,
             email: user.email!,
             displayName: displayName.trim(),
-            cardTheme: 'riya', // default theme
+            cardTheme: 'riya',
+            pairedWith: null,
         };
         batch.set(userProfileRef, newUserProfile);
 
-        // 2. Create initial task list
         const taskListRef = doc(firestore, 'task_lists', user.uid);
-        const newTaskList: Omit<UserState, 'pairedWith'> = {
+        const newTaskList: UserState = {
             tasks: [],
             previousTasks: [],
             isLocked: false,
@@ -106,7 +106,7 @@ const CreateProfile = () => {
         try {
             await batch.commit();
             toast({ title: "Welcome!", description: "Your profile has been created."});
-            refetch(); // Refetch the user data to get the new profile
+            refetch();
         } catch (error: any) {
             console.error("Error creating profile:", error);
             toast({ title: "Error", description: "Could not create your profile. Please try again.", variant: "destructive" });
@@ -180,6 +180,92 @@ const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile })
     return <TaskCard userState={userState} userProfile={profile} userId={userId} />;
 };
 
+const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partnerId: string }) => {
+    const firestore = useFirestore();
+    const [showBack, setShowBack] = useState(false);
+    const [currentUserData, setCurrentUserData] = useState<{profile: UserProfile, state: UserState} | null>(null);
+    const [partnerData, setPartnerData] = useState<{profile: UserProfile, state: UserState} | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!firestore) return;
+        setIsLoading(true);
+
+        const fetchData = (userId: string, setData: (data: {profile: UserProfile, state: UserState}) => void) => {
+            let unsubProfile: () => void;
+            let unsubState: () => void;
+
+            const profileRef = doc(firestore, 'users', userId);
+            unsubProfile = onSnapshot(profileRef, (profileSnap) => {
+                if (profileSnap.exists()) {
+                    const profile = profileSnap.data() as UserProfile;
+                    const stateRef = doc(firestore, 'task_lists', userId);
+                    unsubState = onSnapshot(stateRef, (stateSnap) => {
+                        if (stateSnap.exists()) {
+                            const state = stateSnap.data() as UserState;
+                            setData({ profile, state });
+                        }
+                    });
+                }
+            });
+
+            return () => {
+                unsubProfile && unsubProfile();
+                unsubState && unsubState();
+            };
+        };
+
+        const unsubCurrentUser = fetchData(currentUserId, setCurrentUserData);
+        const unsubPartner = fetchData(partnerId, setPartnerData);
+
+        return () => {
+            unsubCurrentUser();
+            unsubPartner();
+        };
+    }, [firestore, currentUserId, partnerId]);
+
+    useEffect(() => {
+        if (currentUserData && partnerData) {
+            setIsLoading(false);
+        }
+    }, [currentUserData, partnerData]);
+
+
+    if (isLoading || !currentUserData || !partnerData) {
+         return <LoadingScreen />;
+    }
+
+    const buttonThemeClass = showBack
+      ? 'bg-purple-500 hover:bg-purple-600 text-white'
+      : 'bg-cyan-500 hover:bg-cyan-600 text-white';
+
+    const userToSwitch = showBack ? currentUserData.profile.displayName : partnerData.profile.displayName;
+    
+    return (
+        <div className="h-full w-full max-w-lg mx-auto flex flex-col items-center px-4">
+             <Button
+                onClick={() => setShowBack(p => !p)}
+                className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 mb-4 ${buttonThemeClass}`}
+                aria-pressed={showBack}
+            >
+                <RefreshCw className="h-4 w-4" />
+                <span>Switch to {userToSwitch}</span>
+            </Button>
+            <div className="app-flip-shell w-full h-full">
+                <div className={`app-flip-card ${showBack ? 'is-back' : ''}`}>
+                    <div className="app-face front" style={{ pointerEvents: showBack ? 'none' : 'auto' }}>
+                       <TaskCard userId={currentUserData.profile.uid} userProfile={currentUserData.profile} userState={currentUserData.state} />
+                    </div>
+                    <div className="app-face back" style={{ pointerEvents: showBack ? 'auto' : 'none' }}>
+                        <TaskCard userId={partnerData.profile.uid} userProfile={partnerData.profile} userState={partnerData.state} />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
 const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId: string }) => {
     const firestore = useFirestore();
     const [members, setMembers] = useState<UserProfile[]>([]);
@@ -208,7 +294,6 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                 return;
             }
     
-            // Fetch member profiles
             const usersQuery = query(collection(firestore, 'users'), where('uid', 'in', memberUids));
             const usersSnap = await getDocs(usersQuery);
             const fetchedMembers = usersSnap.docs.map(d => d.data() as UserProfile);
@@ -220,7 +305,6 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             });
             setMembers(fetchedMembers);
 
-            // Subscribe to task lists for each member
             const unsubscribers = fetchedMembers.map(member => {
                 const taskListRef = doc(firestore, 'task_lists', member.uid);
                 return onSnapshot(taskListRef, (taskSnap) => {
@@ -231,8 +315,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                 });
             });
 
-             // Check if all data is loaded
-            if(fetchedMembers.length > 0) {
+             if(fetchedMembers.length > 0) {
                 setIsLoading(false);
             }
     
@@ -313,11 +396,15 @@ export default function Home() {
   if (!user || !profile) {
     return <LoadingScreen />;
   }
+  
+  const partnerId = profile.pairedWith;
 
   return (
     <main className="h-screen w-full flex flex-col items-center bg-[#e3eeff] relative overflow-hidden py-8">
       <ActionButtons />
-      {profile.groupId ? (
+      {partnerId ? (
+        <PairedView currentUserId={user.uid} partnerId={partnerId} />
+      ) : profile.groupId ? (
         <GroupView groupId={profile.groupId} currentUserId={user.uid} />
       ) : (
         <div className="h-full w-full max-w-lg mx-auto flex items-center justify-center px-4">
