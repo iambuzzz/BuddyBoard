@@ -22,7 +22,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { useEffect, useState, useMemo } from 'react';
-import { doc, updateDoc, setDoc, getDoc, writeBatch, collection, query, where, getDocs, onSnapshot } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, getDoc, writeBatch, collection, query, where, getDocs, onSnapshot, DocumentData, QuerySnapshot } from 'firebase/firestore';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { useFirestore, useAuth } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -32,7 +32,6 @@ import type { Group, UserProfile } from '@/lib/types';
 import short from 'short-uuid';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
-import { joinGroup } from '@/ai/flows/group-flow';
 
 
 const profileFormSchema = z.object({
@@ -236,28 +235,39 @@ export default function SettingsPage() {
     setIsSaving(true);
 
     try {
-      const result = await joinGroup({
-        userId: user.uid,
-        invitationCode: data.invitationCode,
-      });
+      const groupsRef = collection(firestore, 'groups');
+      const q = query(groupsRef, where('invitationCode', '==', data.invitationCode), where('members.' + user.uid, '==', null));
+      const querySnapshot: QuerySnapshot<DocumentData> = await getDocs(q);
 
-      if (result.success) {
-        toast({
-          title: 'Joined Group!',
-          description: `You have successfully joined ${result.groupName}.`,
-        });
-      } else {
-        toast({
-          title: 'Error',
-          description: result.message || 'Failed to join group.',
-          variant: 'destructive',
-        });
+      if (querySnapshot.empty) {
+        const checkExistingQuery = query(groupsRef, where('invitationCode', '==', data.invitationCode));
+        const checkExistingSnapshot = await getDocs(checkExistingQuery);
+        if (!checkExistingSnapshot.empty) {
+          toast({ title: 'Already a Member', description: 'You are already a member of this group.', variant: 'destructive' });
+        } else {
+          toast({ title: 'Invalid Code', description: 'No group found with that invitation code.', variant: 'destructive' });
+        }
+        return;
       }
+      
+      const groupDoc = querySnapshot.docs[0];
+      const groupData = groupDoc.data() as Group;
+      const batch = writeBatch(firestore);
+
+      const groupRef = doc(firestore, 'groups', groupDoc.id);
+      batch.update(groupRef, { [`members.${user.uid}`]: 'member' });
+      
+      const userRef = doc(firestore, 'users', user.uid);
+      batch.update(userRef, { groupId: groupDoc.id });
+
+      await batch.commit();
+      toast({ title: 'Joined Group!', description: `You have successfully joined ${groupData.name}.` });
+
     } catch (error: any) {
-      console.error('Flow error joining group:', error);
+      console.error('Error joining group:', error);
       toast({
-        title: 'Error',
-        description: 'An unexpected error occurred while joining the group.',
+        title: 'Error Joining Group',
+        description: error.message || 'Failed to join group. Please check the code and try again.',
         variant: 'destructive',
       });
     } finally {

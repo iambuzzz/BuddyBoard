@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview Firestore Security Rules for the new multi-tenant TaskFlipper app.
  *
@@ -18,7 +19,7 @@
  *
  * Key Security Decisions:
  * - User data is strictly owned: A user can only write to their own /users/{userId} and /task_lists/{userId} documents.
- * - Group write access is role-based: Only 'admin' members of a group can modify the group document, with an exception for users joining.
+ * - Group write access is role-based: Admins can update, and non-members can join as 'member'.
  * - Group read access: Any member of a group can read the group document.
  * - Invitation codes are part of the group document and are thus protected by the same read rules.
  */
@@ -45,9 +46,6 @@ service cloud.firestore {
     
     function isNewGroupAdmin() {
       // Check if the user is making themselves the admin in a new group creation.
-      // - The group must not exist yet (resource == null)
-      // - The new members map must contain the user with 'admin' role.
-      // - The user must be the only member.
       return resource == null 
         && request.resource.data.members[request.auth.uid] == 'admin'
         && request.resource.data.members.size() == 1;
@@ -56,9 +54,9 @@ service cloud.firestore {
     function isJoiningGroupAsMember() {
       // A user is joining if:
       // 1. They are signed in.
-      // 2. They are not already a member (checked by checking diff).
+      // 2. They were not a member before the update.
       // 3. The new members map is exactly one larger than the old one.
-      // 4. The user's UID is in the new members map with the role 'member'.
+      // 4. Their own UID is being added with the role 'member'.
       // 5. No other fields are being changed besides the members map.
       let existingMembers = resource.data.members;
       let newMembers = request.resource.data.members;
@@ -85,10 +83,6 @@ service cloud.firestore {
     }
     
     // Group Rules:
-    // - A user can create a group only if they make themselves the sole admin.
-    // - Admins can update. A non-member can join by adding themselves as a 'member'.
-    // - Only members can read a group's details.
-    // - Only admins can delete a group.
     match /groups/{groupId} {
       allow create: if isSignedIn() && isNewGroupAdmin();
       allow read: if isGroupMember(groupId);
