@@ -15,37 +15,27 @@ service cloud.firestore {
     // --- New Scalable Rules ---
 
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if isOwner(userId);
+      allow read, list: if isSignedIn();
+      allow write: if isOwner(userId) || 
+                      (request.resource.data.pairedWith == request.auth.uid || resource.data.pairedWith == request.auth.uid);
     }
     
     match /task_lists/{userId} {
-      // Allow reading anyone's task list (for groups/pairing)
-      // but only the owner can write to their own list.
       allow read: if isSignedIn();
       allow write: if isOwner(userId);
     }
     
     match /groups/{groupId} {
       allow read: if isSignedIn();
-      // For now, any signed-in user can write to groups.
-      // In a real-world app, this would be restricted to group members/admins.
       allow write: if isSignedIn(); 
     }
     
     match /pair_invitations/{invitationId} {
-        // Anyone can create an invitation.
         allow create: if isSignedIn();
-        
-        // Only sender or receiver can read it.
         allow read: if isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
-        
-        // Receiver can accept/decline, sender can cancel.
         allow update: if isSignedIn() && 
                       ((request.auth.uid == resource.data.receiverId && request.resource.data.status in ['accepted', 'declined']) || 
                        (request.auth.uid == resource.data.senderId && request.resource.data.status == 'cancelled'));
-                       
-        // Sender can delete a cancelled/declined invitation. Receiver can delete an accepted one.
         allow delete: if isSignedIn() &&
                       ((request.auth.uid == resource.data.senderId && resource.data.status in ['cancelled', 'declined']) ||
                        (request.auth.uid == resource.data.receiverId));
@@ -53,12 +43,10 @@ service cloud.firestore {
 
 
     // --- Legacy Rules ---
-    // The original app state is kept for reference but should not be written to.
     match /riyalTodoState/app {
       allow read, write: if isSignedIn();
     }
     
-    // The original user roles are kept for reference but are not actively used.
     match /user_roles/{userId} {
       allow read: if true;
       allow write: if false; 

@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -299,6 +300,7 @@ export default function SettingsPage() {
     try {
         if (data.email === user.email) {
             toast({ title: "Cannot invite yourself", variant: 'destructive'});
+            setIsSaving(false);
             return;
         }
         const usersRef = collection(firestore, 'users');
@@ -307,6 +309,7 @@ export default function SettingsPage() {
 
         if (querySnapshot.empty) {
             toast({ title: "User not found", description: `No user with email ${data.email} found.`, variant: 'destructive' });
+            setIsSaving(false);
             return;
         }
         const receiver = querySnapshot.docs[0].data() as UserProfile;
@@ -314,6 +317,7 @@ export default function SettingsPage() {
         // Check if receiver is already paired
         if (receiver.pairedWith) {
             toast({ title: "User already paired", description: `${receiver.displayName} is already paired with someone else.`, variant: 'destructive'});
+            setIsSaving(false);
             return;
         }
 
@@ -325,6 +329,7 @@ export default function SettingsPage() {
         const existingInviteSnap = await getDocs(existingInviteQuery);
         if (!existingInviteSnap.empty) {
             toast({ title: "Invite already sent", description: `You have already sent a pending invite to ${receiver.displayName}.`});
+            setIsSaving(false);
             return;
         }
 
@@ -356,7 +361,7 @@ export default function SettingsPage() {
         batch.update(doc(firestore, 'users', invitation.senderId), { pairedWith: invitation.receiverId });
         batch.update(doc(firestore, 'users', invitation.receiverId), { pairedWith: invitation.senderId });
         try { await batch.commit(); toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` }); refetch(); } 
-        catch (e) { toast({ title: 'Error', description: 'Could not accept invitation.', variant: 'destructive' }); }
+        catch (e) { console.error(e); toast({ title: 'Error', description: 'Could not accept invitation.', variant: 'destructive' }); }
     } else if (action === 'decline') {
         try { await updateDoc(invRef, { status: 'declined' }); toast({ title: "Invitation Declined" }); }
         catch (e) { toast({ title: 'Error', description: 'Could not decline invitation.', variant: 'destructive' }); }
@@ -398,7 +403,7 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                     <p>You are currently paired with <span className="font-bold">{pairedPartner.displayName}</span>.</p>
                     <Button variant="destructive" onClick={onUnpair} disabled={isSaving} className="w-full">
-                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2Off />}
+                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2Off className="mr-2 h-4 w-4" />}
                         Unpair
                     </Button>
                 </CardContent>
@@ -411,7 +416,9 @@ export default function SettingsPage() {
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><LinkIcon /> Pairing Management</CardTitle>
-                <CardDescription>Send an invitation to another user to pair up.</CardDescription>
+                <CardDescription>
+                  {profile?.groupId ? 'Pair up with a member of your group.' : 'Send an invitation to another user to pair up.'}
+                </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
                 {/* Send Invite Form */}
@@ -502,7 +509,7 @@ export default function SettingsPage() {
              </div>
              <Separator />
              <Button variant="destructive" onClick={onLeaveGroup} disabled={isSaving} className="w-full">
-                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LogOutIcon />}
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LogOutIcon className="mr-2 h-4 w-4" />}
                 Leave Group
              </Button>
            </CardContent>
@@ -534,7 +541,7 @@ export default function SettingsPage() {
               <Form {...createGroupForm}>
                 <form onSubmit={createGroupForm.handleSubmit(onCreateGroup)} className="flex items-start gap-2">
                    <FormField control={createGroupForm.control} name="groupName" render={({ field }) => (
-                        <FormItem className="flex-grow"><FormControl><Input placeholder="My Awesome Group" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem className="flex-grow"><FormControl><Input placeholder="My Awesome Group" {...field} /></FormControl><FormMessage /></Item>
                     )} />
                   <Button type="submit" disabled={isSaving}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Create'}</Button>
                 </form>
@@ -578,7 +585,7 @@ export default function SettingsPage() {
                       <FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" placeholder="Enter current password" {...field} /></FormControl><FormDescription>Required only if you want to change your password.</FormDescription><FormMessage /></FormItem>
                   )} />
                   <FormField control={profileForm.control} name="newPassword" render={({ field }) => (
-                      <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormItem>
+                      <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormMessage>
                   )} />
                   <Button type="submit" disabled={isSaving}>
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
