@@ -32,39 +32,17 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-    
-    function getUserData(userId) {
-      return get(/databases/$(database)/documents/users/$(userId)).data;
-    }
-
-    function areInSameGroup(userId1, userId2) {
-      let userData1 = getUserData(userId1);
-      let userData2 = getUserData(userId2);
-      return userData1.groupId != null && userData1.groupId == userData2.groupId;
-    }
-
     // --- New Scalable Rules ---
+    // Temporarily opened for development. Any signed-in user can read/write.
 
-    // User can create and update their own profile. Any signed-in user can read profiles.
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow read, write: if isSignedIn();
     }
     
-    // A user can write to their own task list.
-    // A user can READ a task list if they are the owner OR if they are in the same group.
     match /task_lists/{userId} {
-      allow read: if isOwner(userId) || (isSignedIn() && areInSameGroup(request.auth.uid, userId));
-      allow write: if isOwner(userId);
+      allow read, write: if isSignedIn();
     }
     
-    // Group Rules: Temporarily opened for development.
-    // Any signed-in user can read/write to any group.
-    // TODO: Add stricter, role-based rules back later.
     match /groups/{groupId} {
       allow read, write: if isSignedIn();
     }
