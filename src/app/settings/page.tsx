@@ -477,15 +477,10 @@ export default function SettingsPage() {
             const senderProfile = senderProfileSnap.data() as UserProfile;
 
             // Check for group conflict
-            if (profile.groupId && profile.groupId !== senderProfile.groupId) {
-                // Conflict: Receiver is in a group, sender is not or in a different one.
+            if (profile.groupId !== senderProfile.groupId) {
+                // Conflict: Groups are different, or one is in a group and the other isn't.
                 setGroupConflict({ invitation, senderProfile });
                 setIsSaving(false); // Stop here, wait for user choice from dialog
-                return;
-            } else if (senderProfile.groupId && !profile.groupId) {
-                 // Conflict: Sender is in a group, receiver is not.
-                setGroupConflict({ invitation, senderProfile });
-                setIsSaving(false);
                 return;
             }
             // No conflict, proceed directly
@@ -701,7 +696,7 @@ export default function SettingsPage() {
                         You and {senderProfile.displayName} are in different groups. To pair up, you need to be in the same group. Please choose an option:
                     </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="flex-col gap-2">
+                <AlertDialogFooter className="flex-col sm:flex-col sm:gap-2">
                     {receiverIsInGroup && (
                         <Button variant="outline" onClick={() => executePairing(invitation, 'leave')}>
                             Leave My Group & Pair
@@ -717,7 +712,7 @@ export default function SettingsPage() {
                             Invite {senderProfile.displayName} to My Group & Pair
                         </Button>
                     )}
-                    <AlertDialogCancel onClick={() => setGroupConflict(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -779,3 +774,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
