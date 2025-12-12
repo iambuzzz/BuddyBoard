@@ -195,24 +195,26 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardPro
 
     const getButtonThemeClass = (theme: string) => {
         switch(theme) {
-            case 'riya': return 'bg-purple-500 hover:bg-purple-600 text-white';
-            case 'naitik': return 'bg-cyan-500 hover:bg-cyan-600 text-white';
-            case 'ambuj': return 'bg-emerald-500 hover:bg-emerald-600 text-white';
-            default: return 'bg-purple-500 hover:bg-purple-600 text-white';
+            case 'riya': return 'bg-[--riya-primary] hover:bg-purple-500 text-white';
+            case 'naitik': return 'bg-[--naitik-primary] hover:bg-cyan-500 text-white';
+            case 'ambuj': return 'bg-[--ambuj-primary] hover:bg-emerald-500 text-white';
+            default: return 'bg-[--riya-primary] hover:bg-purple-500 text-white';
         }
     }
     
     return (
-        <div className="h-full w-full flex flex-col items-center justify-center">
-            <Button
-                onClick={() => setShowBack(p => !p)}
-                className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 mb-4 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
-                aria-pressed={showBack}
-            >
-                <RefreshCw className="h-4 w-4" />
-                <span>Switch to {hiddenUser.profile.displayName}</span>
-            </Button>
-            <div className="app-flip-shell w-full h-[calc(100%-4rem)]">
+        <div className="flex flex-col h-full">
+            <div className="flex justify-center mb-4">
+                 <Button
+                    onClick={() => setShowBack(p => !p)}
+                    className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
+                    aria-pressed={showBack}
+                >
+                    <RefreshCw className="h-4 w-4" />
+                    <span>Switch to {hiddenUser.profile.displayName}</span>
+                </Button>
+            </div>
+            <div className="app-flip-shell flex-grow">
                 <div className={`app-flip-card ${showBack ? 'is-back' : ''}`}>
                     <div className="app-face front" style={{ pointerEvents: showBack ? 'none' : 'auto' }}>
                        <TaskCard userId={primaryUser.profile.uid} userProfile={primaryUser.profile} userState={primaryUser.state} />
