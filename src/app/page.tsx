@@ -176,7 +176,18 @@ const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile })
         );
     }
 
-    return <TaskCard userState={userState} userProfile={profile} userId={userId} />;
+    return (
+        <div className="flex flex-col h-full">
+            <div className="flex justify-end items-center mb-4">
+                 <div className="w-40 flex justify-end">
+                    <ActionButtons />
+                </div>
+            </div>
+            <div className="flex-grow h-full">
+                <TaskCard userState={userState} userProfile={profile} userId={userId} />
+            </div>
+        </div>
+    );
 };
 
 type PairedCardProps = {
@@ -447,21 +458,28 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                     const member = item as UserProfile;
                                     const userState = userStates[member.uid];
                                     return (
-                                        <div className="h-full w-full">
-                                            {userState ? (
-                                                <TaskCard 
-                                                    userState={userState}
-                                                    userProfile={member}
-                                                    userId={member.uid}
-                                                />
-                                            ) : (
-                                                <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
-                                                    <div className="flex flex-col items-center gap-4 text-slate-500">
-                                                        <Loader2 className="h-6 w-6 animate-spin" />
-                                                        <p>Loading {member.displayName}'s tasks...</p>
-                                                    </div>
+                                        <div className="h-full w-full flex flex-col">
+                                            <div className="flex justify-end items-center mb-4">
+                                                 <div className="w-40 flex justify-end">
+                                                    <ActionButtons />
                                                 </div>
-                                            )}
+                                            </div>
+                                            <div className="flex-grow">
+                                                {userState ? (
+                                                    <TaskCard 
+                                                        userState={userState}
+                                                        userProfile={member}
+                                                        userId={member.uid}
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
+                                                        <div className="flex flex-col items-center gap-4 text-slate-500">
+                                                            <Loader2 className="h-6 w-6 animate-spin" />
+                                                            <p>Loading {member.displayName}'s tasks...</p>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         </div>
                                     );
                                 })()
@@ -499,7 +517,6 @@ export default function Home() {
   
   const partnerId = profile.pairedWith;
   const groupId = profile.groupId;
-  const isSoloView = !partnerId && !groupId;
 
   const renderContent = () => {
     if (groupId) {
@@ -508,12 +525,10 @@ export default function Home() {
     if (partnerId) {
       return <PairedView currentUserId={user.uid} partnerId={partnerId} />;
     }
+    // Solo View
     return (
       <div className="h-full w-full flex items-center justify-center p-4">
         <div className="w-full max-w-4xl h-full relative">
-            <div className="absolute top-0 right-0 z-10">
-                <ActionButtons />
-            </div>
             <SoloView userId={user.uid} profile={profile} />
         </div>
       </div>
