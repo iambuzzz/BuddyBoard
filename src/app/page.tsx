@@ -16,7 +16,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { AnimatePresence, motion } from 'framer-motion';
 
 const ActionButtons = () => {
   const auth = useAuth();
@@ -180,9 +179,55 @@ const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile })
     return <TaskCard userState={userState} userProfile={profile} userId={userId} />;
 };
 
+type PairedCardProps = {
+  user1: { profile: UserProfile; state: UserState };
+  user2: { profile: UserProfile; state: UserState };
+  isCurrentUserThePrimary: boolean;
+};
+
+const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardProps) => {
+    const [showBack, setShowBack] = useState(!isCurrentUserThePrimary);
+    const primaryUser = isCurrentUserThePrimary ? user1 : user2;
+    const secondaryUser = isCurrentUserThePrimary ? user2 : user1;
+
+    const visibleUser = showBack ? secondaryUser : primaryUser;
+    const hiddenUser = showBack ? primaryUser : secondaryUser;
+
+    const getButtonThemeClass = (theme: string) => {
+        switch(theme) {
+            case 'riya': return 'bg-purple-500 hover:bg-purple-600 text-white';
+            case 'naitik': return 'bg-cyan-500 hover:bg-cyan-600 text-white';
+            case 'ambuj': return 'bg-emerald-500 hover:bg-emerald-600 text-white';
+            default: return 'bg-purple-500 hover:bg-purple-600 text-white';
+        }
+    }
+    
+    return (
+        <div className="h-full w-full max-w-4xl mx-auto flex flex-col items-center px-4">
+             <Button
+                onClick={() => setShowBack(p => !p)}
+                className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 mb-4 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
+                aria-pressed={showBack}
+            >
+                <RefreshCw className="h-4 w-4" />
+                <span>Switch to {hiddenUser.profile.displayName}</span>
+            </Button>
+            <div className="app-flip-shell w-full h-[calc(100%-4rem)]">
+                <div className={`app-flip-card ${showBack ? 'is-back' : ''}`}>
+                    <div className="app-face front" style={{ pointerEvents: showBack ? 'none' : 'auto' }}>
+                       <TaskCard userId={primaryUser.profile.uid} userProfile={primaryUser.profile} userState={primaryUser.state} />
+                    </div>
+                    <div className="app-face back" style={{ pointerEvents: showBack ? 'auto' : 'none' }}>
+                        <TaskCard userId={secondaryUser.profile.uid} userProfile={secondaryUser.profile} userState={secondaryUser.state} />
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
+
 const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partnerId: string }) => {
     const firestore = useFirestore();
-    const [showBack, setShowBack] = useState(false);
     const [currentUserData, setCurrentUserData] = useState<{profile: UserProfile, state: UserState} | null>(null);
     const [partnerData, setPartnerData] = useState<{profile: UserProfile, state: UserState} | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -234,48 +279,22 @@ const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partn
     if (isLoading || !currentUserData || !partnerData) {
          return <LoadingScreen />;
     }
-
-    const userToSwitch = showBack ? currentUserData.profile.displayName : partnerData.profile.displayName;
-    const themeForSwitchButton = (showBack ? partnerData.profile.cardTheme : currentUserData.profile.cardTheme) || 'riya';
-
-
-    const getButtonThemeClass = (theme: string) => {
-        switch(theme) {
-            case 'riya': return 'bg-purple-500 hover:bg-purple-600 text-white';
-            case 'naitik': return 'bg-cyan-500 hover:bg-cyan-600 text-white';
-            case 'ambuj': return 'bg-emerald-500 hover:bg-emerald-600 text-white';
-            default: return 'bg-purple-500 hover:bg-purple-600 text-white';
-        }
-    }
     
     return (
-        <div className="h-full w-full max-w-4xl mx-auto flex flex-col items-center px-4">
-             <Button
-                onClick={() => setShowBack(p => !p)}
-                className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 mb-4 ${getButtonThemeClass(themeForSwitchButton)}`}
-                aria-pressed={showBack}
-            >
-                <RefreshCw className="h-4 w-4" />
-                <span>Switch to {userToSwitch}</span>
-            </Button>
-            <div className="app-flip-shell w-full h-[calc(100%-4rem)]">
-                <div className={`app-flip-card ${showBack ? 'is-back' : ''}`}>
-                    <div className="app-face front" style={{ pointerEvents: showBack ? 'none' : 'auto' }}>
-                       <TaskCard userId={currentUserData.profile.uid} userProfile={currentUserData.profile} userState={currentUserData.state} />
-                    </div>
-                    <div className="app-face back" style={{ pointerEvents: showBack ? 'auto' : 'none' }}>
-                        <TaskCard userId={partnerData.profile.uid} userProfile={partnerData.profile} userState={partnerData.state} />
-                    </div>
-                </div>
-            </div>
-        </div>
+        <PairedTaskCard
+            user1={currentUserData}
+            user2={partnerData}
+            isCurrentUserThePrimary={true}
+        />
     );
 };
 
 
+type GroupDisplayItem = UserProfile | [UserProfile, UserProfile];
+
 const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId: string }) => {
     const firestore = useFirestore();
-    const [members, setMembers] = useState<UserProfile[]>([]);
+    const [displayItems, setDisplayItems] = useState<GroupDisplayItem[]>([]);
     const [userStates, setUserStates] = useState<Record<string, UserState | null>>({});
     const [isLoading, setIsLoading] = useState(true);
 
@@ -295,7 +314,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             const memberUids = Object.keys(groupData.members);
     
             if (memberUids.length === 0) {
-                setMembers([]);
+                setDisplayItems([]);
                 setUserStates({});
                 setIsLoading(false);
                 return;
@@ -303,16 +322,42 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
     
             const usersQuery = query(collection(firestore, 'users'), where('uid', 'in', memberUids));
             const usersSnap = await getDocs(usersQuery);
-            const fetchedMembers = usersSnap.docs.map(d => d.data() as UserProfile);
+            const members = usersSnap.docs.map(d => d.data() as UserProfile);
 
-            fetchedMembers.sort((a, b) => {
-                if (a.uid === currentUserId) return -1;
-                if (b.uid === currentUserId) return 1;
-                return a.displayName.localeCompare(b.displayName);
+            // Process members into pairs and singles
+            const processed = new Set<string>();
+            const items: GroupDisplayItem[] = [];
+            const memberMap = new Map(members.map(m => [m.uid, m]));
+
+            for (const member of members) {
+                if (processed.has(member.uid)) continue;
+
+                if (member.pairedWith && memberMap.has(member.pairedWith) && memberMap.get(member.pairedWith)!.pairedWith === member.uid) {
+                    const partner = memberMap.get(member.pairedWith)!;
+                    items.push([member, partner]);
+                    processed.add(member.uid);
+                    processed.add(partner.uid);
+                } else {
+                    items.push(member);
+                    processed.add(member.uid);
+                }
+            }
+
+            // Sort to put the current user's card first
+            items.sort((a, b) => {
+                const aIsCurrentUser = Array.isArray(a) ? a.some(m => m.uid === currentUserId) : a.uid === currentUserId;
+                const bIsCurrentUser = Array.isArray(b) ? b.some(m => m.uid === currentUserId) : b.uid === currentUserId;
+                if (aIsCurrentUser) return -1;
+                if (bIsCurrentUser) return 1;
+
+                const nameA = Array.isArray(a) ? a[0].displayName : a.displayName;
+                const nameB = Array.isArray(b) ? b[0].displayName : b.displayName;
+                return nameA.localeCompare(nameB);
             });
-            setMembers(fetchedMembers);
+            
+            setDisplayItems(items);
 
-            const unsubscribers = fetchedMembers.map(member => {
+            const unsubscribers = members.map(member => {
                 const taskListRef = doc(firestore, 'task_lists', member.uid);
                 return onSnapshot(taskListRef, (taskSnap) => {
                     setUserStates(prev => ({
@@ -322,7 +367,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                 });
             });
 
-             if(fetchedMembers.length > 0) {
+             if(members.length > 0) {
                 setIsLoading(false);
             }
     
@@ -346,7 +391,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
         );
     }
     
-    if (members.length === 0) {
+    if (displayItems.length === 0) {
         return (
             <div className="h-full w-full flex items-center justify-center">
                 <p>This group has no members.</p>
@@ -356,26 +401,60 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
 
     return (
         <div className="w-full h-full space-y-8 overflow-y-auto pb-8 snap-y snap-mandatory">
-            {members.map(member => {
-                const userState = userStates[member.uid];
-                return (
-                    <div key={member.uid} className="h-full w-full max-w-4xl mx-auto flex-shrink-0 snap-center px-4 flex items-center">
-                        {userState ? (
-                            <TaskCard 
-                                userState={userState}
-                                userProfile={member}
-                                userId={member.uid}
-                            />
-                        ) : (
-                            <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
-                               <div className="flex flex-col items-center gap-4 text-slate-500">
-                                    <Loader2 className="h-6 w-6 animate-spin" />
-                                    <p>Loading {member.displayName}'s tasks...</p>
+            {displayItems.map((item, index) => {
+                const isPair = Array.isArray(item);
+                if (isPair) {
+                    const [user1, user2] = item;
+                    const state1 = userStates[user1.uid];
+                    const state2 = userStates[user2.uid];
+                    const isCurrentUserInPair = user1.uid === currentUserId || user2.uid === currentUserId;
+                    const isCurrentUserPrimary = isCurrentUserInPair && user1.uid === currentUserId;
+
+                    if (!state1 || !state2) {
+                        return (
+                             <div key={user1.uid} className="h-full w-full max-w-4xl mx-auto flex-shrink-0 snap-center px-4 flex items-center">
+                                <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
+                                   <div className="flex flex-col items-center gap-4 text-slate-500">
+                                        <Loader2 className="h-6 w-6 animate-spin" />
+                                        <p>Loading {user1.displayName} & {user2.displayName}'s tasks...</p>
+                                    </div>
                                 </div>
                             </div>
-                        )}
-                    </div>
-                );
+                        )
+                    }
+                    return (
+                        <div key={user1.uid} className="h-full w-full flex-shrink-0 snap-center flex items-center">
+                             <PairedTaskCard
+                                user1={{ profile: user1, state: state1 }}
+                                user2={{ profile: user2, state: state2 }}
+                                isCurrentUserThePrimary={isCurrentUserPrimary}
+                            />
+                        </div>
+                    )
+                } else {
+                    const member = item;
+                    const userState = userStates[member.uid];
+                    return (
+                        <div key={member.uid} className="h-full w-full flex-shrink-0 snap-center flex items-center">
+                            <div className="w-full max-w-4xl mx-auto px-4">
+                                {userState ? (
+                                    <TaskCard 
+                                        userState={userState}
+                                        userProfile={member}
+                                        userId={member.uid}
+                                    />
+                                ) : (
+                                    <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl aspect-[9/16] max-h-[80vh]">
+                                    <div className="flex flex-col items-center gap-4 text-slate-500">
+                                            <Loader2 className="h-6 w-6 animate-spin" />
+                                            <p>Loading {member.displayName}'s tasks...</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    );
+                }
             })}
         </div>
     );
@@ -383,7 +462,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
 
 
 export default function Home() {
-  const { user, profile, isLoading: isUserLoading, refetch } = useUser();
+  const { user, profile, isLoading: isUserLoading } = useUser();
   const router = useRouter();
   
   useEffect(() => {
@@ -433,3 +512,5 @@ export default function Home() {
     </main>
   );
 }
+
+    
