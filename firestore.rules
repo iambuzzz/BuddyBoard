@@ -35,6 +35,16 @@ service cloud.firestore {
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
+    
+    function getUserData(userId) {
+      return get(/databases/$(database)/documents/users/$(userId)).data;
+    }
+
+    function areInSameGroup(userId1, userId2) {
+      let userData1 = getUserData(userId1);
+      let userData2 = getUserData(userId2);
+      return userData1.groupId != null && userData1.groupId == userData2.groupId;
+    }
 
     // --- New Scalable Rules ---
 
@@ -45,9 +55,11 @@ service cloud.firestore {
       allow update: if isOwner(userId);
     }
     
-    // User can create and manage their own private task list.
+    // A user can write to their own task list.
+    // A user can READ a task list if they are the owner OR if they are in the same group.
     match /task_lists/{userId} {
-      allow read, write: if isOwner(userId);
+      allow read: if isOwner(userId) || (isSignedIn() && areInSameGroup(request.auth.uid, userId));
+      allow write: if isOwner(userId);
     }
     
     // Group Rules: Temporarily opened for development.
