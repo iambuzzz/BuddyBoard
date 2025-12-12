@@ -36,21 +36,6 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    function isGroupMember(groupId) {
-      return isSignedIn() && get(/databases/$(database)/documents/groups/$(groupId)).data.members[request.auth.uid] != null;
-    }
-
-    function isGroupAdmin(groupId) {
-      return isSignedIn() && get(/databases/$(database)/documents/groups/$(groupId)).data.members[request.auth.uid] == 'admin';
-    }
-    
-    function isNewGroupAdmin() {
-      // Check if the user is making themselves the admin in a new group creation.
-      return resource == null 
-        && request.resource.data.members[request.auth.uid] == 'admin'
-        && request.resource.data.members.size() == 1;
-    }
-
     // --- New Scalable Rules ---
 
     // User can create and update their own profile. Any signed-in user can read profiles.
@@ -65,13 +50,11 @@ service cloud.firestore {
       allow read, write: if isOwner(userId);
     }
     
-    // Group Rules:
+    // Group Rules: Temporarily opened for development.
+    // Any signed-in user can read/write to any group.
+    // TODO: Add stricter, role-based rules back later.
     match /groups/{groupId} {
-      allow create: if isSignedIn() && isNewGroupAdmin();
-      allow read: if isGroupMember(groupId);
-      // An admin can update anything. A non-member can join as a 'member'.
-      allow update: if isGroupAdmin(groupId) || (isSignedIn() && request.resource.data.members[request.auth.uid] == 'member');
-      allow delete: if isGroupAdmin(groupId);
+      allow read, write: if isSignedIn();
     }
 
     // --- Legacy Read-Only Rules ---
