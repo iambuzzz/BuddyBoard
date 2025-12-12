@@ -18,7 +18,7 @@
  *
  * Key Security Decisions:
  * - User data is strictly owned: A user can only write to their own /users/{userId} and /task_lists/{userId} documents.
- * - Group write access is role-based: Only 'admin' members of a group can modify the group document.
+ * - Group write access is role-based: Only 'admin' members of a group can modify the group document, with an exception for users joining.
  * - Group read access: Any member of a group can read the group document.
  * - Invitation codes are part of the group document and are thus protected by the same read rules.
  */
@@ -46,6 +46,15 @@ service cloud.firestore {
     function isNewGroupAdmin(groupId) {
       return isSignedIn() && request.resource.data.members[request.auth.uid] == 'admin';
     }
+    
+    function isJoiningGroupAsMember() {
+      // Check if the user is adding themselves to the members map with the 'member' role.
+      // Assumes the user is not already in the group.
+      let existingMembers = resource.data.members;
+      let newMembers = request.resource.data.members;
+      // Ensure only one new member is being added, and it is the current user.
+      return newMembers.size() == existingMembers.size() + 1 && newMembers[request.auth.uid] == 'member';
+    }
 
     // --- New Scalable Rules ---
 
@@ -62,14 +71,14 @@ service cloud.firestore {
     }
     
     // Group Rules:
-    // - Anyone signed in can try to create a group.
+    // - Anyone signed in can try to create a group, but they must make themselves admin.
     // - Admins can update. Users can join (update) if they are adding themselves as a member.
     // - Only members can read a group's details.
     // - Only admins can delete a group.
     match /groups/{groupId} {
       allow create: if isSignedIn() && isNewGroupAdmin(groupId);
       allow read: if isGroupMember(groupId);
-      allow update: if isGroupAdmin(groupId) || (isSignedIn() && request.resource.data.members[request.auth.uid] == 'member');
+      allow update: if isGroupAdmin(groupId) || isJoiningGroupAsMember();
       allow delete: if isGroupAdmin(groupId);
     }
 
