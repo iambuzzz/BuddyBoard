@@ -62,13 +62,14 @@ service cloud.firestore {
     
     // Group Rules:
     // - Anyone signed in can try to create a group.
-    // - Only admins can update a group.
+    // - Admins can update. Users can join (update) if they are adding themselves as a member.
     // - Only members can read a group's details.
     // - Only admins can delete a group.
     match /groups/{groupId} {
       allow create: if isSignedIn() && isNewGroupAdmin(groupId);
       allow read: if isGroupMember(groupId);
-      allow update: if isGroupAdmin(groupId);
+      allow update: if isGroupAdmin(groupId) || 
+                       (isSignedIn() && request.resource.data.members[request.auth.uid] == 'member');
       allow delete: if isGroupAdmin(groupId);
     }
 
