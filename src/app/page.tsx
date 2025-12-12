@@ -5,7 +5,7 @@
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Loader2, LogOut, Settings, RefreshCw } from 'lucide-react';
+import { Loader2, LogOut, Settings, RefreshCw, ArrowUp } from 'lucide-react';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
@@ -113,7 +113,7 @@ const CreateProfile = () => {
 };
 
 
-const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile }) => {
+const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: string; profile: UserProfile, isFirstCardInGroup?: boolean }) => {
     const firestore = useFirestore();
     const [userState, setUserState] = useState<UserState | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -126,7 +126,13 @@ const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile })
             router.push('/login');
         }
     };
-
+    
+    const handleGoToTop = () => {
+        const listEl = document.querySelector('.snap-y');
+        if (listEl) {
+            listEl.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
 
     useEffect(() => {
         if (!firestore) return;
@@ -163,9 +169,15 @@ const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile })
                     </Link>
                  </div>
                  <div className="w-40 flex justify-end">
-                    <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
-                        <LogOut className="h-5 w-5" />
-                    </Button>
+                    {isFirstCardInGroup ? (
+                        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
+                            <LogOut className="h-5 w-5" />
+                        </Button>
+                    ) : (
+                         <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
+                            <ArrowUp className="h-5 w-5" />
+                        </Button>
+                    )}
                  </div>
             </div>
             <div className="flex-grow h-full">
@@ -179,9 +191,10 @@ type PairedCardProps = {
   user1: { profile: UserProfile; state: UserState };
   user2: { profile: UserProfile; state: UserState };
   isCurrentUserThePrimary: boolean;
+  isFirstCardInGroup?: boolean;
 };
 
-const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardProps) => {
+const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGroup = true }: PairedCardProps) => {
     const [showBack, setShowBack] = useState(!isCurrentUserThePrimary);
     const primaryUser = isCurrentUserThePrimary ? user1 : user2;
     const secondaryUser = isCurrentUserThePrimary ? user2 : user1;
@@ -193,6 +206,13 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardPro
         if (auth) {
             await signOut(auth);
             router.push('/login');
+        }
+    };
+    
+    const handleGoToTop = () => {
+        const listEl = document.querySelector('.snap-y');
+        if (listEl) {
+            listEl.scrollTo({ top: 0, behavior: 'smooth' });
         }
     };
 
@@ -227,9 +247,15 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardPro
                     <span>Switch to {hiddenUser.profile.displayName}</span>
                 </Button>
                 <div className="w-40 flex justify-end">
-                    <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
-                        <LogOut className="h-5 w-5" />
-                    </Button>
+                    {isFirstCardInGroup ? (
+                        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
+                            <LogOut className="h-5 w-5" />
+                        </Button>
+                     ) : (
+                         <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
+                            <ArrowUp className="h-5 w-5" />
+                        </Button>
+                    )}
                 </div>
             </div>
             <div className="app-flip-shell flex-grow">
@@ -440,6 +466,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             {displayItems.map((item, index) => {
                 const isPair = Array.isArray(item);
                 const key = isPair ? item[0].uid : item.uid;
+                const isFirstCard = index === 0;
 
                 return (
                     <div key={key} className="h-screen w-full snap-start flex items-center justify-center p-4">
@@ -447,12 +474,11 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                             {isPair ? (
                                 (() => {
                                     const [user1, user2] = item;
-                                    const state1 = userStates[user1.uid];
-                                    const state2 = userStates[user2.uid];
                                     
                                     // This logic ensures user1 is always the current user if they are in the pair.
                                     const primaryUser = user1.uid === currentUserId ? user1 : (user2.uid === currentUserId ? user2 : user1);
                                     const secondaryUser = primaryUser.uid === user1.uid ? user2 : user1;
+                                    
                                     const primaryState = userStates[primaryUser.uid];
                                     const secondaryState = userStates[secondaryUser.uid];
                                     
@@ -466,11 +492,15 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                             </div>
                                         );
                                     }
+                                    
+                                    const isCurrentUserInThisPair = primaryUser.uid === currentUserId || secondaryUser.uid === currentUserId;
+
                                     return (
                                         <PairedTaskCard
                                             user1={{ profile: primaryUser, state: primaryState }}
                                             user2={{ profile: secondaryUser, state: secondaryState }}
-                                            isCurrentUserThePrimary={true}
+                                            isCurrentUserThePrimary={isCurrentUserInThisPair}
+                                            isFirstCardInGroup={isFirstCard}
                                         />
                                     );
                                 })()
@@ -484,6 +514,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                                 <SoloView 
                                                     userId={member.uid}
                                                     profile={member}
+                                                    isFirstCardInGroup={isFirstCard}
                                                 />
                                             ) : (
                                                 <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
