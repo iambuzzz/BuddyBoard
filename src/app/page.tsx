@@ -17,41 +17,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
-const ActionButtons = () => {
-  const auth = useAuth();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    if (auth) {
-      await signOut(auth);
-      router.push('/login');
-    }
-  };
-
-  return (
-    <div className="flex items-center gap-2 z-50">
-      <Link href="/settings">
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-slate-600 hover:bg-slate-100"
-          aria-label="Settings"
-        >
-          <Settings className="h-5 w-5" />
-        </Button>
-      </Link>
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={handleLogout}
-        className="text-slate-600 hover:bg-slate-100"
-        aria-label="Logout"
-      >
-        <LogOut className="h-5 w-5" />
-      </Button>
-    </div>
-  );
-};
 
 const LoadingScreen = () => (
   <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]">
@@ -151,6 +116,16 @@ const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile })
     const firestore = useFirestore();
     const [userState, setUserState] = useState<UserState | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const auth = useAuth();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        if (auth) {
+            await signOut(auth);
+            router.push('/login');
+        }
+    };
+
 
     useEffect(() => {
         if (!firestore) return;
@@ -178,10 +153,19 @@ const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile })
 
     return (
         <div className="flex flex-col h-full">
-            <div className="flex justify-end items-center mb-4">
+            <div className="flex justify-between items-center mb-4">
+                 <div className="w-40 flex justify-start">
+                    <Link href="/settings">
+                        <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
+                            <Settings className="h-5 w-5" />
+                        </Button>
+                    </Link>
+                 </div>
                  <div className="w-40 flex justify-end">
-                    <ActionButtons />
-                </div>
+                    <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
+                        <LogOut className="h-5 w-5" />
+                    </Button>
+                 </div>
             </div>
             <div className="flex-grow h-full">
                 <TaskCard userState={userState} userProfile={profile} userId={userId} />
@@ -200,6 +184,16 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardPro
     const [showBack, setShowBack] = useState(!isCurrentUserThePrimary);
     const primaryUser = isCurrentUserThePrimary ? user1 : user2;
     const secondaryUser = isCurrentUserThePrimary ? user2 : user1;
+    const auth = useAuth();
+    const router = useRouter();
+
+
+    const handleLogout = async () => {
+        if (auth) {
+            await signOut(auth);
+            router.push('/login');
+        }
+    };
 
     const visibleUser = showBack ? secondaryUser : primaryUser;
     const hiddenUser = showBack ? primaryUser : secondaryUser;
@@ -216,7 +210,13 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardPro
     return (
         <div className="flex flex-col h-full">
             <div className="flex justify-between items-center mb-4">
-                 <div className="w-40"></div>
+                 <div className="w-40 flex justify-start">
+                     <Link href="/settings">
+                        <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
+                            <Settings className="h-5 w-5" />
+                        </Button>
+                    </Link>
+                 </div>
                  <Button
                     onClick={() => setShowBack(p => !p)}
                     className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
@@ -226,7 +226,9 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardPro
                     <span>Switch to {hiddenUser.profile.displayName}</span>
                 </Button>
                 <div className="w-40 flex justify-end">
-                    <ActionButtons />
+                    <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
+                        <LogOut className="h-5 w-5" />
+                    </Button>
                 </div>
             </div>
             <div className="app-flip-shell flex-grow">
@@ -318,6 +320,15 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
     const [displayItems, setDisplayItems] = useState<GroupDisplayItem[]>([]);
     const [userStates, setUserStates] = useState<Record<string, UserState | null>>({});
     const [isLoading, setIsLoading] = useState(true);
+    const auth = useAuth();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        if (auth) {
+            await signOut(auth);
+            router.push('/login');
+        }
+    };
 
     useEffect(() => {
         if (!firestore || !groupId) return;
@@ -459,10 +470,19 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                     const userState = userStates[member.uid];
                                     return (
                                         <div className="h-full w-full flex flex-col">
-                                            <div className="flex justify-end items-center mb-4">
+                                            <div className="flex justify-between items-center mb-4">
+                                                 <div className="w-40 flex justify-start">
+                                                    <Link href="/settings">
+                                                        <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
+                                                            <Settings className="h-5 w-5" />
+                                                        </Button>
+                                                    </Link>
+                                                 </div>
                                                  <div className="w-40 flex justify-end">
-                                                    <ActionButtons />
-                                                </div>
+                                                    <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
+                                                        <LogOut className="h-5 w-5" />
+                                                    </Button>
+                                                 </div>
                                             </div>
                                             <div className="flex-grow">
                                                 {userState ? (
@@ -543,3 +563,5 @@ export default function Home() {
     </main>
   );
 }
+
+    
