@@ -415,52 +415,71 @@ export default function SettingsPage() {
     } finally { setIsSaving(false); }
   }
 
-    const executePairing = useCallback(async (invitation: PairInvitation, resolution: 'leave' | 'join' | 'invite' | 'none' = 'none') => {
-        if (!user || !firestore || !profile) return;
-        setIsSaving(true);
+  const executePairing = useCallback(async (invitation: PairInvitation, resolution: 'leave' | 'join' | 'invite' | 'none' = 'none') => {
+    if (!user || !firestore || !profile) return;
+    setIsSaving(true);
+
+    const batch = writeBatch(firestore);
+    const invRef = doc(firestore, 'pair_invitations', invitation.id);
+    const senderRef = doc(firestore, 'users', invitation.senderId);
+    const receiverRef = doc(firestore, 'users', invitation.receiverId);
     
-        const batch = writeBatch(firestore);
-        const invRef = doc(firestore, 'pair_invitations', invitation.id);
-        const senderRef = doc(firestore, 'users', invitation.senderId);
-        const receiverRef = doc(firestore, 'users', invitation.receiverId);
-        
-        try {
-            if (resolution === 'leave') {
-                // Both users leave their groups to pair.
-                batch.update(receiverRef, { groupId: null });
-                batch.update(senderRef, { groupId: null });
-            } else if (resolution === 'join') {
-                // Receiver leaves their group and joins sender's group
-                const senderDoc = await getDoc(senderRef);
-                const senderProfile = senderDoc.data() as UserProfile;
-                if (senderProfile.groupId) {
-                    batch.update(receiverRef, { groupId: senderProfile.groupId });
-                    batch.update(doc(firestore, 'groups', senderProfile.groupId), { [`members.${user.uid}`]: 'member' });
-                }
-            } else if (resolution === 'invite') {
-                // Sender joins receiver's group
-                if (profile.groupId) {
-                    batch.update(senderRef, { groupId: profile.groupId });
-                    batch.update(doc(firestore, 'groups', profile.groupId), { [`members.${invitation.senderId}`]: 'member' });
+    try {
+        const senderDoc = await getDoc(senderRef);
+        const senderProfile = senderDoc.data() as UserProfile;
+        const receiverProfile = profile; // The current user is the receiver
+
+        // Helper to remove a user from their current group if they are in one
+        const leaveCurrentGroup = async (userProfile: UserProfile, userId: string) => {
+            if (userProfile.groupId) {
+                const oldGroupRef = doc(firestore, 'groups', userProfile.groupId);
+                const oldGroupDoc = await getDoc(oldGroupRef);
+                if (oldGroupDoc.exists()) {
+                    const oldGroupData = oldGroupDoc.data() as Group;
+                    const newMembers = { ...oldGroupData.members };
+                    delete newMembers[userId];
+                    batch.update(oldGroupRef, { members: newMembers });
                 }
             }
-    
-            // Finalize pairing
-            batch.update(invRef, { status: 'accepted' });
-            batch.update(senderRef, { pairedWith: invitation.receiverId });
-            batch.update(receiverRef, { pairedWith: invitation.senderId });
-    
-            await batch.commit();
-            toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` });
-            refetch();
-        } catch (e: any) {
-            console.error("Error executing pairing:", e);
-            toast({ title: 'Error', description: 'Could not complete pairing action.', variant: 'destructive' });
-        } finally {
-            setIsSaving(false);
-            setGroupConflict(null);
+        };
+
+        if (resolution === 'leave') {
+            await leaveCurrentGroup(senderProfile, invitation.senderId);
+            await leaveCurrentGroup(receiverProfile, invitation.receiverId);
+            batch.update(senderRef, { groupId: null });
+            batch.update(receiverRef, { groupId: null });
+
+        } else if (resolution === 'join') { // Receiver joins Sender's group
+            if (senderProfile.groupId) {
+                await leaveCurrentGroup(receiverProfile, invitation.receiverId);
+                batch.update(receiverRef, { groupId: senderProfile.groupId });
+                batch.update(doc(firestore, 'groups', senderProfile.groupId), { [`members.${invitation.receiverId}`]: 'member' });
+            }
+        } else if (resolution === 'invite') { // Sender joins Receiver's group
+            if (receiverProfile.groupId) {
+                await leaveCurrentGroup(senderProfile, invitation.senderId);
+                batch.update(senderRef, { groupId: receiverProfile.groupId });
+                batch.update(doc(firestore, 'groups', receiverProfile.groupId), { [`members.${invitation.senderId}`]: 'member' });
+            }
         }
-    }, [user, firestore, profile, refetch, toast]);
+
+        // Finalize pairing
+        batch.update(invRef, { status: 'accepted' });
+        batch.update(senderRef, { pairedWith: invitation.receiverId });
+        batch.update(receiverRef, { pairedWith: invitation.senderId });
+
+        await batch.commit();
+        toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` });
+        refetch();
+
+    } catch (e: any) {
+        console.error("Error executing pairing:", e);
+        toast({ title: 'Error', description: 'Could not complete pairing action.', variant: 'destructive' });
+    } finally {
+        setIsSaving(false);
+        setGroupConflict(null);
+    }
+}, [user, firestore, profile, refetch, toast]);
 
 
     async function handleInvitationAction(invitation: PairInvitation, action: 'accept' | 'decline' | 'cancel') {
@@ -696,7 +715,7 @@ export default function SettingsPage() {
                         You and {senderProfile.displayName} are in different groups. To pair up, you need to be in the same group. Please choose an option:
                     </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="flex-col sm:flex-col sm:space-y-2 sm:items-stretch w-full">
+                <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:items-stretch w-full">
                     {/* This option is always available if there's a conflict */}
                     <Button variant="outline" onClick={() => executePairing(invitation, 'leave')}>
                         Both Leave Groups &amp; Pair
