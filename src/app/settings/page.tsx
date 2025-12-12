@@ -235,39 +235,96 @@ export default function SettingsPage() {
   
   // --- Group Handlers ---
   async function onCreateGroup(data: GroupCreateValues) {
-    if (!user || !firestore) return;
+    if (!user || !firestore || !profile) return;
     setIsSaving(true);
-    const batch = writeBatch(firestore);
-    const newGroupId = doc(collection(firestore, 'groups')).id;
-    const newGroupRef = doc(firestore, 'groups', newGroupId);
-    const userProfileRef = doc(firestore, 'users', user.uid);
-    const newGroup: Omit<Group, 'id'> = { name: data.groupName, invitationCode: short.generate(), createdBy: user.uid, members: { [user.uid]: 'admin' } };
-    batch.set(newGroupRef, newGroup);
-    batch.update(userProfileRef, { groupId: newGroupId });
-    try { await batch.commit(); toast({ title: 'Group Created!', description: `Successfully created ${data.groupName}.`}); refetch(); } 
-    catch (error: any) { toast({ title: 'Error', description: 'Could not create group.', variant: 'destructive' }); } 
-    finally { setIsSaving(false); }
+
+    try {
+        const batch = writeBatch(firestore);
+        const newGroupId = doc(collection(firestore, 'groups')).id;
+        const newGroupRef = doc(firestore, 'groups', newGroupId);
+        const userProfileRef = doc(firestore, 'users', user.uid);
+
+        const newMembers: { [uid: string]: 'admin' | 'member' } = { [user.uid]: 'admin' };
+
+        // If the user is paired, add their partner to the group as well
+        if (profile.pairedWith) {
+            newMembers[profile.pairedWith] = 'member';
+            const partnerProfileRef = doc(firestore, 'users', profile.pairedWith);
+            batch.update(partnerProfileRef, { groupId: newGroupId });
+        }
+
+        const newGroup: Omit<Group, 'id'> = {
+            name: data.groupName,
+            invitationCode: short.generate(),
+            createdBy: user.uid,
+            members: newMembers,
+        };
+
+        batch.set(newGroupRef, newGroup);
+        batch.update(userProfileRef, { groupId: newGroupId });
+
+        await batch.commit();
+        toast({ title: 'Group Created!', description: `Successfully created ${data.groupName}.` });
+        refetch();
+    } catch (error: any) {
+        console.error("Error creating group:", error);
+        toast({ title: 'Error', description: 'Could not create group.', variant: 'destructive' });
+    } finally {
+        setIsSaving(false);
+    }
   }
 
   async function onJoinGroup(data: GroupJoinValues) {
-    if (!user || !firestore) return;
-    setIsSaving(true);
-    try {
-      const q = query(collection(firestore, 'groups'), where('invitationCode', '==', data.invitationCode));
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) { toast({ title: 'Invalid Code', description: 'No group found with that invitation code.', variant: 'destructive' }); setIsSaving(false); return; }
-      const groupDoc = querySnapshot.docs[0];
-      const groupData = groupDoc.data() as Group;
-      if (groupData.members[user.uid]) { toast({ title: 'Already a Member', description: 'You are already a member of this group.' }); setIsSaving(false); return; }
-      const batch = writeBatch(firestore);
-      batch.update(doc(firestore, 'groups', groupDoc.id), { [`members.${user.uid}`]: 'member' });
-      batch.update(doc(firestore, 'users', user.uid), { groupId: groupDoc.id });
-      await batch.commit();
-      toast({ title: 'Joined Group!', description: `You have successfully joined ${groupData.name}.` });
-      refetch();
-    } catch (error: any) {
-      toast({ title: 'Error Joining Group', description: error.message || 'Failed to join group.', variant: 'destructive' });
-    } finally { setIsSaving(false); }
+      if (!user || !firestore || !profile) return;
+      setIsSaving(true);
+      try {
+          const q = query(collection(firestore, 'groups'), where('invitationCode', '==', data.invitationCode));
+          const querySnapshot = await getDocs(q);
+
+          if (querySnapshot.empty) {
+              toast({ title: 'Invalid Code', description: 'No group found with that invitation code.', variant: 'destructive' });
+              setIsSaving(false);
+              return;
+          }
+
+          const groupDoc = querySnapshot.docs[0];
+          const groupData = groupDoc.data() as Group;
+          const groupId = groupDoc.id;
+
+          if (groupData.members[user.uid]) {
+              toast({ title: 'Already a Member', description: 'You are already a member of this group.' });
+              setIsSaving(false);
+              return;
+          }
+
+          const batch = writeBatch(firestore);
+
+          // Update current user's groupId
+          const userProfileRef = doc(firestore, 'users', user.uid);
+          batch.update(userProfileRef, { groupId: groupId });
+
+          // Update the group's member list for the current user
+          const groupRef = doc(firestore, 'groups', groupId);
+          batch.update(groupRef, { [`members.${user.uid}`]: 'member' });
+
+          // If the user is paired, add their partner to the group as well
+          if (profile.pairedWith) {
+              // Check if partner is already in the group
+              if (!groupData.members[profile.pairedWith]) {
+                  const partnerProfileRef = doc(firestore, 'users', profile.pairedWith);
+                  batch.update(partnerProfileRef, { groupId: groupId });
+                  batch.update(groupRef, { [`members.${profile.pairedWith}`]: 'member' });
+              }
+          }
+
+          await batch.commit();
+          toast({ title: 'Joined Group!', description: `You have successfully joined ${groupData.name}.` });
+          refetch();
+      } catch (error: any) {
+          toast({ title: 'Error Joining Group', description: error.message || 'Failed to join group.', variant: 'destructive' });
+      } finally {
+          setIsSaving(false);
+      }
   }
 
   async function onLeaveGroup() {
