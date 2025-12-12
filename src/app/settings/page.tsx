@@ -32,6 +32,8 @@ import type { Group, UserProfile } from '@/lib/types';
 import short from 'short-uuid';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
+import { joinGroup } from '@/ai/flows/group-flow';
+
 
 const profileFormSchema = z.object({
   displayName: z
@@ -233,29 +235,31 @@ export default function SettingsPage() {
     if (!user || !firestore) return;
     setIsSaving(true);
 
-    const q = query(collection(firestore, 'groups'), where('invitationCode', '==', data.invitationCode));
-    
     try {
-      const querySnapshot = await getDocs(q);
-      if (querySnapshot.empty) {
-        toast({ title: 'Invalid Code', description: 'No group found with that invitation code.', variant: 'destructive' });
-        setIsSaving(false);
-        return;
+      const result = await joinGroup({
+        userId: user.uid,
+        invitationCode: data.invitationCode,
+      });
+
+      if (result.success) {
+        toast({
+          title: 'Joined Group!',
+          description: `You have successfully joined ${result.groupName}.`,
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: result.message || 'Failed to join group.',
+          variant: 'destructive',
+        });
       }
-      
-      const groupDoc = querySnapshot.docs[0];
-      const groupId = groupDoc.id;
-      const groupRef = doc(firestore, 'groups', groupId);
-      const userProfileRef = doc(firestore, 'users', user.uid);
-      
-      const batch = writeBatch(firestore);
-      batch.update(groupRef, { [`members.${user.uid}`]: 'member' });
-      batch.update(userProfileRef, { groupId: groupId });
-      await batch.commit();
-      
-      toast({ title: 'Joined Group!', description: `You have successfully joined ${groupDoc.data().name}.` });
     } catch (error: any) {
-      toast({ title: 'Error', description: 'Failed to join group.', variant: 'destructive' });
+      console.error('Flow error joining group:', error);
+      toast({
+        title: 'Error',
+        description: 'An unexpected error occurred while joining the group.',
+        variant: 'destructive',
+      });
     } finally {
       setIsSaving(false);
     }
