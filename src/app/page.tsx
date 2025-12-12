@@ -1,16 +1,17 @@
+
 "use client";
 
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Loader2, LogOut, Settings } from 'lucide-react';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
-import { useAuth, useFirestore } from '@/firebase';
-import { doc, onSnapshot } from 'firebase/firestore';
-import type { UserState } from '@/lib/types';
+import { useAuth } from '@/firebase';
+import type { UserState, UserProfile } from '@/lib/types';
 import Link from 'next/link';
+import { useGroupData } from '@/hooks/use-group-data';
 
 const ActionButtons = () => {
   const auth = useAuth();
@@ -24,12 +25,12 @@ const ActionButtons = () => {
   };
 
   return (
-    <div className="absolute top-4 right-4 flex items-center gap-2">
+    <div className="absolute top-4 right-4 flex items-center gap-2 z-10">
       <Link href="/settings">
         <Button
           variant="ghost"
           size="icon"
-          className="text-slate-600 hover:bg-slate-100"
+          className="text-slate-600 hover:bg-slate-100 bg-white/50 backdrop-blur-sm"
           aria-label="Settings"
         >
           <Settings className="h-5 w-5" />
@@ -39,7 +40,7 @@ const ActionButtons = () => {
         variant="ghost"
         size="icon"
         onClick={handleLogout}
-        className="text-slate-600 hover:bg-slate-100"
+        className="text-slate-600 hover:bg-slate-100 bg-white/50 backdrop-blur-sm"
         aria-label="Logout"
       >
         <LogOut className="h-5 w-5" />
@@ -48,80 +49,89 @@ const ActionButtons = () => {
   );
 };
 
+const LoadingScreen = () => (
+  <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]">
+    <Loader2 className="h-12 w-12 animate-spin text-slate-500" />
+  </div>
+);
+
+const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile }) => {
+    const { userState, isLoading } = useGroupData(null, userId);
+
+    if (isLoading || !userState[userId]) {
+        return (
+             <div className="h-full w-full flex items-center justify-center">
+               <div className="flex flex-col items-center gap-4 text-slate-500">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <p>Loading your tasks...</p>
+               </div>
+             </div>
+        );
+    }
+
+    return <TaskCard userState={userState[userId]} userProfile={profile} userId={userId} />;
+};
+
+const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId: string }) => {
+    const { groupMembers, userState, isLoading } = useGroupData(groupId, currentUserId);
+
+    if (isLoading) {
+        return (
+             <div className="h-full w-full flex items-center justify-center">
+               <div className="flex flex-col items-center gap-4 text-slate-500">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                  <p>Loading group tasks...</p>
+               </div>
+             </div>
+        );
+    }
+
+    return (
+        <div className="w-full h-full space-y-8 overflow-y-auto pb-8 snap-y snap-mandatory">
+            {groupMembers.map(member => (
+                <div key={member.uid} className="h-full w-full max-w-md mx-auto flex-shrink-0 snap-start">
+                    {userState[member.uid] ? (
+                        <TaskCard 
+                            userState={userState[member.uid]}
+                            userProfile={member}
+                            userId={member.uid}
+                        />
+                    ) : (
+                        <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
+                            <p className="text-slate-500">Loading {member.displayName}'s tasks...</p>
+                        </div>
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+};
+
+
 export default function Home() {
   const { user, profile, isLoading: isUserLoading } = useUser();
   const router = useRouter();
-  const firestore = useFirestore();
-
-  const [userState, setUserState] = useState<UserState | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
+  
   useEffect(() => {
     if (!isUserLoading && !user) {
       router.push('/login');
     }
   }, [user, isUserLoading, router]);
 
-  useEffect(() => {
-    if (user && firestore) {
-      setIsLoading(true);
-      const taskListRef = doc(firestore, 'task_lists', user.uid);
-      const unsubscribe = onSnapshot(taskListRef, (docSnap) => {
-        if (docSnap.exists()) {
-          setUserState(docSnap.data() as UserState);
-        } else {
-          // If the task list doc doesn't exist, it might be created shortly after signup
-          setUserState(null); 
-        }
-        setIsLoading(false);
-      }, (error) => {
-        console.error("Error listening to task list:", error);
-        setIsLoading(false);
-      });
-
-      return () => unsubscribe();
-    }
-  }, [user, firestore]);
-  
-  useEffect(() => {
-    // This effect listens for profile changes and forces a re-render
-    // if the user's name or theme changes on the settings page.
-    if (user && firestore) {
-      const profileRef = doc(firestore, 'users', user.uid);
-      const unsubscribe = onSnapshot(profileRef, (docSnap) => {
-        if (docSnap.exists()) {
-          // We just need to trigger a state update to reflect new profile data from useUser hook
-           setUserState(prevState => ({...prevState} as UserState));
-        }
-      });
-       return () => unsubscribe();
-    }
-  }, [user, firestore]);
-
-
-  if (isUserLoading || isLoading || !user) {
-    return (
-      <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]">
-        <Loader2 className="h-12 w-12 animate-spin text-slate-500" />
-      </div>
-    );
+  if (isUserLoading || !user || !profile) {
+    return <LoadingScreen />;
   }
 
   return (
-    <div className="h-screen w-full flex flex-col items-center justify-center bg-[#e3eeff] p-4 relative">
+    <div className="h-screen w-full flex flex-col items-center justify-center bg-[#e3eeff] p-4 relative overflow-hidden">
       <ActionButtons />
-      <div className="h-full w-full max-w-md mx-auto">
-        {userState ? (
-          <TaskCard userState={userState} userProfile={profile} userId={user.uid} />
-        ) : (
-           <div className="h-full w-full flex items-center justify-center">
-             <div className="flex flex-col items-center gap-4 text-slate-500">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <p>Loading your tasks...</p>
-             </div>
-           </div>
-        )}
-      </div>
+      {profile.groupId ? (
+        <GroupView groupId={profile.groupId} currentUserId={user.uid} />
+      ) : (
+        <div className="h-full w-full max-w-md mx-auto">
+            <SoloView userId={user.uid} profile={profile} />
+        </div>
+      )}
     </div>
   );
 }
