@@ -10,7 +10,7 @@
 
 import { adminFirestore } from '@/firebase/admin';
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit/zod';
+import { z } from 'genkit';
 
 // Define the input schema for the joinGroup flow
 export const JoinGroupInputSchema = z.object({
