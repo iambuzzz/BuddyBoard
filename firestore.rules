@@ -43,7 +43,7 @@ service cloud.firestore {
       return isSignedIn() && get(/databases/$(database)/documents/groups/$(groupId)).data.members[request.auth.uid] == 'admin';
     }
     
-    function isNewGroupAdmin(groupId) {
+    function isNewGroupAdmin() {
       // Check if the user is making themselves the admin in a new group creation.
       // - The group must not exist yet (resource == null)
       // - The new members map must contain the user with 'admin' role.
@@ -59,11 +59,12 @@ service cloud.firestore {
       // 2. They are not already a member (checked by checking diff).
       // 3. The new members map is exactly one larger than the old one.
       // 4. The user's UID is in the new members map with the role 'member'.
-      // 5. No other fields are being changed.
+      // 5. No other fields are being changed besides the members map.
       let existingMembers = resource.data.members;
       let newMembers = request.resource.data.members;
       
       return isSignedIn()
+        && !existingMembers.keys().hasAny([request.auth.uid])
         && newMembers.size() == existingMembers.size() + 1
         && newMembers[request.auth.uid] == 'member'
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']);
@@ -89,7 +90,7 @@ service cloud.firestore {
     // - Only members can read a group's details.
     // - Only admins can delete a group.
     match /groups/{groupId} {
-      allow create: if isSignedIn() && isNewGroupAdmin(groupId);
+      allow create: if isSignedIn() && isNewGroupAdmin();
       allow read: if isGroupMember(groupId);
       allow update: if isGroupAdmin(groupId) || isJoiningGroupAsMember();
       allow delete: if isGroupAdmin(groupId);
