@@ -269,7 +269,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             {members.map(member => {
                 const userState = userStates[member.uid];
                 return (
-                    <div key={member.uid} className="h-full w-full max-w-md mx-auto flex-shrink-0 snap-center px-4">
+                    <div key={member.uid} className="h-full w-full max-w-lg mx-auto flex-shrink-0 snap-center px-4 flex items-center">
                         {userState ? (
                             <TaskCard 
                                 userState={userState}
@@ -315,17 +315,15 @@ export default function Home() {
   }
 
   return (
-    <main className="h-screen w-full flex flex-col items-center justify-center bg-[#e3eeff] relative overflow-hidden">
+    <main className="h-screen w-full flex flex-col items-center bg-[#e3eeff] relative overflow-hidden py-8">
       <ActionButtons />
       {profile.groupId ? (
         <GroupView groupId={profile.groupId} currentUserId={user.uid} />
       ) : (
-        <div className="h-full w-full max-w-md mx-auto flex items-center justify-center px-4">
+        <div className="h-full w-full max-w-lg mx-auto flex items-center justify-center px-4">
             <SoloView userId={user.uid} profile={profile} />
         </div>
       )}
     </main>
   );
 }
-
-    
