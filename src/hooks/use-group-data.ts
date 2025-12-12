@@ -62,8 +62,13 @@ export const useGroupData = (groupId: string | null, currentUserId: string) => {
     const uidsToFetch = groupId ? groupMembers.map(m => m.uid) : [currentUserId];
 
     if (uidsToFetch.length === 0) {
-        setIsLoading(!groupId); // If in group mode but no members yet, keep loading
-        return;
+      if(groupId) {
+        // Still loading if in a group context but members aren't populated yet.
+        setIsLoading(true);
+      } else {
+        setIsLoading(false);
+      }
+      return;
     }
 
     const unsubscribers = uidsToFetch.map(uid => {
@@ -71,18 +76,36 @@ export const useGroupData = (groupId: string | null, currentUserId: string) => {
       return onSnapshot(taskListRef, (docSnap) => {
         if (docSnap.exists()) {
           setUserState(prev => ({ ...prev, [uid]: docSnap.data() as UserState }));
+        } else {
+           // Handle case where task list doesn't exist for a user
+           setUserState(prev => ({ ...prev, [uid]: { tasks: [], previousTasks: [], isLocked: false, isFinished: false, totalCompleted: 0, totalAssigned: 0, currentStreak: 0, maxStreak: 0, lockedAt: null, lastLockedAt: null } }));
         }
       });
     });
 
-    // Check if all required task lists have been loaded
-    const allLoaded = uidsToFetch.every(uid => userState.hasOwnProperty(uid));
-    if (allLoaded) {
-      setIsLoading(false);
+    // All necessary listeners are set up. Now we can check if we have data for everyone.
+    const allDataLoaded = uidsToFetch.every(uid => userState.hasOwnProperty(uid));
+    if (allDataLoaded) {
+        setIsLoading(false);
+    } else {
+        // If some data is still missing, we keep it in a loading state.
+        // The state will re-render as snapshots arrive, and this effect will be re-evaluated.
+        // A more robust solution might wait for all initial snapshots.
+        // For now, we set loading to true until we have at least something for everyone.
+        const checkLoadingStatus = () => {
+          const loadedUIDs = Object.keys(userState);
+          const allUIDsPresent = uidsToFetch.every(uid => loadedUIDs.includes(uid));
+          setIsLoading(!allUIDsPresent);
+        }
+        // Give a short moment for snapshots to arrive.
+        const loadingTimer = setTimeout(checkLoadingStatus, 1000);
+        return () => clearTimeout(loadingTimer);
     }
 
+
     return () => unsubscribers.forEach(unsub => unsub());
-  }, [firestore, groupMembers, groupId, currentUserId, userState]);
+  // IMPORTANT: Do NOT add `userState` to the dependency array. It will cause an infinite loop.
+  }, [firestore, groupMembers, groupId, currentUserId]);
 
   return { group, groupMembers, userState, isLoading };
 };
