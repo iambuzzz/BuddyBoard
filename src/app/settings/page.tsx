@@ -369,10 +369,12 @@ export default function SettingsPage() {
         const newPartnerRef = doc(firestore, 'users', partnerId);
         // Also unpair the new partner from anyone they were previously paired with
         const newPartnerSnap = await getDoc(newPartnerRef);
-        const newPartnerData = newPartnerSnap.data() as UserProfile;
-        if(newPartnerData.pairedWith) {
-            const oldPartnerOfNewPartnerRef = doc(firestore, 'users', newPartnerData.pairedWith);
-            batch.update(oldPartnerOfNewPartnerRef, { pairedWith: null });
+        if (newPartnerSnap.exists()) {
+            const newPartnerData = newPartnerSnap.data() as UserProfile;
+            if(newPartnerData.pairedWith) {
+                const oldPartnerOfNewPartnerRef = doc(firestore, 'users', newPartnerData.pairedWith);
+                batch.update(oldPartnerOfNewPartnerRef, { pairedWith: null });
+            }
         }
         batch.update(newPartnerRef, { pairedWith: user.uid });
     }
@@ -422,6 +424,18 @@ export default function SettingsPage() {
   }
 
   const renderPairingManagement = () => {
+
+      if (profile?.groupId) {
+        return (
+          <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><LinkIcon /> Pairing</CardTitle>
+                <CardDescription>The pairing feature is only available for users who are not in a group. In a group, you can already see everyone's cards.</CardDescription>
+            </CardHeader>
+          </Card>
+        )
+      }
+
       if (!group || otherGroupMembers.length === 0) return null;
 
       return (
@@ -707,5 +721,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

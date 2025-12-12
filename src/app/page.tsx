@@ -238,6 +238,7 @@ const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partn
     const userToSwitch = showBack ? currentUserData.profile.displayName : partnerData.profile.displayName;
     const themeForSwitchButton = (showBack ? partnerData.profile.cardTheme : currentUserData.profile.cardTheme) || 'riya';
 
+
     const getButtonThemeClass = (theme: string) => {
         switch(theme) {
             case 'riya': return 'bg-purple-500 hover:bg-purple-600 text-white';
@@ -248,7 +249,7 @@ const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partn
     }
     
     return (
-        <div className="h-full w-full max-w-lg mx-auto flex flex-col items-center justify-center px-4">
+        <div className="h-full w-full max-w-lg mx-auto flex flex-col items-center px-4">
              <Button
                 onClick={() => setShowBack(p => !p)}
                 className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 mb-4 ${getButtonThemeClass(themeForSwitchButton)}`}
@@ -404,20 +405,30 @@ export default function Home() {
   }
   
   const partnerId = profile.pairedWith;
+  const groupId = profile.groupId;
+
+  const renderContent = () => {
+    // Priority 1: Group View
+    if (groupId) {
+      return <GroupView groupId={groupId} currentUserId={user.uid} />;
+    }
+    // Priority 2: Paired View (only if not in a group)
+    if (partnerId) {
+      return <PairedView currentUserId={user.uid} partnerId={partnerId} />;
+    }
+    // Priority 3: Solo View
+    return (
+      <div className="h-full w-full max-w-lg mx-auto flex items-center justify-center px-4">
+        <SoloView userId={user.uid} profile={profile} />
+      </div>
+    );
+  };
 
   return (
     <main className="h-screen w-full flex flex-col items-center bg-[#e3eeff] relative overflow-hidden py-8">
       <ActionButtons />
       <div className="w-full h-full flex-grow">
-        {partnerId ? (
-          <PairedView currentUserId={user.uid} partnerId={partnerId} />
-        ) : profile.groupId ? (
-          <GroupView groupId={profile.groupId} currentUserId={user.uid} />
-        ) : (
-          <div className="h-full w-full max-w-lg mx-auto flex items-center justify-center px-4">
-              <SoloView userId={user.uid} profile={profile} />
-          </div>
-        )}
+        {renderContent()}
       </div>
     </main>
   );
