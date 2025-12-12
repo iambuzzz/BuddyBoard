@@ -203,8 +203,8 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardPro
     }
     
     return (
-        <div className="h-[80vh] min-h-[600px] w-full max-w-4xl mx-auto flex flex-col items-center px-4">
-             <Button
+        <div className="h-full w-full flex flex-col items-center justify-center">
+            <Button
                 onClick={() => setShowBack(p => !p)}
                 className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 mb-4 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
                 aria-pressed={showBack}
@@ -281,12 +281,14 @@ unsubProfile = onSnapshot(profileRef, (profileSnap) => {
     }
     
     return (
-        <div className="h-full w-full flex items-center justify-center">
-            <PairedTaskCard
-                user1={currentUserData}
-                user2={partnerData}
-                isCurrentUserThePrimary={true}
-            />
+        <div className="h-full w-full flex items-center justify-center px-4">
+            <div className="w-full max-w-4xl h-[80vh] min-h-[600px]">
+                <PairedTaskCard
+                    user1={currentUserData}
+                    user2={partnerData}
+                    isCurrentUserThePrimary={true}
+                />
+            </div>
         </div>
     );
 };
@@ -400,63 +402,65 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
     }
 
     return (
-        <div className="w-full h-full flex flex-col items-center gap-8 py-8 overflow-y-auto px-4">
-            {displayItems.map((item) => {
+        <div className="h-screen w-full snap-y snap-mandatory overflow-y-auto">
+            {displayItems.map((item, index) => {
                 const isPair = Array.isArray(item);
                 const key = isPair ? item[0].uid : item.uid;
 
                 return (
-                    <div key={key} className="w-full flex justify-center">
-                        {isPair ? (
-                            (() => {
-                                const [user1, user2] = item;
-                                const state1 = userStates[user1.uid];
-                                const state2 = userStates[user2.uid];
-                                const isCurrentUserInPair = user1.uid === currentUserId || user2.uid === currentUserId;
-                                const isCurrentUserPrimary = isCurrentUserInPair && user1.uid === currentUserId;
+                    <div key={key} className="h-screen w-full snap-start flex items-center justify-center p-4">
+                        <div className="w-full max-w-4xl h-[80vh] min-h-[600px]">
+                            {isPair ? (
+                                (() => {
+                                    const [user1, user2] = item;
+                                    const state1 = userStates[user1.uid];
+                                    const state2 = userStates[user2.uid];
+                                    const isCurrentUserInPair = user1.uid === currentUserId || user2.uid === currentUserId;
+                                    const isCurrentUserPrimary = isCurrentUserInPair && user1.uid === currentUserId;
 
-                                if (!state1 || !state2) {
-                                    return (
-                                        <div className="h-[80vh] min-h-[600px] w-full max-w-4xl mx-auto flex items-center justify-center bg-slate-100 rounded-2xl">
-                                            <div className="flex flex-col items-center gap-4 text-slate-500">
-                                                <Loader2 className="h-6 w-6 animate-spin" />
-                                                <p>Loading {user1.displayName} & {user2.displayName}'s tasks...</p>
-                                            </div>
-                                        </div>
-                                    );
-                                }
-                                return (
-                                    <PairedTaskCard
-                                        user1={{ profile: user1, state: state1 }}
-                                        user2={{ profile: user2, state: state2 }}
-                                        isCurrentUserThePrimary={isCurrentUserPrimary}
-                                    />
-                                );
-                            })()
-                        ) : (
-                            (() => {
-                                const member = item as UserProfile;
-                                const userState = userStates[member.uid];
-                                return (
-                                    <div className="w-full max-w-4xl mx-auto h-[80vh] min-h-[600px] flex items-center">
-                                        {userState ? (
-                                            <TaskCard 
-                                                userState={userState}
-                                                userProfile={member}
-                                                userId={member.uid}
-                                            />
-                                        ) : (
+                                    if (!state1 || !state2) {
+                                        return (
                                             <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
                                                 <div className="flex flex-col items-center gap-4 text-slate-500">
                                                     <Loader2 className="h-6 w-6 animate-spin" />
-                                                    <p>Loading {member.displayName}'s tasks...</p>
+                                                    <p>Loading {user1.displayName} & {user2.displayName}'s tasks...</p>
                                                 </div>
                                             </div>
-                                        )}
-                                    </div>
-                                );
-                            })()
-                        )}
+                                        );
+                                    }
+                                    return (
+                                        <PairedTaskCard
+                                            user1={{ profile: user1, state: state1 }}
+                                            user2={{ profile: user2, state: state2 }}
+                                            isCurrentUserThePrimary={isCurrentUserPrimary}
+                                        />
+                                    );
+                                })()
+                            ) : (
+                                (() => {
+                                    const member = item as UserProfile;
+                                    const userState = userStates[member.uid];
+                                    return (
+                                        <div className="h-full w-full">
+                                            {userState ? (
+                                                <TaskCard 
+                                                    userState={userState}
+                                                    userProfile={member}
+                                                    userId={member.uid}
+                                                />
+                                            ) : (
+                                                <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
+                                                    <div className="flex flex-col items-center gap-4 text-slate-500">
+                                                        <Loader2 className="h-6 w-6 animate-spin" />
+                                                        <p>Loading {member.displayName}'s tasks...</p>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })()
+                            )}
+                        </div>
                     </div>
                 );
             })}
