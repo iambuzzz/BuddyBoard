@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Lock, Check, AlertTriangle, RotateCcw, Palette } from 'lucide-react';
+import { Plus, Lock, Check, AlertTriangle, RotateCcw } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import {
   AlertDialog,
@@ -18,12 +18,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 import type { UserState, Task, PreviousTask, UserProfile } from '@/lib/types';
 import { useFirestore, useUser as useAuthUser } from '@/firebase'; // Renamed to avoid conflict
@@ -51,7 +45,7 @@ const getThemeClass = (theme: string | undefined) => {
     case 'ambuj':
       return 'theme-ambuj';
     default:
-      return 'theme-ambuj'; // Default theme
+      return 'theme-riya'; // Default theme
   }
 };
 
@@ -66,12 +60,10 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const [undoState, setUndoState] = useState<{ active: boolean; countdown: number }>({ active: false, countdown: 5 });
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Derive user display info from auth if possible, fallback to a default
   const userName = userProfile?.displayName || 'My';
   const isCurrentUserCard = authUser?.uid === userId;
   
-  // Use a default theme, will be customized later
-  const cardTheme = userProfile?.cardTheme || 'ambuj';
+  const cardTheme = userProfile?.cardTheme || 'riya';
   const themeClass = getThemeClass(cardTheme);
   
   const updateFirestore = useCallback(async (updatePayload: Partial<UserState>) => {
@@ -84,19 +76,6 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
       toast({ title: 'Sync Error', description: 'Failed to save changes.', variant: 'destructive' });
     }
   }, [firestore, userId, toast]);
-
-  const updateProfile = useCallback(async (updatePayload: Partial<UserProfile>) => {
-    if (!firestore || !userId) return;
-    const docRef = doc(firestore, 'users', userId);
-    try {
-        await updateDoc(docRef, updatePayload);
-        toast({ title: 'Theme Updated!', description: 'Your card theme has been changed.' });
-    } catch (error) {
-        console.error("Failed to update profile to Firestore", error);
-        toast({ title: 'Sync Error', description: 'Failed to save your theme.', variant: 'destructive' });
-    }
-  }, [firestore, userId, toast]);
-
 
   const addTask = (text: string) => {
     const newTask: Task = {
@@ -319,7 +298,6 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     
   const effectiveTheme = cardTheme as 'riya' | 'naitik' | 'ambuj';
 
-
   return (
     <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card pl-6 pb-6 pr-6 pt-3 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
       <AnimatePresence>
@@ -338,26 +316,6 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
       <div className="flex justify-between items-center pb-4 mb-4 border-b flex-shrink-0 pt-2">
         <div className="flex items-center gap-2 pr-2">
             <h2 className={`text-xl sm:text-2xl font-bold ${titleColor}`}>{userName}'s Tasks</h2>
-            {isCurrentUserCard && (
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-7 w-7 text-slate-400 hover:text-slate-600">
-                           <Palette className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => updateProfile({ cardTheme: 'riya' })}>
-                           Periwinkle (Riya)
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateProfile({ cardTheme: 'naitik' })}>
-                           Cyan (Naitik)
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => updateProfile({ cardTheme: 'ambuj' })}>
-                           Emerald (Ambuj)
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            )}
             <StreakBadge
                 currentStreak={userState.currentStreak}
                 maxStreak={userState.maxStreak}
@@ -444,5 +402,3 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     </Card>
   );
 }
-
-    

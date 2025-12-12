@@ -3,15 +3,16 @@
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { Loader2, LogOut } from 'lucide-react';
+import { Loader2, LogOut, Settings } from 'lucide-react';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
 import { useAuth, useFirestore } from '@/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import type { UserState } from '@/lib/types';
+import Link from 'next/link';
 
-const LogoutButton = () => {
+const ActionButtons = () => {
   const auth = useAuth();
   const router = useRouter();
 
@@ -23,15 +24,27 @@ const LogoutButton = () => {
   };
 
   return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={handleLogout}
-      className="absolute top-4 right-4 text-slate-600 hover:bg-slate-100"
-      aria-label="Logout"
-    >
-      <LogOut className="h-5 w-5" />
-    </Button>
+    <div className="absolute top-4 right-4 flex items-center gap-2">
+      <Link href="/settings">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-slate-600 hover:bg-slate-100"
+          aria-label="Settings"
+        >
+          <Settings className="h-5 w-5" />
+        </Button>
+      </Link>
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={handleLogout}
+        className="text-slate-600 hover:bg-slate-100"
+        aria-label="Logout"
+      >
+        <LogOut className="h-5 w-5" />
+      </Button>
+    </div>
   );
 };
 
@@ -61,11 +74,30 @@ export default function Home() {
           setUserState(null); 
         }
         setIsLoading(false);
+      }, (error) => {
+        console.error("Error listening to task list:", error);
+        setIsLoading(false);
       });
 
       return () => unsubscribe();
     }
   }, [user, firestore]);
+  
+  useEffect(() => {
+    // This effect listens for profile changes and forces a re-render
+    // if the user's name or theme changes on the settings page.
+    if (user && firestore) {
+      const profileRef = doc(firestore, 'users', user.uid);
+      const unsubscribe = onSnapshot(profileRef, (docSnap) => {
+        if (docSnap.exists()) {
+          // We just need to trigger a state update to reflect new profile data from useUser hook
+           setUserState(prevState => ({...prevState} as UserState));
+        }
+      });
+       return () => unsubscribe();
+    }
+  }, [user, firestore]);
+
 
   if (isUserLoading || isLoading || !user) {
     return (
@@ -77,7 +109,7 @@ export default function Home() {
 
   return (
     <div className="h-screen w-full flex flex-col items-center justify-center bg-[#e3eeff] p-4 relative">
-      <LogoutButton />
+      <ActionButtons />
       <div className="h-full w-full max-w-md mx-auto">
         {userState ? (
           <TaskCard userState={userState} userProfile={profile} userId={user.uid} />
