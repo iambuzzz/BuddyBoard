@@ -349,10 +349,8 @@ export default function SettingsPage() {
 
   async function onPairingSubmit(data: PairingValues) {
     if (!user || !firestore || !profile) return;
-    const { partnerId } = data;
     
-    // PartnerId can be an empty string if "None" is selected
-    const newPartnerId = partnerId || null;
+    const partnerId = data.partnerId === 'none' ? null : data.partnerId;
 
     setIsSaving(true);
     const batch = writeBatch(firestore);
@@ -366,9 +364,9 @@ export default function SettingsPage() {
     }
 
     // Set new pairing
-    batch.update(currentUserRef, { pairedWith: newPartnerId });
-    if (newPartnerId) {
-        const newPartnerRef = doc(firestore, 'users', newPartnerId);
+    batch.update(currentUserRef, { pairedWith: partnerId });
+    if (partnerId) {
+        const newPartnerRef = doc(firestore, 'users', partnerId);
         // Also unpair the new partner from anyone they were previously paired with
         const newPartnerSnap = await getDoc(newPartnerRef);
         const newPartnerData = newPartnerSnap.data() as UserProfile;
@@ -457,7 +455,7 @@ export default function SettingsPage() {
                                                 </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                                <SelectItem value="">None</SelectItem>
+                                                <SelectItem value="none">None</SelectItem>
                                                 {otherGroupMembers.map(member => (
                                                     <SelectItem key={member.uid} value={member.uid} disabled={!!member.pairedWith}>
                                                         {member.displayName} {member.pairedWith ? '(Already Paired)' : ''}
@@ -709,3 +707,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
