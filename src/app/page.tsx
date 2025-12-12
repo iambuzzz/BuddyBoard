@@ -34,7 +34,7 @@ const ActionButtons = () => {
         <Button
           variant="ghost"
           size="icon"
-          className="text-slate-600 hover:bg-slate-100 bg-white/50 backdrop-blur-sm"
+          className="text-slate-600 hover:bg-slate-100"
           aria-label="Settings"
         >
           <Settings className="h-5 w-5" />
@@ -44,7 +44,7 @@ const ActionButtons = () => {
         variant="ghost"
         size="icon"
         onClick={handleLogout}
-        className="text-slate-600 hover:bg-slate-100 bg-white/50 backdrop-blur-sm"
+        className="text-slate-600 hover:bg-slate-100"
         aria-label="Logout"
       >
         <LogOut className="h-5 w-5" />
@@ -195,10 +195,10 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardPro
 
     const getButtonThemeClass = (theme: string) => {
         switch(theme) {
-            case 'riya': return 'bg-[--riya-primary] hover:bg-purple-500 text-white';
+            case 'riya': return 'bg-[--riya-primary] hover:bg-violet-500 text-white';
             case 'naitik': return 'bg-[--naitik-primary] hover:bg-cyan-500 text-white';
             case 'ambuj': return 'bg-[--ambuj-primary] hover:bg-emerald-500 text-white';
-            default: return 'bg-[--riya-primary] hover:bg-purple-500 text-white';
+            default: return 'bg-[--riya-primary] hover:bg-violet-500 text-white';
         }
     }
     
@@ -522,4 +522,5 @@ export default function Home() {
   );
 }
 
+    
     
