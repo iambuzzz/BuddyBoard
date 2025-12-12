@@ -203,7 +203,7 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary }: PairedCardPro
     }
     
     return (
-        <div className="h-full w-full max-w-4xl mx-auto flex flex-col items-center px-4">
+        <div className="h-[80vh] min-h-[600px] w-full max-w-4xl mx-auto flex flex-col items-center px-4">
              <Button
                 onClick={() => setShowBack(p => !p)}
                 className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 mb-4 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
@@ -241,7 +241,7 @@ const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partn
             let unsubState: () => void;
 
             const profileRef = doc(firestore, 'users', userId);
-            unsubProfile = onSnapshot(profileRef, (profileSnap) => {
+unsubProfile = onSnapshot(profileRef, (profileSnap) => {
                 if (profileSnap.exists()) {
                     const profile = profileSnap.data() as UserProfile;
                     const stateRef = doc(firestore, 'task_lists', userId);
@@ -281,11 +281,13 @@ const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partn
     }
     
     return (
-        <PairedTaskCard
-            user1={currentUserData}
-            user2={partnerData}
-            isCurrentUserThePrimary={true}
-        />
+        <div className="h-full w-full flex items-center justify-center">
+            <PairedTaskCard
+                user1={currentUserData}
+                user2={partnerData}
+                isCurrentUserThePrimary={true}
+            />
+        </div>
     );
 };
 
@@ -324,7 +326,6 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             const usersSnap = await getDocs(usersQuery);
             const members = usersSnap.docs.map(d => d.data() as UserProfile);
 
-            // Process members into pairs and singles
             const processed = new Set<string>();
             const items: GroupDisplayItem[] = [];
             const memberMap = new Map(members.map(m => [m.uid, m]));
@@ -343,7 +344,6 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                 }
             }
 
-            // Sort to put the current user's card first
             items.sort((a, b) => {
                 const aIsCurrentUser = Array.isArray(a) ? a.some(m => m.uid === currentUserId) : a.uid === currentUserId;
                 const bIsCurrentUser = Array.isArray(b) ? b.some(m => m.uid === currentUserId) : b.uid === currentUserId;
@@ -400,64 +400,63 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
     }
 
     return (
-        <div className="w-full h-full flex overflow-x-auto snap-x snap-mandatory">
-            {displayItems.map((item, index) => {
+        <div className="w-full h-full flex flex-col items-center gap-8 py-8 overflow-y-auto px-4">
+            {displayItems.map((item) => {
                 const isPair = Array.isArray(item);
-                
-                return (
-                    <div key={isPair ? item[0].uid : item.uid} className="w-full h-full flex-shrink-0 snap-center flex items-center justify-center">
-                        <div className="w-full h-full flex items-center justify-center">
-                            {isPair ? (
-                                (() => {
-                                    const [user1, user2] = item;
-                                    const state1 = userStates[user1.uid];
-                                    const state2 = userStates[user2.uid];
-                                    const isCurrentUserInPair = user1.uid === currentUserId || user2.uid === currentUserId;
-                                    const isCurrentUserPrimary = isCurrentUserInPair && user1.uid === currentUserId;
+                const key = isPair ? item[0].uid : item.uid;
 
-                                    if (!state1 || !state2) {
-                                        return (
-                                            <div className="h-full w-full max-w-4xl mx-auto flex items-center justify-center bg-slate-100 rounded-2xl">
-                                                <div className="flex flex-col items-center gap-4 text-slate-500">
-                                                    <Loader2 className="h-6 w-6 animate-spin" />
-                                                    <p>Loading {user1.displayName} & {user2.displayName}'s tasks...</p>
-                                                </div>
+                return (
+                    <div key={key} className="w-full flex justify-center">
+                        {isPair ? (
+                            (() => {
+                                const [user1, user2] = item;
+                                const state1 = userStates[user1.uid];
+                                const state2 = userStates[user2.uid];
+                                const isCurrentUserInPair = user1.uid === currentUserId || user2.uid === currentUserId;
+                                const isCurrentUserPrimary = isCurrentUserInPair && user1.uid === currentUserId;
+
+                                if (!state1 || !state2) {
+                                    return (
+                                        <div className="h-[80vh] min-h-[600px] w-full max-w-4xl mx-auto flex items-center justify-center bg-slate-100 rounded-2xl">
+                                            <div className="flex flex-col items-center gap-4 text-slate-500">
+                                                <Loader2 className="h-6 w-6 animate-spin" />
+                                                <p>Loading {user1.displayName} & {user2.displayName}'s tasks...</p>
                                             </div>
-                                        );
-                                    }
-                                    return (
-                                        <PairedTaskCard
-                                            user1={{ profile: user1, state: state1 }}
-                                            user2={{ profile: user2, state: state2 }}
-                                            isCurrentUserThePrimary={isCurrentUserPrimary}
-                                        />
-                                    );
-                                })()
-                            ) : (
-                                (() => {
-                                    const member = item as UserProfile;
-                                    const userState = userStates[member.uid];
-                                    return (
-                                        <div className="w-full max-w-4xl mx-auto px-4 h-full flex items-center">
-                                            {userState ? (
-                                                <TaskCard 
-                                                    userState={userState}
-                                                    userProfile={member}
-                                                    userId={member.uid}
-                                                />
-                                            ) : (
-                                                <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl aspect-[9/16] max-h-[80vh]">
-                                                    <div className="flex flex-col items-center gap-4 text-slate-500">
-                                                        <Loader2 className="h-6 w-6 animate-spin" />
-                                                        <p>Loading {member.displayName}'s tasks...</p>
-                                                    </div>
-                                                </div>
-                                            )}
                                         </div>
                                     );
-                                })()
-                            )}
-                        </div>
+                                }
+                                return (
+                                    <PairedTaskCard
+                                        user1={{ profile: user1, state: state1 }}
+                                        user2={{ profile: user2, state: state2 }}
+                                        isCurrentUserThePrimary={isCurrentUserPrimary}
+                                    />
+                                );
+                            })()
+                        ) : (
+                            (() => {
+                                const member = item as UserProfile;
+                                const userState = userStates[member.uid];
+                                return (
+                                    <div className="w-full max-w-4xl mx-auto h-[80vh] min-h-[600px] flex items-center">
+                                        {userState ? (
+                                            <TaskCard 
+                                                userState={userState}
+                                                userProfile={member}
+                                                userId={member.uid}
+                                            />
+                                        ) : (
+                                            <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
+                                                <div className="flex flex-col items-center gap-4 text-slate-500">
+                                                    <Loader2 className="h-6 w-6 animate-spin" />
+                                                    <p>Loading {member.displayName}'s tasks...</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()
+                        )}
                     </div>
                 );
             })}
@@ -492,24 +491,23 @@ export default function Home() {
   const groupId = profile.groupId;
 
   const renderContent = () => {
-    // Priority 1: Group View
     if (groupId) {
       return <GroupView groupId={groupId} currentUserId={user.uid} />;
     }
-    // Priority 2: Paired View (only if not in a group)
     if (partnerId) {
       return <PairedView currentUserId={user.uid} partnerId={partnerId} />;
     }
-    // Priority 3: Solo View
     return (
-      <div className="h-full w-full max-w-4xl mx-auto flex items-center px-4">
-        <SoloView userId={user.uid} profile={profile} />
+      <div className="h-full w-full flex items-center justify-center px-4">
+        <div className="w-full max-w-4xl h-[80vh] min-h-[600px]">
+            <SoloView userId={user.uid} profile={profile} />
+        </div>
       </div>
     );
   };
 
   return (
-    <main className="h-screen w-full flex flex-col items-center bg-[#e3eeff] relative overflow-hidden py-8">
+    <main className="h-screen w-full flex flex-col items-center bg-[#e3eeff] relative overflow-hidden">
       <ActionButtons />
       <div className="w-full h-full flex-grow">
         {renderContent()}
@@ -517,5 +515,3 @@ export default function Home() {
     </main>
   );
 }
-
-    
