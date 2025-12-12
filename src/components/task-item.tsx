@@ -65,7 +65,11 @@ const TaskTimer = ({ task, onToggleTimer, theme, isLocked, isCurrentUserCard }: 
         </div>
       );
     }
-    return null;
+    return (
+       <div className="flex items-center justify-center h-8 w-8 sm:mr-2">
+          <Check className="h-4 w-4 text-emerald-500" />
+       </div>
+    );
   }
 
   return (
@@ -121,12 +125,12 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
 
   return (
     <li
-      className={`task-item flex p-3 rounded-lg bg-slate-50 transition-colors ${
+      className={`task-item flex items-center p-2.5 rounded-lg bg-slate-50 transition-colors ${
         task.isCompleted ? 'completed' : 'hover:bg-slate-100'
       }`}
     >
       <div
-        className={`mr-3 flex-shrink-0 pt-0.5 ${canToggle ? 'cursor-pointer' : 'cursor-default'}`}
+        className={`mr-3 flex-shrink-0 ${canToggle ? 'cursor-pointer' : 'cursor-default'}`}
         onClick={() => canToggle && onToggle(task.id)}
       >
         {task.isCompleted ? (
@@ -149,7 +153,7 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
           />
         ) : (
           <>
-            <span className="task-text break-all sm:self-center">{task.text}</span>
+            <span className="task-text break-all py-1 sm:self-center">{task.text}</span>
             <div className="flex items-center justify-end sm:justify-start flex-shrink-0">
               <TaskTimer task={task} onToggleTimer={() => onToggleTimer(task.id)} theme={theme} isLocked={isLocked} isCurrentUserCard={isCurrentUserCard}/>
               {!isLocked && isCurrentUserCard && (

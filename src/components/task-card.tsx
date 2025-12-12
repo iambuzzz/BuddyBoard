@@ -299,7 +299,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const effectiveTheme = cardTheme as 'riya' | 'naitik' | 'ambuj';
 
   return (
-    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card p-6 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
+    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card p-4 sm:p-6 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
       <AnimatePresence>
         {userState.isFinished && (
           <CelebrationOverlay
@@ -351,7 +351,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
       </form>
 
       <div className="flex-grow min-h-0">
-      <ScrollArea className="h-full task-list-container" style={{ scrollbarGutter: 'stable', touchAction: 'pan-y' }}>
+      <ScrollArea className="h-full task-list-container -mr-2 pr-2" style={{ scrollbarGutter: 'stable', touchAction: 'pan-y' }}>
           <TaskList
             tasks={userState.tasks}
             isLocked={userState.isLocked || userState.isFinished}

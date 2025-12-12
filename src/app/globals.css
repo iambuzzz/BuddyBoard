@@ -73,6 +73,7 @@
     @apply bg-background text-slate-700;
     min-height: 100vh;
     background-color: #e3eeff;
+    overflow-y: auto;
   }
   .snap-center {
     scroll-snap-align: center;
@@ -118,6 +119,12 @@
 
 
   /* Task Item */
+  .task-item {
+    @apply border-b;
+  }
+  .task-item:last-child {
+      @apply border-b-0;
+  }
   .task-item.completed {
     @apply bg-emerald-50 text-emerald-800;
   }
