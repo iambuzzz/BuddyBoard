@@ -11,7 +11,11 @@ import { signOut } from 'firebase/auth';
 import { useAuth, useFirestore } from '@/firebase';
 import type { UserState, UserProfile, Group } from '@/lib/types';
 import Link from 'next/link';
-import { collection, doc, onSnapshot, query, where } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, where, setDoc, writeBatch } from 'firebase/firestore';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/hooks/use-toast';
 
 const ActionButtons = () => {
   const auth = useAuth();
@@ -55,6 +59,96 @@ const LoadingScreen = () => (
   </div>
 );
 
+const CreateProfile = () => {
+    const { user, refetch } = useUser();
+    const firestore = useFirestore();
+    const [displayName, setDisplayName] = useState('');
+    const [loading, setLoading] = useState(false);
+    const { toast } = useToast();
+
+    const handleCreateProfile = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!user || !firestore || !displayName.trim()) {
+            toast({ title: "Error", description: "Please enter a display name.", variant: "destructive"});
+            return;
+        }
+
+        setLoading(true);
+
+        const batch = writeBatch(firestore);
+
+        // 1. Create user profile
+        const userProfileRef = doc(firestore, 'users', user.uid);
+        const newUserProfile: UserProfile = {
+            uid: user.uid,
+            email: user.email!,
+            displayName: displayName.trim(),
+            cardTheme: 'riya', // default theme
+        };
+        batch.set(userProfileRef, newUserProfile);
+
+        // 2. Create initial task list
+        const taskListRef = doc(firestore, 'task_lists', user.uid);
+        const newTaskList: UserState = {
+            tasks: [],
+            previousTasks: [],
+            isLocked: false,
+            isFinished: false,
+            totalCompleted: 0,
+            totalAssigned: 0,
+            currentStreak: 0,
+            maxStreak: 0,
+            lockedAt: null,
+            lastLockedAt: null,
+            pairedWith: null,
+        };
+        batch.set(taskListRef, newTaskList);
+
+        try {
+            await batch.commit();
+            toast({ title: "Welcome!", description: "Your profile has been created."});
+            refetch?.(); // Refetch the user data to get the new profile
+        } catch (error: any) {
+            console.error("Error creating profile:", error);
+            toast({ title: "Error", description: "Could not create your profile. Please try again.", variant: "destructive" });
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff] p-4">
+            <Card className="w-[400px]">
+                <CardHeader>
+                    <CardTitle>Welcome!</CardTitle>
+                    <CardDescription>Let's set up your profile. What should we call you?</CardDescription>
+                </CardHeader>
+                <form onSubmit={handleCreateProfile}>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="display-name">Display Name</Label>
+                            <Input
+                                id="display-name"
+                                type="text"
+                                placeholder="e.g., Ambuj"
+                                value={displayName}
+                                onChange={(e) => setDisplayName(e.target.value)}
+                                required
+                            />
+                        </div>
+                    </CardContent>
+                    <CardFooter>
+                        <Button type="submit" disabled={loading} className="w-full">
+                            {loading ? <Loader2 className="animate-spin mr-2"/> : null}
+                            Create Profile
+                        </Button>
+                    </CardFooter>
+                </form>
+            </Card>
+        </div>
+    );
+};
+
+
 const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile }) => {
     const firestore = useFirestore();
     const [userState, setUserState] = useState<UserState | null>(null);
@@ -94,64 +188,73 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        if (!firestore) return;
-        setIsLoading(true);
+        if (!firestore || !groupId) return;
+
         const groupRef = doc(firestore, 'groups', groupId);
         
-        const unsubGroup = onSnapshot(groupRef, (groupSnap) => {
+        const unsubGroup = onSnapshot(groupRef, async (groupSnap) => {
             if (!groupSnap.exists()) {
+                // This might happen if the user leaves the group
                 setIsLoading(false);
                 return;
             }
+
             const groupData = groupSnap.data() as Group;
             const memberUids = Object.keys(groupData.members);
 
             if (memberUids.length === 0) {
-                 setIsLoading(false);
-                 return;
+                setMembers([]);
+                setUserStates({});
+                setIsLoading(false);
+                return;
             }
-            
+
             const usersQuery = query(collection(firestore, 'users'), where('uid', 'in', memberUids));
             const unsubUsers = onSnapshot(usersQuery, (usersSnap) => {
-                const membersData = usersSnap.docs.map(d => d.data() as UserProfile);
-                membersData.sort((a, b) => {
+                const fetchedMembers = usersSnap.docs.map(d => d.data() as UserProfile);
+
+                fetchedMembers.sort((a, b) => {
                     if (a.uid === currentUserId) return -1;
                     if (b.uid === currentUserId) return 1;
                     return a.displayName.localeCompare(b.displayName);
                 });
-                setMembers(membersData);
+                
+                setMembers(fetchedMembers);
 
-                // Now that we have members, listen to their task lists
-                const unsubTasks = membersData.map(member => 
+                const taskListeners = fetchedMembers.map(member => 
                     onSnapshot(doc(firestore, 'task_lists', member.uid), (taskSnap) => {
-                        if (taskSnap.exists()) {
-                            setUserStates(prev => ({ ...prev, [member.uid]: taskSnap.data() as UserState }));
-                        }
+                         setUserStates(prev => ({
+                            ...prev,
+                            [member.uid]: taskSnap.exists() ? (taskSnap.data() as UserState) : null,
+                        }));
                     })
                 );
 
-                const allLoaded = membersData.every(m => userStates[m.uid]);
-                if(allLoaded || membersData.length === Object.keys(userStates).length) {
-                    setIsLoading(false);
-                }
-                
-                return () => unsubTasks.forEach(unsub => unsub());
+                return () => taskListeners.forEach(unsub => unsub());
             });
-
-             return () => unsubUsers();
+            
+            return () => unsubUsers();
         });
 
         return () => unsubGroup();
+
     }, [firestore, groupId, currentUserId]);
     
      useEffect(() => {
         if (members.length > 0 && Object.keys(userStates).length >= members.length) {
+            // Check if all fetched members have a corresponding state (even if null)
+            const allStatesAccountedFor = members.every(m => Object.prototype.hasOwnProperty.call(userStates, m.uid));
+            if (allStatesAccountedFor) {
+              setIsLoading(false);
+            }
+        } else if (members.length === 0 && !isLoading) {
+            // Handled in the group snapshot listener, but as a fallback
             setIsLoading(false);
         }
-     }, [members, userStates]);
+     }, [members, userStates, isLoading]);
 
 
-    if (isLoading && members.length === 0) {
+    if (isLoading) {
         return (
              <div className="h-full w-full flex items-center justify-center">
                <div className="flex flex-col items-center gap-4 text-slate-500">
@@ -168,7 +271,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                 <div key={member.uid} className="h-full w-full max-w-md mx-auto flex-shrink-0 snap-start">
                     {userStates[member.uid] ? (
                         <TaskCard 
-                            userState={userStates[member.uid]}
+                            userState={userStates[member.uid]!}
                             userProfile={member}
                             userId={member.uid}
                         />
@@ -197,7 +300,16 @@ export default function Home() {
     }
   }, [user, isUserLoading, router]);
 
-  if (isUserLoading || !user || !profile) {
+  if (isUserLoading) {
+    return <LoadingScreen />;
+  }
+  
+  if (user && !profile) {
+      return <CreateProfile />;
+  }
+
+  if (!user || !profile) {
+    // This case should be covered by the useEffect redirect, but as a fallback
     return <LoadingScreen />;
   }
 
@@ -214,3 +326,5 @@ export default function Home() {
     </div>
   );
 }
+
+    

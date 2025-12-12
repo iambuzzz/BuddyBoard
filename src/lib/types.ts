@@ -71,10 +71,11 @@ export interface LegacyUserState {
   lastLockedAt: number | null;
 }
 
-export type LegacyAppState = {
-  [key in LegacyUser]: LegacyUserState;
-} & {
+export interface AppState {
+  [key: string]: any; 
   showBack: boolean;
   connectionStatus: 'connecting' | 'connected' | 'error';
   lastUpdater: LegacyUser | null;
 };
+
+    
