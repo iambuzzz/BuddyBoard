@@ -13,14 +13,14 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 // Define the input schema for the joinGroup flow
-export const JoinGroupInputSchema = z.object({
+const JoinGroupInputSchema = z.object({
   userId: z.string().describe('The UID of the user trying to join the group.'),
   invitationCode: z.string().describe('The invitation code for the group.'),
 });
 export type JoinGroupInput = z.infer<typeof JoinGroupInputSchema>;
 
 // Define the output schema for the joinGroup flow
-export const JoinGroupOutputSchema = z.object({
+const JoinGroupOutputSchema = z.object({
   success: z.boolean(),
   message: z.string().optional(),
   groupName: z.string().optional(),
@@ -34,7 +34,7 @@ export type JoinGroupOutput = z.infer<typeof JoinGroupOutputSchema>;
  * @param {JoinGroupInput} input - The user ID and invitation code.
  * @returns {Promise<JoinGroupOutput>} - The result of the operation.
  */
-export const joinGroupFlow = ai.defineFlow(
+const joinGroupFlow = ai.defineFlow(
   {
     name: 'joinGroupFlow',
     inputSchema: JoinGroupInputSchema,
