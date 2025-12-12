@@ -31,6 +31,7 @@ import { useRouter } from 'next/navigation';
 import type { Group, UserProfile } from '@/lib/types';
 import short from 'short-uuid';
 import { Separator } from '@/components/ui/separator';
+import { Label } from '@/components/ui/label';
 
 const profileFormSchema = z.object({
   displayName: z
@@ -518,3 +519,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
