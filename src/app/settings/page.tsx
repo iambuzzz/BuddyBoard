@@ -170,20 +170,31 @@ export default function SettingsPage() {
       const userProfileRef = doc(firestore, 'users', user.uid);
       
       await updateDoc(userProfileRef, { displayName, cardTheme });
-      await updateProfile(auth.currentUser, { displayName });
+      if(auth.currentUser.displayName !== displayName) {
+        await updateProfile(auth.currentUser, { displayName });
+      }
 
       if (newPassword && currentPassword) {
         const credential = EmailAuthProvider.credential(user.email!, currentPassword);
         await reauthenticateWithCredential(auth.currentUser, credential);
         await updatePassword(auth.currentUser, newPassword);
         toast({ title: 'Success!', description: 'Profile and password updated successfully.' });
+        profileForm.reset({ ...profileForm.getValues(), currentPassword: '', newPassword: '' });
       } else {
         toast({ title: 'Settings Saved', description: 'Your profile has been updated successfully.' });
       }
 
     } catch (error: any) {
       console.error('Error updating profile:', error);
-      toast({ title: 'Error', description: error.message || 'Failed to update settings.', variant: 'destructive' });
+      if (error.code === 'auth/invalid-credential') {
+        toast({
+          title: 'Incorrect Password',
+          description: 'The current password you entered is incorrect. Please try again.',
+          variant: 'destructive',
+        });
+      } else {
+        toast({ title: 'Error', description: error.message || 'Failed to update settings.', variant: 'destructive' });
+      }
     } finally {
       setIsSaving(false);
     }
@@ -198,8 +209,7 @@ export default function SettingsPage() {
     const newGroupRef = doc(firestore, 'groups', newGroupId);
     const userProfileRef = doc(firestore, 'users', user.uid);
 
-    const newGroup: Group = {
-      id: newGroupId,
+    const newGroup: Omit<Group, 'id'> = {
       name: data.groupName,
       invitationCode: short.generate(),
       createdBy: user.uid,
@@ -519,5 +529,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
