@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useUser } from '@/firebase/auth/use-user';
@@ -153,7 +154,7 @@ const SoloView = ({ userId, profile }: { userId: string; profile: UserProfile })
 
     return (
         <div className="flex flex-col h-full">
-            <div className="flex justify-between items-center mb-4">
+             <div className="flex justify-between items-center mb-4">
                  <div className="w-40 flex justify-start">
                     <Link href="/settings">
                         <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
@@ -320,15 +321,6 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
     const [displayItems, setDisplayItems] = useState<GroupDisplayItem[]>([]);
     const [userStates, setUserStates] = useState<Record<string, UserState | null>>({});
     const [isLoading, setIsLoading] = useState(true);
-    const auth = useAuth();
-    const router = useRouter();
-
-    const handleLogout = async () => {
-        if (auth) {
-            await signOut(auth);
-            router.push('/login');
-        }
-    };
 
     useEffect(() => {
         if (!firestore || !groupId) return;
@@ -360,6 +352,18 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             const items: GroupDisplayItem[] = [];
             const memberMap = new Map(members.map(m => [m.uid, m]));
 
+            // Prioritize current user's pairs
+            const currentUserProfile = memberMap.get(currentUserId);
+            if (currentUserProfile && currentUserProfile.pairedWith && memberMap.has(currentUserProfile.pairedWith) && !processed.has(currentUserId)) {
+                const partner = memberMap.get(currentUserProfile.pairedWith)!;
+                 if (partner.pairedWith === currentUserId) { // Ensure the pairing is mutual
+                    items.push([currentUserProfile, partner]);
+                    processed.add(currentUserId);
+                    processed.add(partner.uid);
+                }
+            }
+
+
             for (const member of members) {
                 if (processed.has(member.uid)) continue;
 
@@ -374,9 +378,11 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                 }
             }
 
-            items.sort((a, b) => {
+            // The main sort places the current user (or their pair) at the top.
+             items.sort((a, b) => {
                 const aIsCurrentUser = Array.isArray(a) ? a.some(m => m.uid === currentUserId) : a.uid === currentUserId;
                 const bIsCurrentUser = Array.isArray(b) ? b.some(m => m.uid === currentUserId) : b.uid === currentUserId;
+
                 if (aIsCurrentUser) return -1;
                 if (bIsCurrentUser) return 1;
 
@@ -443,10 +449,14 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                     const [user1, user2] = item;
                                     const state1 = userStates[user1.uid];
                                     const state2 = userStates[user2.uid];
-                                    const isCurrentUserInPair = user1.uid === currentUserId || user2.uid === currentUserId;
-                                    const isCurrentUserPrimary = isCurrentUserInPair && user1.uid === currentUserId;
-
-                                    if (!state1 || !state2) {
+                                    
+                                    // This logic ensures user1 is always the current user if they are in the pair.
+                                    const primaryUser = user1.uid === currentUserId ? user1 : (user2.uid === currentUserId ? user2 : user1);
+                                    const secondaryUser = primaryUser.uid === user1.uid ? user2 : user1;
+                                    const primaryState = userStates[primaryUser.uid];
+                                    const secondaryState = userStates[secondaryUser.uid];
+                                    
+                                    if (!primaryState || !secondaryState) {
                                         return (
                                             <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
                                                 <div className="flex flex-col items-center gap-4 text-slate-500">
@@ -458,9 +468,9 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                     }
                                     return (
                                         <PairedTaskCard
-                                            user1={{ profile: user1, state: state1 }}
-                                            user2={{ profile: user2, state: state2 }}
-                                            isCurrentUserThePrimary={isCurrentUserPrimary}
+                                            user1={{ profile: primaryUser, state: primaryState }}
+                                            user2={{ profile: secondaryUser, state: secondaryState }}
+                                            isCurrentUserThePrimary={true}
                                         />
                                     );
                                 })()
@@ -470,36 +480,19 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                     const userState = userStates[member.uid];
                                     return (
                                         <div className="h-full w-full flex flex-col">
-                                            <div className="flex justify-between items-center mb-4">
-                                                 <div className="w-40 flex justify-start">
-                                                    <Link href="/settings">
-                                                        <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
-                                                            <Settings className="h-5 w-5" />
-                                                        </Button>
-                                                    </Link>
-                                                 </div>
-                                                 <div className="w-40 flex justify-end">
-                                                    <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
-                                                        <LogOut className="h-5 w-5" />
-                                                    </Button>
-                                                 </div>
-                                            </div>
-                                            <div className="flex-grow">
-                                                {userState ? (
-                                                    <TaskCard 
-                                                        userState={userState}
-                                                        userProfile={member}
-                                                        userId={member.uid}
-                                                    />
-                                                ) : (
-                                                    <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
-                                                        <div className="flex flex-col items-center gap-4 text-slate-500">
-                                                            <Loader2 className="h-6 w-6 animate-spin" />
-                                                            <p>Loading {member.displayName}'s tasks...</p>
-                                                        </div>
+                                            {userState ? (
+                                                <SoloView 
+                                                    userId={member.uid}
+                                                    profile={member}
+                                                />
+                                            ) : (
+                                                <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
+                                                    <div className="flex flex-col items-center gap-4 text-slate-500">
+                                                        <Loader2 className="h-6 w-6 animate-spin" />
+                                                        <p>Loading {member.displayName}'s tasks...</p>
                                                     </div>
-                                                )}
-                                            </div>
+                                                </div>
+                                            )}
                                         </div>
                                     );
                                 })()
@@ -563,5 +556,3 @@ export default function Home() {
     </main>
   );
 }
-
-    
