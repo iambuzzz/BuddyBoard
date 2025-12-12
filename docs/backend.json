@@ -1,5 +1,36 @@
 {
   "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores public information about a user.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID." },
+        "displayName": { "type": "string", "description": "User's public display name." },
+        "email": { "type": "string", "format": "email" },
+        "cardTheme": { "type": "string", "description": "The selected color theme for the user's card." }
+      },
+      "required": ["uid", "email", "displayName"]
+    },
+    "Group": {
+      "title": "Group",
+      "description": "Represents a group of users.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "invitationCode": { "type": "string" },
+        "createdBy": { "type": "string", "description": "UID of the user who created the group." },
+        "members": {
+          "type": "object",
+          "description": "A map of user UIDs to their roles in the group.",
+          "additionalProperties": {
+            "type": "string",
+            "enum": ["admin", "member"]
+          }
+        }
+      },
+      "required": ["name", "invitationCode", "createdBy", "members"]
+    },
     "Task": {
       "title": "Task",
       "description": "Represents a single task item.",
@@ -24,8 +55,8 @@
       },
       "required": ["text"]
     },
-    "UserState": {
-      "title": "User State",
+    "TaskList": {
+      "title": "User's Task List",
       "description": "The complete state for a single user's task list.",
       "type": "object",
       "properties": {
@@ -34,45 +65,38 @@
         "isLocked": { "type": "boolean" },
         "isFinished": { "type": "boolean" },
         "totalCompleted": { "type": "number" },
-        "totalAssigned": { "type": "number" },
+        "totalAssigned": { "type": "number"},
         "currentStreak": { "type": "number" },
         "maxStreak": { "type": "number" },
         "lockedAt": { "type": "number", "description": "Timestamp or null" },
-        "lastLockedAt": { "type": "number", "description": "Timestamp or null" }
+        "lastLockedAt": { "type": "number", "description": "Timestamp or null" },
+        "pairedWith": { "type": "string", "description": "UID of the user on the back of the card, or null." }
       }
-    },
-    "AppState": {
-      "title": "App State",
-      "description": "The entire state of the application, containing all user data.",
-      "type": "object",
-      "properties": {
-        "riya": { "$ref": "#/entities/UserState" },
-        "naitik": { "$ref": "#/entities/UserState" },
-        "ambuj": { "$ref": "#/entities/UserState" },
-        "lastUpdater": { "type": "string", "enum": ["riya", "naitik", "ambuj"] }
-      }
-    },
-    "UserRole": {
-      "title": "User Role",
-      "description": "Maps a Firebase Auth UID to a list name.",
-      "type": "object",
-      "properties": {
-        "listName": { "type": "string", "enum": ["riya", "naitik", "ambuj"] }
-      },
-      "required": ["listName"]
     }
   },
   "auth": {
     "providers": ["email"]
   },
   "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Stores public profiles for all users."
+    },
+    "/groups/{groupId}": {
+      "schema": { "$ref": "#/entities/Group" },
+      "description": "Stores information about user groups."
+    },
+    "/task_lists/{userId}": {
+      "schema": { "$ref": "#/entities/TaskList" },
+      "description": "Stores the private task list for each user."
+    },
     "/riyalTodoState/app": {
       "schema": { "$ref": "#/entities/AppState" },
-      "description": "A single document containing the state for all users."
+      "description": "LEGACY: A single document containing the state for the original three users. This will no longer be actively used for new users."
     },
     "/user_roles/{userId}": {
       "schema": { "$ref": "#/entities/UserRole" },
-      "description": "Maps a user's UID to their corresponding list name (e.g., 'riya')."
+      "description": "LEGACY: Maps a user's UID to their corresponding list name (e.g., 'riya'). This will no longer be actively used for new users."
     }
   }
 }

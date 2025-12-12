@@ -1,110 +1,89 @@
 /**
- * @fileoverview Firestore Security Rules for Riya's Todo App.
+ * @fileoverview Firestore Security Rules for the new multi-tenant TaskFlipper app.
  *
  * Core Philosophy:
- * This ruleset enforces a strict user-ownership model for user-specific data
- * stored within a shared "app" document.  Each user (riya, naitik, ambuj)
- * has a dedicated section within the app document that only they can modify.
- * A user_roles collection is used to map Firebase UIDs to list names.
+ * This ruleset establishes a robust security model for a multi-user, group-based application.
+ * Each user has full control over their own data (profile and task list), and group access
+ * is managed through roles (admin/member) defined within each group document.
+ * The legacy data model remains readable but not writable to prevent interference.
  *
- * Data Structure:
- * - /riyalTodoState/app:  A single document containing the entire application state,
- *   including nested UserState objects for each user.
- * - /user_roles/{userId}: Documents mapping a user's Firebase UID to their list name.
+ * New Data Structure:
+ * - /users/{userId}: Public user profiles. Users can create their own and update it. Anyone can read.
+ * - /groups/{groupId}: Group definitions. Contains a members map with roles.
+ * - /task_lists/{userId}: A user's private task list. Only the owner can read or write.
+ *
+ * Legacy Data Structure (Read-Only):
+ * - /riyalTodoState/app: The original app state.
+ * - /user_roles/{userId}: The original user-to-list mapping.
  *
  * Key Security Decisions:
- * - Users can only modify their own UserState within the app document.
- * - Listing of documents in /user_roles is disallowed for privacy.
- * - Data shape is not strictly enforced beyond authorization fields in this prototyping phase.
- *
- * Denormalization for Authorization:
- * - The `lastUpdater` field in the `/riyalTodoState/app` document is used for
- *   authorization, ensuring that only the user identified in this field can
- *   modify their section of the document.
- *
- * Structural Segregation:
- * - Private user data and shared application data are stored in separate
- *   sections of the Firestore database to maintain clear access control boundaries.
+ * - User data is strictly owned: A user can only write to their own /users/{userId} and /task_lists/{userId} documents.
+ * - Group write access is role-based: Only 'admin' members of a group can modify the group document.
+ * - Group read access: Any member of a group can read the group document.
+ * - Invitation codes are part of the group document and are thus protected by the same read rules.
  */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    /**
-     * @description Checks if the user is signed in.
-     * @return {boolean} True if the user is signed in, false otherwise.
-     */
+    // --- Helper Functions ---
     function isSignedIn() {
       return request.auth != null;
     }
 
-    /**
-     * @description Checks if the authenticated user's list name matches the given list name.
-     * @param {string} listName - The list name to compare against.
-     * @return {boolean} True if the user's list name matches, false otherwise.
-     */
-    function isListOwner(listName) {
-        return isSignedIn() && get(/databases/$(database)/documents/user_roles/$(request.auth.uid)).data.listName == listName;
-    }
-
-    /**
-     * @description Determines if the current user is authorized to update the application state.
-     * @param {string} listName The name of the list being updated.
-     * @return {boolean} True if the user is authorized, false otherwise.
-     */
-    function canUpdateAppState(listName) {
-      return request.auth.uid != null && isListOwner(listName) && request.resource.data.lastUpdater == listName;
-    }
-
-    /**
-     * @description Checks if the user is the owner of the user role document.
-     * @param {string} userId The user ID.
-     * @return {boolean} True if the user is the owner, false otherwise.
-     */
     function isOwner(userId) {
-        return isSignedIn() && request.auth.uid == userId;
+      return isSignedIn() && request.auth.uid == userId;
     }
 
-    /**
-     * @description Checks if the user is the existing owner of the user role document.
-     * @param {string} userId The user ID.
-     * @return {boolean} True if the user is the owner and the resource exists, false otherwise.
-     */
-    function isExistingOwner(userId) {
-        return isOwner(userId) && resource != null;
+    function isGroupMember(groupId) {
+      return isSignedIn() && resource.data.members[request.auth.uid] != null;
     }
 
+    function isGroupAdmin(groupId) {
+      return isSignedIn() && resource.data.members[request.auth.uid] == 'admin';
+    }
+    
+    function isNewGroupAdmin(groupId) {
+      return isSignedIn() && request.resource.data.members[request.auth.uid] == 'admin';
+    }
 
-    /**
-     * @description Rules for the /riyalTodoState/app document.
-     * @path /riyalTodoState/app
-     * @allow (update) Signed-in user 'riya' can update the document if request.resource.data.lastUpdater == 'riya'.
-     * @deny (update) Signed-in user 'naitik' cannot update the document if request.resource.data.lastUpdater != 'naitik'.
-     * @principle Enforces user-specific updates to the application state.
-     */
+    // --- New Scalable Rules ---
+
+    // User can create and update their own profile. Anyone can read profiles.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isOwner(userId);
+    }
+    
+    // User can create and manage their own private task list.
+    match /task_lists/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // Group Rules:
+    // - Anyone signed in can try to create a group.
+    // - Only admins can update a group.
+    // - Only members can read a group's details.
+    // - Only admins can delete a group.
+    match /groups/{groupId} {
+      allow create: if isSignedIn() && isNewGroupAdmin(groupId);
+      allow read: if isGroupMember(groupId);
+      allow update: if isGroupAdmin(groupId);
+      allow delete: if isGroupAdmin(groupId);
+    }
+
+    // --- Legacy Read-Only Rules ---
+
+    // The original app state is now read-only to preserve history.
     match /riyalTodoState/app {
-      allow get: if true;
-      allow list: if false;
-      allow create: if false;
-      allow update: if canUpdateAppState(request.resource.data.lastUpdater);
-      allow delete: if false;
+      allow read: if true;
+      allow write: if false; // Prevent any modification
     }
-
-    /**
-     * @description Rules for the /user_roles/{userId} documents.
-     * @path /user_roles/{userId}
-     * @allow (create) Signed-in user can create their own user role document.
-     * @allow (update) Signed-in user can update their own user role document.
-     * @deny (create) Signed-in user cannot create a user role document for another user.
-     * @deny (update) Signed-in user cannot update a user role document for another user.
-     * @principle Enforces document ownership for writes; restricts listing for privacy.
-     */
+    
+    // The original user roles are now read-only.
     match /user_roles/{userId} {
-      allow get: if isOwner(userId);
-      allow list: if false;
-      allow create: if isOwner(userId);
-      allow update: if isExistingOwner(userId);
-      allow delete: if isExistingOwner(userId);
+      allow read: if true;
+      allow write: if false; // Prevent any modification
     }
   }
 }
