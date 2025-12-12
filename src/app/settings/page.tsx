@@ -23,7 +23,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { useEffect, useState } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { updateProfile } from 'firebase/auth';
+import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { useFirestore, useAuth } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Loader2, ArrowLeft } from 'lucide-react';
@@ -41,7 +41,19 @@ const profileFormSchema = z.object({
   cardTheme: z.enum(['riya', 'naitik', 'ambuj'], {
     required_error: 'You need to select a theme.',
   }),
+  newPassword: z.string().optional(),
+  currentPassword: z.string().optional(),
+}).refine(data => {
+  // If newPassword is provided, currentPassword must also be provided.
+  if (data.newPassword && !data.currentPassword) {
+    return false;
+  }
+  return true;
+}, {
+  message: 'Current password is required to set a new password.',
+  path: ['currentPassword'],
 });
+
 
 type ProfileFormValues = z.infer<typeof profileFormSchema>;
 
@@ -55,14 +67,20 @@ export default function SettingsPage() {
 
   const form = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
+    defaultValues: {
+      displayName: '',
+      cardTheme: 'riya',
+      newPassword: '',
+      currentPassword: '',
+    },
     mode: 'onChange',
   });
 
   useEffect(() => {
     if (profile) {
       form.reset({
-        displayName: profile.displayName,
-        cardTheme: profile.cardTheme,
+        displayName: profile.displayName || '',
+        cardTheme: profile.cardTheme || 'riya',
       });
     }
   }, [profile, form]);
@@ -79,23 +97,31 @@ export default function SettingsPage() {
 
     setIsSaving(true);
     try {
+      const { displayName, cardTheme, newPassword, currentPassword } = data;
       const userProfileRef = doc(firestore, 'users', user.uid);
       
       // Update Firestore
-      await updateDoc(userProfileRef, {
-        displayName: data.displayName,
-        cardTheme: data.cardTheme,
-      });
+      await updateDoc(userProfileRef, { displayName, cardTheme });
 
-      // Update Auth profile
-      await updateProfile(auth.currentUser, {
-        displayName: data.displayName,
-      });
+      // Update Auth profile display name
+      await updateProfile(auth.currentUser, { displayName });
 
-      toast({
-        title: 'Settings Saved',
-        description: 'Your profile has been updated successfully.',
-      });
+      // Update password if provided
+      if (newPassword && currentPassword) {
+        const credential = EmailAuthProvider.credential(user.email!, currentPassword);
+        await reauthenticateWithCredential(auth.currentUser, credential);
+        await updatePassword(auth.currentUser, newPassword);
+        toast({
+            title: 'Success!',
+            description: 'Profile and password updated successfully.',
+        });
+      } else {
+        toast({
+            title: 'Settings Saved',
+            description: 'Your profile has been updated successfully.',
+        });
+      }
+
       router.push('/');
     } catch (error: any) {
       console.error('Error updating profile:', error);
@@ -188,6 +214,38 @@ export default function SettingsPage() {
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="currentPassword"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Current Password</FormLabel>
+                        <FormControl>
+                            <Input type="password" placeholder="Enter current password" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                            Required only if you want to change your password.
+                        </FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                <FormField
+                    control={form.control}
+                    name="newPassword"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>New Password</FormLabel>
+                        <FormControl>
+                            <Input type="password" placeholder="Enter new password" {...field} />
+                        </FormControl>
+                        <FormDescription>
+                            Leave this blank if you do not want to change your password.
+                        </FormDescription>
+                        <FormMessage />
+                        </FormItem>
+                    )}
                 />
                 <Button type="submit" disabled={isSaving}>
                   {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
