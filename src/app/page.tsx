@@ -249,7 +249,7 @@ const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partn
     }
     
     return (
-        <div className="h-full w-full max-w-2xl mx-auto flex flex-col items-center px-4">
+        <div className="h-full w-full max-w-4xl mx-auto flex flex-col items-center px-4">
              <Button
                 onClick={() => setShowBack(p => !p)}
                 className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 mb-4 ${getButtonThemeClass(themeForSwitchButton)}`}
@@ -359,7 +359,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             {members.map(member => {
                 const userState = userStates[member.uid];
                 return (
-                    <div key={member.uid} className="h-full w-full max-w-2xl mx-auto flex-shrink-0 snap-center px-4 flex items-center">
+                    <div key={member.uid} className="h-full w-full max-w-4xl mx-auto flex-shrink-0 snap-center px-4 flex items-center">
                         {userState ? (
                             <TaskCard 
                                 userState={userState}
@@ -418,7 +418,7 @@ export default function Home() {
     }
     // Priority 3: Solo View
     return (
-      <div className="h-full w-full max-w-2xl mx-auto flex items-center px-4">
+      <div className="h-full w-full max-w-4xl mx-auto flex items-center px-4">
         <SoloView userId={user.uid} profile={profile} />
       </div>
     );
