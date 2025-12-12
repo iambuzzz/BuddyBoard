@@ -1,28 +1,4 @@
 
-/**
- * @fileoverview Firestore Security Rules for the new multi-tenant TaskFlipper app.
- *
- * Core Philosophy:
- * This ruleset establishes a robust security model for a multi-user, group-based application.
- * Each user has full control over their own data (profile and task list), and group access
- * is managed through roles (admin/member) defined within each group document.
- * The legacy data model remains readable but not writable to prevent interference.
- *
- * New Data Structure:
- * - /users/{userId}: Public user profiles. Users can create their own and update it. Anyone can read.
- * - /groups/{groupId}: Group definitions. Contains a members map with roles.
- * - /task_lists/{userId}: A user's private task list. Only the owner can read or write.
- *
- * Legacy Data Structure (Read-Only):
- * - /riyalTodoState/app: The original app state.
- * - /user_roles/{userId}: The original user-to-list mapping.
- *
- * Key Security Decisions:
- * - User data is strictly owned: A user can only write to their own /users/{userId} and /task_lists/{userId} documents.
- * - Group write access is role-based: Admins can update/delete, and new users can join.
- * - Group read access: Any member of a group can read the group document.
- * - Invitation codes are part of the group document and are thus protected by the same read rules.
- */
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
