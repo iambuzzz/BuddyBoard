@@ -79,7 +79,7 @@ const CreateProfile = () => {
         const batch = writeBatch(firestore);
 
         const userProfileRef = doc(firestore, 'users', user.uid);
-        const newUserProfile: UserProfile = {
+        const newUserProfile: Omit<UserProfile, 'groupId'> = {
             uid: user.uid,
             email: user.email!,
             displayName: displayName.trim(),
@@ -110,6 +110,7 @@ const CreateProfile = () => {
         } catch (error: any) {
             console.error("Error creating profile:", error);
             toast({ title: "Error", description: "Could not create your profile. Please try again.", variant: "destructive" });
+        } finally {
             setLoading(false);
         }
     };
@@ -235,23 +236,29 @@ const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partn
          return <LoadingScreen />;
     }
 
-    const buttonThemeClass = showBack
-      ? 'bg-purple-500 hover:bg-purple-600 text-white'
-      : 'bg-cyan-500 hover:bg-cyan-600 text-white';
-
     const userToSwitch = showBack ? currentUserData.profile.displayName : partnerData.profile.displayName;
+    const themeForSwitchButton = (showBack ? currentUserData.profile.cardTheme : partnerData.profile.cardTheme) || 'riya';
+
+    const getButtonThemeClass = (theme: string) => {
+        switch(theme) {
+            case 'riya': return 'bg-purple-500 hover:bg-purple-600 text-white';
+            case 'naitik': return 'bg-cyan-500 hover:bg-cyan-600 text-white';
+            case 'ambuj': return 'bg-emerald-500 hover:bg-emerald-600 text-white';
+            default: return 'bg-purple-500 hover:bg-purple-600 text-white';
+        }
+    }
     
     return (
-        <div className="h-full w-full max-w-lg mx-auto flex flex-col items-center px-4">
+        <div className="h-full w-full max-w-lg mx-auto flex flex-col items-center justify-center px-4">
              <Button
                 onClick={() => setShowBack(p => !p)}
-                className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 mb-4 ${buttonThemeClass}`}
+                className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 mb-4 ${getButtonThemeClass(themeForSwitchButton)}`}
                 aria-pressed={showBack}
             >
                 <RefreshCw className="h-4 w-4" />
                 <span>Switch to {userToSwitch}</span>
             </Button>
-            <div className="app-flip-shell w-full h-full">
+            <div className="app-flip-shell w-full h-[calc(100%-4rem)]">
                 <div className={`app-flip-card ${showBack ? 'is-back' : ''}`}>
                     <div className="app-face front" style={{ pointerEvents: showBack ? 'none' : 'auto' }}>
                        <TaskCard userId={currentUserData.profile.uid} userProfile={currentUserData.profile} userState={currentUserData.state} />
@@ -402,15 +409,17 @@ export default function Home() {
   return (
     <main className="h-screen w-full flex flex-col items-center bg-[#e3eeff] relative overflow-hidden py-8">
       <ActionButtons />
-      {partnerId ? (
-        <PairedView currentUserId={user.uid} partnerId={partnerId} />
-      ) : profile.groupId ? (
-        <GroupView groupId={profile.groupId} currentUserId={user.uid} />
-      ) : (
-        <div className="h-full w-full max-w-lg mx-auto flex items-center justify-center px-4">
-            <SoloView userId={user.uid} profile={profile} />
-        </div>
-      )}
+      <div className="w-full h-full flex-grow">
+        {partnerId ? (
+          <PairedView currentUserId={user.uid} partnerId={partnerId} />
+        ) : profile.groupId ? (
+          <GroupView groupId={profile.groupId} currentUserId={user.uid} />
+        ) : (
+          <div className="h-full w-full max-w-lg mx-auto flex items-center justify-center px-4">
+              <SoloView userId={user.uid} profile={profile} />
+          </div>
+        )}
+      </div>
     </main>
   );
 }
