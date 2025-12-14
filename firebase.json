@@ -1,0 +1,19 @@
+{
+  "storage": {
+    "cors": [
+      {
+        "origin": [
+          "https://6000-firebase-studio-1758055367437.cluster-cz5nqyh5nreq6ua6gaqd7okl7o.cloudworkstations.dev"
+        ],
+        "method": [
+          "GET",
+          "POST",
+          "PUT",
+          "DELETE",
+          "HEAD"
+        ],
+        "maxAgeSeconds": 3600
+      }
+    ]
+  }
+}
