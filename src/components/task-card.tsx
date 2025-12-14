@@ -307,9 +307,9 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const effectiveTheme = cardTheme as 'riya' | 'naitik' | 'ambuj';
 
   const avatarBorderStyle =
-    cardTheme === 'riya' ? 'border-[--riya-primary]' :
-    cardTheme === 'naitik' ? 'border-[--naitik-primary]' :
-    'border-[--ambuj-primary]';
+    cardTheme === 'riya' ? 'border-[--riya-text]' :
+    cardTheme === 'naitik' ? 'border-[--naitik-text]' :
+    'border-[--ambuj-text]';
 
 
   return (
@@ -329,7 +329,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
       </AnimatePresence>
       <header className="flex justify-between items-center pb-4 mb-4 border-b">
         <div className="flex items-center gap-3">
-          <Avatar className={`h-8 w-8 border-2 ${avatarBorderStyle}`}>
+          <Avatar className={`h-8 w-8 border ${avatarBorderStyle}`}>
             <AvatarImage src={userProfile?.photoURL} alt={userName} />
             <AvatarFallback>{getInitials(userName)}</AvatarFallback>
           </Avatar>
