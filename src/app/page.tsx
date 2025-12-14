@@ -369,7 +369,14 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
 
     const handleSelectMember = (uid: string) => {
         setSheetOpen(false);
-        const element = document.querySelector(`[data-scroll-id="${uid}"]`);
+        // Find the scroll container for the member
+        let scrollId = uid;
+        const pair = displayItems.find(item => Array.isArray(item) && (item[0].uid === uid || item[1].uid === uid));
+        if (pair && Array.isArray(pair)) {
+            scrollId = pair[0].uid; // The scroll ID is always the first user in the pair
+        }
+
+        const element = document.querySelector(`[data-scroll-id="${scrollId}"]`);
         if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
