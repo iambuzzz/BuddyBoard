@@ -9,6 +9,7 @@
         "uid": { "type": "string", "description": "Firebase Auth UID." },
         "displayName": { "type": "string", "description": "User's public display name." },
         "email": { "type": "string", "format": "email" },
+        "photoURL": { "type": "string", "description": "URL of the user's profile picture." },
         "cardTheme": { "type": "string", "description": "The selected color theme for the user's card." },
         "groupId": { "type": "string", "description": "ID of the group the user belongs to, or null." },
         "pairedWith": { "type": "string", "description": "UID of the paired user, or null." }

@@ -28,6 +28,7 @@ import { TaskList } from './task-list';
 import { ScoreBadge } from './score-badge';
 import { CelebrationOverlay } from './celebration-overlay';
 import { StreakBadge } from './streak-badge';
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 
 type TaskCardProps = {
   userState: UserState;
@@ -49,6 +50,13 @@ const getThemeClass = (theme: string | undefined) => {
   }
 };
 
+const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join('');
+};
 
 export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const firestore = useFirestore();
@@ -299,7 +307,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const effectiveTheme = cardTheme as 'riya' | 'naitik' | 'ambuj';
 
   return (
-    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card p-4 sm:pt-4 sm:px-6 sm:pb-6 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
+    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card pt-4 px-6 pb-6 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
       <AnimatePresence>
         {userState.isFinished && (
           <CelebrationOverlay
@@ -313,15 +321,21 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
           />
         )}
       </AnimatePresence>
-      <header className="flex justify-between items-center pb-4 mb-4 border-b flex-shrink-0">
-        <div className="flex items-center gap-1 pr-2">
-          <h2 className={`text-xl sm:text-2xl font-bold ${titleColor}`}>{userName}</h2>
-          <div className="h-7 w-12">
-            <StreakBadge
-                currentStreak={userState.currentStreak}
-                maxStreak={userState.maxStreak}
-                theme={effectiveTheme}
-            />
+      <header className="flex justify-between items-center pb-4 mb-4 border-b">
+        <div className="flex items-center gap-3">
+          <Avatar>
+            <AvatarImage src={userProfile?.photoURL} alt={userName} />
+            <AvatarFallback>{getInitials(userName)}</AvatarFallback>
+          </Avatar>
+          <div className="flex items-center gap-1">
+            <h2 className={`text-xl sm:text-2xl font-bold ${titleColor}`}>{userName}</h2>
+            <div className="h-7 w-12">
+                <StreakBadge
+                    currentStreak={userState.currentStreak}
+                    maxStreak={userState.maxStreak}
+                    theme={effectiveTheme}
+                />
+            </div>
           </div>
         </div>
         <div className="score-badge-container">

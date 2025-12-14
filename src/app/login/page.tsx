@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore'; 
 import { useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
@@ -49,6 +49,7 @@ export default function LoginPage() {
       uid: userId,
       email: email,
       displayName: displayName,
+      photoURL: null,
       cardTheme: 'riya', // Default theme set to 'riya'
     });
   };
@@ -79,6 +80,9 @@ export default function LoginPage() {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         
+        // Update auth profile
+        await updateProfile(user, { displayName });
+
         // Create user profile and initial task list in parallel
         await Promise.all([
           createUserProfile(user.uid, user.email!, displayName),
@@ -92,7 +96,7 @@ export default function LoginPage() {
         toast({ title: 'Success', description: 'Logged in successfully!' });
       }
       router.push('/');
-    } catch (error: any) {
+    } catch (error: any) => {
       let description = error.message || 'An unknown error occurred.';
       if (error.code === 'auth/invalid-credential') {
         description = 'Invalid email or password. Please try again.';

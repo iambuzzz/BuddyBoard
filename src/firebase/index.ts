@@ -1,12 +1,14 @@
 import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, enableIndexedDbPersistence, CACHE_SIZE_UNLIMITED } from 'firebase/firestore';
+import { getStorage } from "firebase/storage";
+
 
 const firebaseConfig = {
     apiKey: "AIzaSyBLzLnKlMBmG24TCLisORuO21-rRLoFQfw",
     authDomain: "studio-2709310238-bb315.firebaseapp.com",
     projectId: "studio-2709310238-bb315",
-    storageBucket: "studio-2709310238-bb315.firebasestorage.app",
+    storageBucket: "studio-2709310238-bb315.appspot.com",
     messagingSenderId: "201140323091",
     appId: "1:201140323091:web:fac69e924bac71727450e6"
 };
@@ -15,6 +17,7 @@ function initializeFirebase() {
     const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     const auth = getAuth(app);
     const firestore = getFirestore(app);
+    const storage = getStorage(app);
 
     if (typeof window !== 'undefined') {
         enableIndexedDbPersistence(firestore, {
@@ -29,7 +32,7 @@ function initializeFirebase() {
         });
     }
 
-    return { app, auth, firestore };
+    return { app, auth, firestore, storage };
 }
 
 export { initializeFirebase };

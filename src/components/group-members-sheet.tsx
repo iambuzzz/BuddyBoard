@@ -8,10 +8,10 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { UserProfile } from '@/lib/types';
-import { Crown, User } from 'lucide-react';
+import { User } from 'lucide-react';
 
 interface GroupMembersSheetProps {
   isOpen: boolean;
@@ -59,6 +59,7 @@ export function GroupMembersSheet({
                 onClick={() => onSelectMember(member.uid)}
               >
                 <Avatar className="h-9 w-9 mr-3">
+                  <AvatarImage src={member.photoURL} alt={member.displayName} />
                   <AvatarFallback className="bg-slate-200 text-slate-600 font-bold">
                     {getInitials(member.displayName)}
                   </AvatarFallback>

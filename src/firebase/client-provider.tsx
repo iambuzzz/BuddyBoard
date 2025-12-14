@@ -5,6 +5,7 @@ import { initializeFirebase, FirebaseProvider } from '.';
 import type { FirebaseApp } from 'firebase/app';
 import type { Auth } from 'firebase/auth';
 import type { Firestore } from 'firebase/firestore';
+import type { FirebaseStorage } from 'firebase/storage';
 
 interface FirebaseClientProviderProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
     app: FirebaseApp;
     auth: Auth;
     firestore: Firestore;
+    storage: FirebaseStorage;
   } | null>(null);
 
   useEffect(() => {
@@ -34,6 +36,7 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
       app={firebaseInstances.app}
       auth={firebaseInstances.auth}
       firestore={firebaseInstances.firestore}
+      storage={firebaseInstances.storage}
     >
       {children}
     </FirebaseProvider>

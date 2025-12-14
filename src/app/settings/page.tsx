@@ -21,18 +21,20 @@ import {
 } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { doc, updateDoc, setDoc, getDoc, writeBatch, collection, query, where, getDocs, onSnapshot, DocumentData, QuerySnapshot, serverTimestamp, addDoc, deleteDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { useFirestore, useAuth } from '@/firebase';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, LogOut as LogOutIcon, Crown, Link as LinkIcon, Link2Off, Send, X, Check } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, LogOut as LogOutIcon, Crown, Link as LinkIcon, Link2Off, Send, X, Check, Edit2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { Group, UserProfile, PairInvitation } from '@/lib/types';
 import short from 'short-uuid';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 
 
 const profileFormSchema = z.object({
@@ -81,6 +83,14 @@ type GroupConflictInfo = {
     senderProfile: UserProfile;
 };
 
+const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((n) => n[0])
+      .slice(0, 2)
+      .join('');
+};
+
 
 export default function SettingsPage() {
   const { user, profile, isLoading: isUserLoading, refetch } = useUser();
@@ -92,6 +102,7 @@ export default function SettingsPage() {
   const [group, setGroup] = useState<Group | null>(null);
   const [groupMembers, setGroupMembers] = useState<UserProfile[]>([]);
   const [isGroupLoading, setIsGroupLoading] = useState(true);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const [sentInvites, setSentInvites] = useState<PairInvitation[]>([]);
   const [receivedInvites, setReceivedInvites] = useState<PairInvitation[]>([]);
@@ -238,6 +249,34 @@ export default function SettingsPage() {
         toast({ title: 'Error', description: error.message || 'Failed to update settings.', variant: 'destructive' });
       }
     } finally { setIsSaving(false); }
+  }
+
+  async function handlePhotoUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    if (!user || !firestore || !auth) return;
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsSaving(true);
+    try {
+        const storage = getStorage();
+        const filePath = `profile-photos/${user.uid}/${file.name}`;
+        const fileRef = storageRef(storage, filePath);
+        
+        const snapshot = await uploadBytes(fileRef, file);
+        const photoURL = await getDownloadURL(snapshot.ref);
+
+        const userProfileRef = doc(firestore, 'users', user.uid);
+        await updateDoc(userProfileRef, { photoURL });
+        await updateProfile(auth.currentUser!, { photoURL });
+
+        toast({ title: 'Profile Photo Updated!', description: 'Your new photo has been saved.' });
+        refetch();
+    } catch (error: any) {
+        console.error("Error uploading photo:", error);
+        toast({ title: 'Upload Error', description: 'Could not upload your photo. Please try again.', variant: 'destructive' });
+    } finally {
+        setIsSaving(false);
+    }
   }
   
   // --- Group Handlers ---
@@ -549,7 +588,13 @@ export default function SettingsPage() {
                     <CardTitle className="flex items-center gap-2"><LinkIcon /> Pairing Status</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <p>You are currently paired with <span className="font-bold">{pairedPartner.displayName}</span>.</p>
+                    <div className="flex items-center gap-4">
+                        <Avatar className="h-12 w-12">
+                            <AvatarImage src={pairedPartner.photoURL} />
+                            <AvatarFallback>{getInitials(pairedPartner.displayName)}</AvatarFallback>
+                        </Avatar>
+                        <p>You are currently paired with <span className="font-bold">{pairedPartner.displayName}</span>.</p>
+                    </div>
                     <Button variant="destructive" onClick={onUnpair} disabled={isSaving} className="w-full">
                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2Off className="mr-2 h-4 w-4" />}
                         Unpair
@@ -647,7 +692,13 @@ export default function SettingsPage() {
                 <div className="mt-2 space-y-2 rounded-md border p-2">
                   {groupMembers.map(member => (
                     <div key={member.uid} className="flex items-center justify-between text-sm">
-                      <span className="font-medium">{member.displayName}</span>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                            <AvatarImage src={member.photoURL} alt={member.displayName} />
+                            <AvatarFallback className="text-xs">{getInitials(member.displayName)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{member.displayName}</span>
+                      </div>
                       {group.members[member.uid] === 'admin' && (
                         <span className="text-xs font-bold text-amber-600 flex items-center gap-1"><Crown className="h-3 w-3" /> ADMIN</span>
                       )}
@@ -752,6 +803,32 @@ export default function SettingsPage() {
               <CardDescription>Manage your account and card appearance.</CardDescription>
             </CardHeader>
             <CardContent>
+              <div className="flex flex-col items-center space-y-4 mb-8">
+                <div className="relative group">
+                    <Avatar className="h-24 w-24 border">
+                        <AvatarImage src={profile?.photoURL} />
+                        <AvatarFallback className="text-3xl">{profile ? getInitials(profile.displayName) : ''}</AvatarFallback>
+                    </Avatar>
+                    <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="absolute inset-0 h-full w-full bg-black/50 text-white opacity-0 group-hover:opacity-100 rounded-full"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isSaving}
+                        aria-label="Change profile photo"
+                    >
+                        {isSaving ? <Loader2 className="h-6 w-6 animate-spin"/> : <Edit2 className="h-6 w-6"/>}
+                    </Button>
+                    <Input 
+                        type="file" 
+                        ref={fileInputRef}
+                        className="hidden"
+                        accept="image/png, image/jpeg, image/gif"
+                        onChange={handlePhotoUpload}
+                    />
+                </div>
+              </div>
+
               <Form {...profileForm}>
                 <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
                   <FormField control={profileForm.control} name="displayName" render={({ field }) => (

@@ -37,6 +37,7 @@ export interface UserProfile {
     uid: string;
     displayName: string;
     email: string;
+    photoURL?: string;
     cardTheme: string; // e.g., 'default', 'periwinkle', 'lavender'
     groupId?: string | null; // ID of the group the user belongs to
     pairedWith?: string | null; // UID of the paired user
@@ -82,7 +83,7 @@ export interface LegacyUserState {
   currentStreak: number;
   maxStreak: number;
   lockedAt: number | null;
-  lastLockedAt: number | null;
+  lastLockedAt: null;
 }
 
 export interface AppState {
