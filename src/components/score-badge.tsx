@@ -48,13 +48,13 @@ export function ScoreBadge({
         onClick={handleToggle}
         title={isLocked ? 'Click to toggle score' : ''}
       >
-        <div className="score-face score-front gap-2">
+        <div className="score-face score-front">
           <Trophy className="w-4 h-4 flex-shrink-0" />
-          <span>{frontText}</span>
+          <span className="whitespace-nowrap">{frontText}</span>
         </div>
-        <div className="score-face score-back gap-2">
+        <div className="score-face score-back">
           <Trophy className="w-4 h-4 flex-shrink-0" />
-          <span>{backText}</span>
+          <span className="whitespace-nowrap">{backText}</span>
         </div>
       </div>
     </div>
