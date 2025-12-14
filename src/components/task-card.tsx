@@ -313,8 +313,8 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
           />
         )}
       </AnimatePresence>
-      <header className="flex justify-between items-start pb-4 mb-4 border-b flex-shrink-0">
-        <div className="flex items-center gap-1 pr-2">
+      <header className="flex justify-between items-center pb-4 mb-4 border-b flex-shrink-0">
+        <div className="flex gap-1 pr-2">
           <h2 className={`text-xl sm:text-2xl font-bold ${titleColor}`}>{userName}</h2>
           <div className="h-7 w-12">
             <StreakBadge
