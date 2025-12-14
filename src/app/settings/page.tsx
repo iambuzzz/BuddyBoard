@@ -28,7 +28,7 @@ import { useFirestore, useAuth } from '@/firebase';
 import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, LogOut as LogOutIcon, Crown, Link as LinkIcon, Link2Off, Send, X, Check, Edit2 } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, LogOut as LogOutIcon, Crown, Link as LinkIcon, Link2Off, Send, X, Check, Edit2, ImagePlus } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { Group, UserProfile, PairInvitation } from '@/lib/types';
 import short from 'short-uuid';
@@ -112,6 +112,8 @@ export default function SettingsPage() {
 
   const [groupConflict, setGroupConflict] = useState<GroupConflictInfo | null>(null);
 
+  const [photoUrlInput, setPhotoUrlInput] = useState('');
+
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -151,6 +153,7 @@ export default function SettingsPage() {
         displayName: profile.displayName || '',
         cardTheme: profile.cardTheme || 'riya',
       });
+      setPhotoUrlInput(profile.photoURL || '');
     }
   }, [profile, profileForm]);
 
@@ -252,34 +255,22 @@ export default function SettingsPage() {
     } finally { setIsSaving(false); }
   }
 
-  async function handlePhotoUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    if (!user || !firestore || !auth || !storage) return;
-    const file = event.target.files?.[0];
-    if (!file) return;
-
+  async function handleSavePhotoUrl() {
+    if (!user || !firestore || !auth?.currentUser) return;
     setIsSaving(true);
     try {
-        const filePath = `profile-photos/${user.uid}/${file.name}`;
-        const fileRef = storageRef(storage, filePath);
-        
-        const snapshot = await uploadBytes(fileRef, file, { 
-            cacheControl: 'public,max-age=31536000' 
-        });
-        const photoURL = await getDownloadURL(snapshot.ref);
-
         const userProfileRef = doc(firestore, 'users', user.uid);
-        await updateDoc(userProfileRef, { photoURL });
-        await updateProfile(auth.currentUser!, { photoURL });
-
+        await updateDoc(userProfileRef, { photoURL: photoUrlInput });
+        await updateProfile(auth.currentUser, { photoURL: photoUrlInput });
         toast({ title: 'Profile Photo Updated!', description: 'Your new photo has been saved.' });
         refetch();
     } catch (error: any) {
-        console.error("Error uploading photo:", error);
-        toast({ title: 'Upload Error', description: 'Could not upload your photo. Please try again.', variant: 'destructive' });
+        console.error("Error updating photo URL:", error);
+        toast({ title: 'Error', description: 'Could not update your photo. Please try again.', variant: 'destructive' });
     } finally {
         setIsSaving(false);
     }
-  }
+}
   
   // --- Group Handlers ---
   async function onCreateGroup(data: GroupCreateValues) {
@@ -806,28 +797,30 @@ export default function SettingsPage() {
             </CardHeader>
             <CardContent>
               <div className="flex flex-col items-center space-y-4 mb-8">
-                <div className="relative group">
-                    <Avatar className="h-24 w-24 border">
-                        <AvatarImage src={profile?.photoURL} />
-                        <AvatarFallback className="text-3xl">{profile ? getInitials(profile.displayName) : ''}</AvatarFallback>
-                    </Avatar>
-                    <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="absolute inset-0 h-full w-full bg-black/50 text-white opacity-0 group-hover:opacity-100 rounded-full"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isSaving}
-                        aria-label="Change profile photo"
-                    >
-                        {isSaving ? <Loader2 className="h-6 w-6 animate-spin"/> : <Edit2 className="h-6 w-6"/>}
-                    </Button>
-                    <Input 
-                        type="file" 
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/png, image/jpeg, image/gif"
-                        onChange={handlePhotoUpload}
-                    />
+                <Avatar className="h-24 w-24 border">
+                    <AvatarImage src={profile?.photoURL} />
+                    <AvatarFallback className="text-3xl">{profile ? getInitials(profile.displayName) : ''}</AvatarFallback>
+                </Avatar>
+                
+                {/* Workaround: URL input instead of file upload */}
+                <div className="w-full space-y-2">
+                    <Label htmlFor="photo-url">Profile Photo URL</Label>
+                    <div className="flex items-center gap-2">
+                        <Input 
+                            id="photo-url"
+                            type="url"
+                            placeholder="https://example.com/image.png"
+                            value={photoUrlInput}
+                            onChange={(e) => setPhotoUrlInput(e.target.value)}
+                            disabled={isSaving}
+                        />
+                        <Button onClick={handleSavePhotoUrl} disabled={isSaving}>
+                            {isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Save'}
+                        </Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                        File upload is temporarily disabled. Please paste an image URL.
+                    </p>
                 </div>
               </div>
 
@@ -872,3 +865,5 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
