@@ -162,6 +162,7 @@
   /* Score Badge */
   .score-badge-container {
     perspective: 1000px;
+    height: 2.25rem;
   }
   .score-badge {
     position: relative;
