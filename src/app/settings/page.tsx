@@ -20,7 +20,7 @@ import {
   RadioGroupItem,
 } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { useUser } from '@/firebase';
+import { useUser, useStorage } from '@/firebase';
 import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import { doc, updateDoc, setDoc, getDoc, writeBatch, collection, query, where, getDocs, onSnapshot, DocumentData, QuerySnapshot, serverTimestamp, addDoc, deleteDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
@@ -96,6 +96,7 @@ export default function SettingsPage() {
   const { user, profile, isLoading: isUserLoading, refetch } = useUser();
   const firestore = useFirestore();
   const auth = useAuth();
+  const storage = useStorage();
   const { toast } = useToast();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
@@ -252,13 +253,12 @@ export default function SettingsPage() {
   }
 
   async function handlePhotoUpload(event: React.ChangeEvent<HTMLInputElement>) {
-    if (!user || !firestore || !auth) return;
+    if (!user || !firestore || !auth || !storage) return;
     const file = event.target.files?.[0];
     if (!file) return;
 
     setIsSaving(true);
     try {
-        const storage = getStorage();
         const filePath = `profile-photos/${user.uid}/${file.name}`;
         const fileRef = storageRef(storage, filePath);
         
