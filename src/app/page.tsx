@@ -5,7 +5,7 @@
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Loader2, LogOut, Settings, RefreshCw, ArrowUp } from 'lucide-react';
+import { Loader2, LogOut, Settings, RefreshCw, ArrowUp, Users } from 'lucide-react';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
@@ -17,6 +17,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { GroupMembersSheet } from '@/components/group-members-sheet';
 
 
 const LoadingScreen = () => (
@@ -345,8 +346,34 @@ type GroupDisplayItem = UserProfile | [UserProfile, UserProfile];
 const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId: string }) => {
     const firestore = useFirestore();
     const [displayItems, setDisplayItems] = useState<GroupDisplayItem[]>([]);
+    const [groupMembers, setGroupMembers] = useState<UserProfile[]>([]);
     const [userStates, setUserStates] = useState<Record<string, UserState | null>>({});
     const [isLoading, setIsLoading] = useState(true);
+    const [isSheetOpen, setSheetOpen] = useState(false);
+    const auth = useAuth();
+    const router = useRouter();
+
+    const handleLogout = async () => {
+        if (auth) {
+            await signOut(auth);
+            router.push('/login');
+        }
+    };
+    
+    const handleGoToTop = () => {
+        const listEl = document.querySelector('.snap-y');
+        if (listEl) {
+            listEl.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    const handleSelectMember = (uid: string) => {
+        setSheetOpen(false);
+        const element = document.querySelector(`[data-scroll-id="${uid}"]`);
+        if (element) {
+            element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    };
 
     useEffect(() => {
         if (!firestore || !groupId) return;
@@ -366,6 +393,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             if (memberUids.length === 0) {
                 setDisplayItems([]);
                 setUserStates({});
+                setGroupMembers([]);
                 setIsLoading(false);
                 return;
             }
@@ -373,6 +401,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             const usersQuery = query(collection(firestore, 'users'), where('uid', 'in', memberUids));
             const usersSnap = await getDocs(usersQuery);
             const members = usersSnap.docs.map(d => d.data() as UserProfile);
+            setGroupMembers(members);
 
             const processed = new Set<string>();
             const items: GroupDisplayItem[] = [];
@@ -461,22 +490,83 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
         )
     }
 
+    const renderTopBarButtons = (isFirstCard: boolean, isPaired: boolean, visibleUser?: UserProfile, hiddenUser?: UserProfile) => {
+        const getButtonThemeClass = (theme: string) => {
+            switch(theme) {
+                case 'riya': return 'bg-[--riya-primary] hover:bg-violet-500 text-white';
+                case 'naitik': return 'bg-[--naitik-primary] hover:bg-cyan-500 text-white';
+                case 'ambuj': return 'bg-[--ambuj-primary] hover:bg-emerald-500 text-white';
+                default: return 'bg-[--riya-primary] hover:bg-violet-500 text-white';
+            }
+        }
+
+        return (
+            <div className="flex justify-between items-center mb-4">
+                <div className="w-40 flex justify-start items-center gap-2">
+                     <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Group Members" onClick={() => setSheetOpen(true)}>
+                        <Users className="h-5 w-5" />
+                    </Button>
+                    <Link href="/settings">
+                       <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
+                           <Settings className="h-5 w-5" />
+                       </Button>
+                   </Link>
+                </div>
+                
+                {isPaired && visibleUser && hiddenUser && (
+                     <Button
+                        onClick={() => {
+                            // This is a bit of a hack, we need to re-implement the state toggle from PairedTaskCard
+                            // A better solution would be to lift the state up.
+                            const cardElement = document.querySelector(`[data-scroll-id="${visibleUser.uid}"] .app-flip-card`);
+                            cardElement?.classList.toggle('is-back');
+                        }}
+                        className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
+                    >
+                        <RefreshCw className="h-4 w-4" />
+                        <span>Switch to {hiddenUser.profile.displayName}</span>
+                    </Button>
+                )}
+
+               <div className="w-40 flex justify-end">
+                   {isFirstCard ? (
+                       <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
+                           <LogOut className="h-5 w-5" />
+                       </Button>
+                    ) : (
+                        <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
+                           <ArrowUp className="h-5 w-5" />
+                       </Button>
+                   )}
+                </div>
+           </div>
+        )
+    }
+
     return (
+        <>
+        <GroupMembersSheet 
+            isOpen={isSheetOpen}
+            onOpenChange={setSheetOpen}
+            members={groupMembers}
+            onSelectMember={handleSelectMember}
+            currentUserId={currentUserId}
+        />
         <div className="h-screen w-full snap-y snap-mandatory overflow-y-auto">
             {displayItems.map((item, index) => {
                 const isPair = Array.isArray(item);
                 const key = isPair ? item[0].uid : item.uid;
+                const scrollId = isPair ? item[0].uid : item.uid;
                 const isFirstCard = index === 0;
 
                 return (
-                    <div key={key} className="h-screen w-full snap-start flex items-center justify-center p-4">
-                        <div className="w-full max-w-4xl h-full">
+                    <div key={key} data-scroll-id={scrollId} className="h-screen w-full snap-center flex items-center justify-center p-4">
+                        <div className="w-full max-w-4xl h-full flex flex-col">
                             {isPair ? (
                                 (() => {
                                     const [user1, user2] = item;
-                                    
-                                    // This logic ensures user1 is always the current user if they are in the pair.
-                                    const primaryUser = user1.uid === currentUserId ? user1 : (user2.uid === currentUserId ? user2 : user1);
+                                    const isCurrentUserInThisPair = user1.uid === currentUserId || user2.uid === currentUserId;
+                                    const primaryUser = (isFirstCard && isCurrentUserInThisPair) ? (user1.uid === currentUserId ? user1 : user2) : user1;
                                     const secondaryUser = primaryUser.uid === user1.uid ? user2 : user1;
                                     
                                     const primaryState = userStates[primaryUser.uid];
@@ -492,11 +582,10 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                             </div>
                                         );
                                     }
-                                    
-                                    const isCurrentUserInThisPair = primaryUser.uid === currentUserId || secondaryUser.uid === currentUserId;
 
+                                    // PairedTaskCard with state managed here
                                     return (
-                                        <PairedTaskCard
+                                        <PairedTaskWrapper 
                                             user1={{ profile: primaryUser, state: primaryState }}
                                             user2={{ profile: secondaryUser, state: secondaryState }}
                                             isCurrentUserThePrimary={isCurrentUserInThisPair}
@@ -510,11 +599,13 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                     const userState = userStates[member.uid];
                                     return (
                                         <div className="h-full w-full flex flex-col">
+                                            {renderTopBarButtons(isFirstCard, false)}
+                                            <div className="flex-grow min-h-0">
                                             {userState ? (
-                                                <SoloView 
+                                                <TaskCard 
                                                     userId={member.uid}
-                                                    profile={member}
-                                                    isFirstCardInGroup={isFirstCard}
+                                                    userProfile={member}
+                                                    userState={userState}
                                                 />
                                             ) : (
                                                 <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
@@ -524,6 +615,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                                     </div>
                                                 </div>
                                             )}
+                                            </div>
                                         </div>
                                     );
                                 })()
@@ -532,6 +624,75 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                     </div>
                 );
             })}
+        </div>
+        </>
+    );
+};
+
+
+// Wrapper component to manage the flip state for PairedTaskCard within GroupView
+const PairedTaskWrapper = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGroup }: PairedCardProps) => {
+    const [showBack, setShowBack] = useState(!isCurrentUserThePrimary);
+    const auth = useAuth();
+    const router = useRouter();
+
+    const handleLogout = async () => { if (auth) { await signOut(auth); router.push('/login'); } };
+    const handleGoToTop = () => { const listEl = document.querySelector('.snap-y'); if (listEl) { listEl.scrollTo({ top: 0, behavior: 'smooth' }); } };
+    
+    const visibleUser = showBack ? user2 : user1;
+    const hiddenUser = showBack ? user1 : user2;
+
+    const getButtonThemeClass = (theme: string) => {
+        switch(theme) {
+            case 'riya': return 'bg-[--riya-primary] hover:bg-violet-500 text-white';
+            case 'naitik': return 'bg-[--naitik-primary] hover:bg-cyan-500 text-white';
+            case 'ambuj': return 'bg-[--ambuj-primary] hover:bg-emerald-500 text-white';
+            default: return 'bg-[--riya-primary] hover:bg-violet-500 text-white';
+        }
+    };
+
+    return (
+        <div className="flex flex-col h-full">
+            <div className="flex justify-between items-center mb-4">
+                 <div className="w-40 flex justify-start items-center gap-2">
+                     {/* The group sheet button is now managed in GroupView */}
+                    <Link href="/settings">
+                       <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
+                           <Settings className="h-5 w-5" />
+                       </Button>
+                   </Link>
+                </div>
+                 <Button
+                    onClick={() => setShowBack(p => !p)}
+                    className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
+                    aria-pressed={showBack}
+                >
+                    <RefreshCw className="h-4 w-4" />
+                    <span>Switch to {hiddenUser.profile.displayName}</span>
+                </Button>
+               <div className="w-40 flex justify-end">
+                   {isFirstCardInGroup ? (
+                       <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
+                           <LogOut className="h-5 w-5" />
+                       </Button>
+                    ) : (
+                        <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
+                           <ArrowUp className="h-5 w-5" />
+                       </Button>
+                   )}
+                </div>
+           </div>
+
+            <div className="app-flip-shell flex-grow">
+                <div className={`app-flip-card ${showBack ? 'is-back' : ''}`}>
+                    <div className="app-face front" style={{ pointerEvents: showBack ? 'none' : 'auto' }}>
+                       <TaskCard userId={user1.profile.uid} userProfile={user1.profile} userState={user1.state} />
+                    </div>
+                    <div className="app-face back" style={{ pointerEvents: showBack ? 'auto' : 'none' }}>
+                        <TaskCard userId={user2.profile.uid} userProfile={user2.profile} userState={user2.state} />
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
