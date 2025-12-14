@@ -590,6 +590,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                             user2={{ profile: secondaryUser, state: secondaryState }}
                                             isCurrentUserThePrimary={isCurrentUserInThisPair}
                                             isFirstCardInGroup={isFirstCard}
+                                            onOpenGroupSheet={() => setSheetOpen(true)}
                                         />
                                     );
                                 })()
@@ -631,7 +632,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
 
 
 // Wrapper component to manage the flip state for PairedTaskCard within GroupView
-const PairedTaskWrapper = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGroup }: PairedCardProps) => {
+const PairedTaskWrapper = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGroup, onOpenGroupSheet }: PairedCardProps & { onOpenGroupSheet: () => void }) => {
     const [showBack, setShowBack] = useState(!isCurrentUserThePrimary);
     const auth = useAuth();
     const router = useRouter();
@@ -655,7 +656,9 @@ const PairedTaskWrapper = ({ user1, user2, isCurrentUserThePrimary, isFirstCardI
         <div className="flex flex-col h-full">
             <div className="flex justify-between items-center mb-4">
                  <div className="w-40 flex justify-start items-center gap-2">
-                     {/* The group sheet button is now managed in GroupView */}
+                    <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Group Members" onClick={onOpenGroupSheet}>
+                        <Users className="h-5 w-5" />
+                    </Button>
                     <Link href="/settings">
                        <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
                            <Settings className="h-5 w-5" />
