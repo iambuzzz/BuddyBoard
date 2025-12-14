@@ -262,7 +262,9 @@ export default function SettingsPage() {
         const filePath = `profile-photos/${user.uid}/${file.name}`;
         const fileRef = storageRef(storage, filePath);
         
-        const snapshot = await uploadBytes(fileRef, file);
+        const snapshot = await uploadBytes(fileRef, file, { 
+            cacheControl: 'public,max-age=31536000' 
+        });
         const photoURL = await getDownloadURL(snapshot.ref);
 
         const userProfileRef = doc(firestore, 'users', user.uid);
