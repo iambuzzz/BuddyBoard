@@ -33,7 +33,6 @@ service cloud.firestore {
       // Also allow write if the user is being unpaired by their partner.
       // Also allow write if a user is accepting a pair invitation from the user.
       allow write: if isOwner(userId) || 
-                     (resource.data.pairedWith == request.auth.uid && request.resource.data.pairedWith == null) ||
                      (request.resource.data.pairedWith == get(/databases/$(database)/documents/users/$(userId)).data.pairedWith);
     }
     
