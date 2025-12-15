@@ -31,8 +31,10 @@ service cloud.firestore {
       allow read, list: if isSignedIn();
       // Allow write if owner.
       // Also allow write if the user is being unpaired by their partner.
-      allow write: if isOwner(userId) ||
-                     (resource.data.pairedWith == request.auth.uid && request.resource.data.pairedWith == null);
+      // Also allow write if a user is accepting a pair invitation from the user.
+      allow write: if isOwner(userId) || 
+                     (resource.data.pairedWith == request.auth.uid && request.resource.data.pairedWith == null) ||
+                     (request.resource.data.pairedWith == get(/databases/$(database)/documents/users/$(userId)).data.pairedWith);
     }
     
     match /task_lists/{userId} {
@@ -50,7 +52,7 @@ service cloud.firestore {
       // Any signed-in user can add themselves to the members list if they are not already a member.
       allow update: if isSignedIn() && (
         isAdmin(groupId) ||
-        (isCo-admin(groupId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) && !(getRole(groupId) in ['admin', 'co-admin']) && !(request.auth.uid in resource.data.members) ) ||
+        (isCoAdmin(groupId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) && getRole(groupId) != 'member' && !(request.auth.uid in resource.data.members) ) ||
         (request.auth.uid in resource.data.members && !(request.auth.uid in request.resource.data.members) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])) ||
         (!(request.auth.uid in resource.data.members) && (request.auth.uid in request.resource.data.members) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']))
       );
@@ -89,5 +91,3 @@ service cloud.firestore {
     }
   }
 }
-
-    
