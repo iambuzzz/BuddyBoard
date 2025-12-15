@@ -30,8 +30,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, list: if isSignedIn();
       allow write: if isOwner(userId) || 
-                      (resource.data.groupId != null && isCoAdmin(resource.data.groupId)) ||
-                      (request.resource.data.pairedWith == request.auth.uid || resource.data.pairedWith == request.auth.uid);
+                      (resource.data.groupId != null && isCoAdmin(resource.data.groupId));
     }
     
     match /task_lists/{userId} {
@@ -41,7 +40,8 @@ service cloud.firestore {
     
     match /groups/{groupId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && (
+      allow create: if isSignedIn();
+      allow update, delete: if isSignedIn() && (
         isAdmin(groupId) ||
         isCoAdmin(groupId) ||
         // Allow a user to add themselves to a group if they are not already a member
@@ -52,12 +52,13 @@ service cloud.firestore {
     match /pair_invitations/{invitationId} {
         allow create: if isSignedIn();
         allow read: if isSignedIn() && (request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId);
-        allow update: if isSignedIn() && 
-                      ((request.auth.uid == resource.data.receiverId && request.resource.data.status in ['accepted', 'declined']) || 
-                       (request.auth.uid == resource.data.senderId && request.resource.data.status in ['cancelled', 'pending_leave_and_pair']));
+        allow update: if isSignedIn() && (
+            (request.auth.uid == resource.data.receiverId && request.resource.data.status in ['accepted', 'declined', 'pending_leave_and_pair']) ||
+            (request.auth.uid == resource.data.senderId && request.resource.data.status == 'cancelled')
+        );
         allow delete: if isSignedIn() &&
-                      ((request.auth.uid == resource.data.senderId && resource.data.status in ['cancelled', 'declined']) ||
-                       (request.auth.uid == resource.data.receiverId));
+                      (request.auth.uid == resource.data.senderId && resource.data.status == 'pending') ||
+                      ((request.auth.uid == resource.data.senderId || request.auth.uid == resource.data.receiverId) && resource.data.status != 'pending');
     }
     
     match /group_invitations/{invitationId} {
