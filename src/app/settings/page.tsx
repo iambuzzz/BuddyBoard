@@ -95,6 +95,18 @@ type GroupConflictInfo = {
     senderProfile: UserProfile;
 };
 
+type KickPairConfirmationInfo = {
+    member: UserProfile;
+    partner: UserProfile;
+};
+
+type ConfirmationInfo = {
+    title: string;
+    description: string;
+    onConfirm: () => void;
+};
+
+
 const getInitials = (name: string) => {
     return name
       .split(' ')
@@ -126,6 +138,9 @@ export default function SettingsPage() {
   const [groupConflict, setGroupConflict] = useState<GroupConflictInfo | null>(null);
 
   const [photoUrlInput, setPhotoUrlInput] = useState('');
+
+  const [confirmation, setConfirmation] = useState<ConfirmationInfo | null>(null);
+  const [kickPairConfirmation, setKickPairConfirmation] = useState<KickPairConfirmationInfo | null>(null);
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(profileFormSchema),
@@ -363,7 +378,14 @@ export default function SettingsPage() {
         const userRef = doc(firestore, 'users', user.uid);
 
         await runTransaction(firestore, async (transaction) => {
-            transaction.update(groupRef, { [`members.${user.uid}`]: 'member' });
+            const currentGroupDoc = await transaction.get(groupRef);
+            if (!currentGroupDoc.exists()) {
+                throw new Error("Group does not exist anymore.");
+            }
+            const groupData = currentGroupDoc.data() as Group;
+            const newMembers = { ...groupData.members, [user.uid]: 'member' as const };
+            
+            transaction.update(groupRef, { members: newMembers });
             transaction.update(userRef, { groupId: groupDoc.id });
         });
 
@@ -386,18 +408,18 @@ export default function SettingsPage() {
 
     try {
         if(action === 'accept') {
-             // Use a transaction to ensure atomicity
             await runTransaction(firestore, async (transaction) => {
                 const groupRef = doc(firestore, 'groups', invitation.groupId);
                 const userRef = doc(firestore, 'users', user.uid);
-
-                // Add the user to the group's member list first
-                transaction.update(groupRef, { [`members.${user.uid}`]: 'member' });
                 
-                // Then, update the user's profile to set their groupId
-                transaction.update(userRef, { groupId: invitation.groupId });
+                const groupDoc = await transaction.get(groupRef);
+                if (!groupDoc.exists()) throw new Error("Group no longer exists.");
 
-                // Finally, update the invitation status
+                const groupData = groupDoc.data() as Group;
+                const updatedMembers = { ...groupData.members, [user.uid]: 'member' as const };
+                
+                transaction.update(groupRef, { members: updatedMembers });
+                transaction.update(userRef, { groupId: invitation.groupId });
                 transaction.update(invRef, { status: 'accepted' });
             });
             
@@ -408,7 +430,7 @@ export default function SettingsPage() {
             toast({ title: 'Invitation Declined' });
         }
     } catch (e: any) {
-        console.error("Error accepting invitation:", e);
+        console.error("Error handling invitation:", e);
         toast({ title: 'Error', description: `Failed to ${action} invitation. Please try again.`, variant: 'destructive' });
     } finally {
         setIsSaving(false);
@@ -457,7 +479,15 @@ export default function SettingsPage() {
     }
   }
 
-  async function onLeaveGroup() {
+  const confirmLeaveGroup = () => {
+    setConfirmation({
+        title: "Are you sure you want to leave?",
+        description: "You will need a new invitation to rejoin this group. If you are paired, your pairing will be broken.",
+        onConfirm: handleLeaveGroup
+    });
+  };
+
+  async function handleLeaveGroup() {
     if (!user || !firestore || !group) return;
     setIsSaving(true);
     
@@ -491,62 +521,106 @@ export default function SettingsPage() {
         toast({ title: 'Error', description: 'Failed to leave group.', variant: 'destructive' });
     } finally {
         setIsSaving(false);
+        setConfirmation(null);
     }
   }
 
-  async function handleMemberAction(memberUid: string, action: 'make-admin' | 'make-co-admin' | 'make-member' | 'kick') {
-    if (!user || !firestore || !group || user.uid === memberUid) return;
-
-    const groupRef = doc(firestore, 'groups', group.id);
-    setIsSaving(true);
-
-    try {
-        const batch = writeBatch(firestore);
-        const groupDoc = await getDoc(groupRef);
-        if (!groupDoc.exists()) throw new Error("Group not found.");
-        
-        const currentMembers = groupDoc.data().members;
-        const memberProfileSnap = await getDoc(doc(firestore, 'users', memberUid));
-        if (!memberProfileSnap.exists()) throw new Error("Member profile not found.");
-        const memberProfile = memberProfileSnap.data() as UserProfile;
-
-        if (action === 'kick') {
-            delete currentMembers[memberUid];
-            batch.update(groupRef, { members: currentMembers });
+  async function executeMemberAction(
+        memberUid: string, 
+        action: 'make-admin' | 'make-co-admin' | 'make-member' | 'kick', 
+        options: { kickBothPaired?: boolean } = {}
+    ) {
+        if (!user || !firestore || !group || user.uid === memberUid) return;
+    
+        setIsSaving(true);
+    
+        try {
+            const batch = writeBatch(firestore);
+            const groupRef = doc(firestore, 'groups', group.id);
+    
+            const groupDoc = await getDoc(groupRef);
+            if (!groupDoc.exists()) throw new Error("Group not found.");
             
-            const memberUserRef = doc(firestore, 'users', memberUid);
-            batch.update(memberUserRef, { groupId: null, pairedWith: null });
+            const currentMembers = groupDoc.data().members;
+    
+            if (action === 'kick') {
+                const memberToKickSnap = await getDoc(doc(firestore, 'users', memberUid));
+                if (!memberToKickSnap.exists()) throw new Error("Member to kick not found.");
+                const memberToKick = memberToKickSnap.data() as UserProfile;
 
-             if (memberProfile.pairedWith) {
-                const partnerDoc = await getDoc(doc(firestore, 'users', memberProfile.pairedWith));
-                // Only unpair the partner if they are also in the same group.
-                if (partnerDoc.exists() && partnerDoc.data().groupId === group.id) {
-                    const partnerRef = doc(firestore, 'users', memberProfile.pairedWith);
-                    batch.update(partnerRef, { pairedWith: null });
+                delete currentMembers[memberUid];
+                batch.update(doc(firestore, 'users', memberUid), { groupId: null, pairedWith: null });
+    
+                if (memberToKick.pairedWith) {
+                    const partnerRef = doc(firestore, 'users', memberToKick.pairedWith);
+                    if (options.kickBothPaired) {
+                        delete currentMembers[memberToKick.pairedWith];
+                        batch.update(partnerRef, { groupId: null, pairedWith: null });
+                    } else {
+                         batch.update(partnerRef, { pairedWith: null });
+                    }
                 }
+    
+            } else if (action === 'make-admin') {
+                currentMembers[user.uid] = 'co-admin';
+                currentMembers[memberUid] = 'admin';
+            } else if (action === 'make-co-admin') {
+                currentMembers[memberUid] = 'co-admin';
+            } else if (action === 'make-member') {
+                currentMembers[memberUid] = 'member';
             }
-
-        } else if (action === 'make-admin') {
-            currentMembers[user.uid] = 'co-admin'; // Demote current admin
-            currentMembers[memberUid] = 'admin';
+    
             batch.update(groupRef, { members: currentMembers });
-        } else if (action === 'make-co-admin') {
-            currentMembers[memberUid] = 'co-admin';
-            batch.update(groupRef, { members: currentMembers });
-        } else if (action === 'make-member') {
-            currentMembers[memberUid] = 'member';
-            batch.update(groupRef, { members: currentMembers });
+            await batch.commit();
+            toast({ title: 'Success', description: 'Group member updated.' });
+        } catch (error: any) {
+            console.error("Error updating member role: ", error);
+            toast({ title: 'Error', description: 'Could not update member.', variant: 'destructive' });
+        } finally {
+            setIsSaving(false);
+            setConfirmation(null);
+            setKickPairConfirmation(null);
         }
-
-        await batch.commit();
-        toast({ title: 'Success', description: 'Group member updated.' });
-    } catch (error: any) {
-        console.error("Error updating member role: ", error);
-        toast({ title: 'Error', description: 'Could not update member.', variant: 'destructive' });
-    } finally {
-        setIsSaving(false);
     }
-}
+  
+  const handleMemberAction = (member: UserProfile, action: 'make-admin' | 'make-co-admin' | 'make-member' | 'kick') => {
+      const memberUid = member.uid;
+      
+      const onConfirm = (options = {}) => () => executeMemberAction(memberUid, action, options);
+  
+      if (action === 'kick') {
+          if (member.pairedWith) {
+              const partner = groupMembers.find(m => m.uid === member.pairedWith);
+              if (partner) {
+                  setKickPairConfirmation({ member, partner });
+                  return;
+              }
+          }
+          setConfirmation({
+              title: `Kick ${member.displayName}?`,
+              description: "They will be removed from the group and will need a new invitation to rejoin. Are you sure?",
+              onConfirm: onConfirm(),
+          });
+      } else if (action === 'make-admin') {
+          setConfirmation({
+              title: `Make ${member.displayName} Admin?`,
+              description: `You will be demoted to a Co-Admin. ${member.displayName} will become the new group admin.`,
+              onConfirm: onConfirm(),
+          });
+      } else if (action === 'make-co-admin') {
+          setConfirmation({
+              title: `Make ${member.displayName} Co-Admin?`,
+              description: "They will be able to invite and remove other members.",
+              onConfirm: onConfirm(),
+          });
+      } else if (action === 'make-member') {
+          setConfirmation({
+              title: `Make ${member.displayName} a Member?`,
+              description: "Their Co-Admin permissions will be revoked.",
+              onConfirm: onConfirm(),
+          });
+      }
+  };
 
   // --- Pairing Handlers ---
   
@@ -608,65 +682,68 @@ export default function SettingsPage() {
     if (!user || !firestore || !profile) return;
     setIsSaving(true);
 
-    const batch = writeBatch(firestore);
-    const invRef = doc(firestore, 'pair_invitations', invitation.id);
-    const senderRef = doc(firestore, 'users', invitation.senderId);
-    const receiverRef = doc(firestore, 'users', invitation.receiverId);
-    
     try {
-        const senderDoc = await getDoc(senderRef);
-        const senderProfile = senderDoc.data() as UserProfile;
-        const receiverProfile = profile; 
+      await runTransaction(firestore, async (transaction) => {
+        const senderRef = doc(firestore, 'users', invitation.senderId);
+        const receiverRef = doc(firestore, 'users', user.uid);
+        const invRef = doc(firestore, 'pair_invitations', invitation.id);
 
-        const leaveCurrentGroup = async (userProfile: UserProfile, userId: string) => {
-            if (userProfile.groupId) {
-                const oldGroupRef = doc(firestore, 'groups', userProfile.groupId);
-                const oldGroupDoc = await getDoc(oldGroupRef);
-                if (oldGroupDoc.exists()) {
-                    const oldGroupData = oldGroupDoc.data() as Group;
-                    const newMembers = { ...oldGroupData.members };
-                    delete newMembers[userId];
-                    batch.update(oldGroupRef, { members: newMembers });
-                }
+        const senderDoc = await transaction.get(senderRef);
+        const receiverDoc = await transaction.get(receiverRef);
+
+        if (!senderDoc.exists() || !receiverDoc.exists()) {
+          throw new Error("One or both users not found.");
+        }
+        
+        const senderProfile = senderDoc.data() as UserProfile;
+        const receiverProfile = receiverDoc.data() as UserProfile;
+
+        const leaveGroup = async (userProfile: UserProfile, userId: string) => {
+          if (userProfile.groupId) {
+            const oldGroupRef = doc(firestore, 'groups', userProfile.groupId);
+            const oldGroupDoc = await transaction.get(oldGroupRef);
+            if (oldGroupDoc.exists()) {
+                const oldGroupData = oldGroupDoc.data() as Group;
+                const newMembers = { ...oldGroupData.members };
+                delete newMembers[userId];
+                transaction.update(oldGroupRef, { members: newMembers });
             }
+          }
         };
 
         if (resolution === 'leave') {
-            await leaveCurrentGroup(senderProfile, invitation.senderId);
-            await leaveCurrentGroup(receiverProfile, invitation.receiverId);
-            batch.update(senderRef, { groupId: null });
-            batch.update(receiverRef, { groupId: null });
-
-        } else if (resolution === 'join') { 
-            if (senderProfile.groupId) {
-                await leaveCurrentGroup(receiverProfile, invitation.receiverId);
-                batch.update(receiverRef, { groupId: senderProfile.groupId });
-                batch.update(doc(firestore, 'groups', senderProfile.groupId), { [`members.${invitation.receiverId}`]: 'member' });
-            }
-        } else if (resolution === 'invite') { 
-            if (receiverProfile.groupId) {
-                await leaveCurrentGroup(senderProfile, invitation.senderId);
-                batch.update(senderRef, { groupId: receiverProfile.groupId });
-                batch.update(doc(firestore, 'groups', receiverProfile.groupId), { [`members.${invitation.senderId}`]: 'member' });
-            }
+            await leaveGroup(senderProfile, invitation.senderId);
+            await leaveGroup(receiverProfile, invitation.receiverId);
+            transaction.update(senderRef, { groupId: null });
+            transaction.update(receiverRef, { groupId: null });
+        } else if (resolution === 'join' && senderProfile.groupId) {
+            await leaveGroup(receiverProfile, invitation.receiverId);
+            transaction.update(receiverRef, { groupId: senderProfile.groupId });
+            const groupRef = doc(firestore, 'groups', senderProfile.groupId);
+            transaction.update(groupRef, { [`members.${invitation.receiverId}`]: 'member' });
+        } else if (resolution === 'invite' && receiverProfile.groupId) {
+            await leaveGroup(senderProfile, invitation.senderId);
+            transaction.update(senderRef, { groupId: receiverProfile.groupId });
+            const groupRef = doc(firestore, 'groups', receiverProfile.groupId);
+            transaction.update(groupRef, { [`members.${invitation.senderId}`]: 'member' });
         }
 
-        batch.update(invRef, { status: 'accepted' });
-        batch.update(senderRef, { pairedWith: invitation.receiverId });
-        batch.update(receiverRef, { pairedWith: invitation.senderId });
+        transaction.update(invRef, { status: 'accepted' });
+        transaction.update(senderRef, { pairedWith: invitation.receiverId });
+        transaction.update(receiverRef, { pairedWith: invitation.senderId });
+      });
 
-        await batch.commit();
-        toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` });
-        refetch();
+      toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` });
+      refetch();
 
     } catch (e: any) {
-        console.error("Error executing pairing:", e);
-        toast({ title: 'Error', description: 'Could not complete pairing action.', variant: 'destructive' });
+      console.error("Error executing pairing:", e);
+      toast({ title: 'Error', description: 'Could not complete pairing action.', variant: 'destructive' });
     } finally {
-        setIsSaving(false);
-        setGroupConflict(null);
+      setIsSaving(false);
+      setGroupConflict(null);
     }
-}, [user, firestore, profile, refetch, toast]);
+  }, [user, firestore, profile, refetch, toast]);
 
 
     async function handlePairInvitationAction(invitation: PairInvitation, action: 'accept' | 'decline' | 'cancel') {
@@ -874,12 +951,12 @@ export default function SettingsPage() {
                                     <DropdownMenuLabel>Manage {member.displayName}</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
                                     {group.members[member.uid] !== 'co-admin' ?
-                                      <DropdownMenuItem onClick={() => handleMemberAction(member.uid, 'make-co-admin')}><Star className="mr-2"/> Make Co-Admin</DropdownMenuItem>
-                                      : <DropdownMenuItem onClick={() => handleMemberAction(member.uid, 'make-member')}><UserCog className="mr-2"/> Make Member</DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleMemberAction(member, 'make-co-admin')}><Star className="mr-2"/> Make Co-Admin</DropdownMenuItem>
+                                      : <DropdownMenuItem onClick={() => handleMemberAction(member, 'make-member')}><UserCog className="mr-2"/> Make Member</DropdownMenuItem>
                                     }
-                                    {group.members[member.uid] !== 'admin' && <DropdownMenuItem onClick={() => handleMemberAction(member.uid, 'make-admin')}><Crown className="mr-2"/> Make Admin</DropdownMenuItem>}
+                                    {group.members[member.uid] !== 'admin' && <DropdownMenuItem onClick={() => handleMemberAction(member, 'make-admin')}><Crown className="mr-2"/> Make Admin</DropdownMenuItem>}
                                     <DropdownMenuSeparator />
-                                    <DropdownMenuItem className="text-red-500" onClick={() => handleMemberAction(member.uid, 'kick')}><Trash2 className="mr-2"/> Kick Member</DropdownMenuItem>
+                                    <DropdownMenuItem className="text-red-500" onClick={() => handleMemberAction(member, 'kick')}><Trash2 className="mr-2"/> Kick Member</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}
@@ -889,7 +966,7 @@ export default function SettingsPage() {
                                     <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="h-4 w-4"/></Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    <DropdownMenuItem className="text-red-500" onClick={() => handleMemberAction(member.uid, 'kick')}><Trash2 className="mr-2"/> Kick Member</DropdownMenuItem>
+                                    <DropdownMenuItem className="text-red-500" onClick={() => handleMemberAction(member, 'kick')}><Trash2 className="mr-2"/> Kick Member</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}
@@ -899,7 +976,7 @@ export default function SettingsPage() {
                 </div>
              </div>
              <Separator />
-             <Button onClick={onLeaveGroup} disabled={isSaving} className="w-full bg-[--riya-primary] hover:bg-violet-500">
+             <Button onClick={confirmLeaveGroup} disabled={isSaving} className="w-full bg-[--riya-primary] hover:bg-violet-500">
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LogOutIcon className="mr-2 h-4 w-4" />}
                 Leave Group
              </Button>
@@ -995,6 +1072,63 @@ export default function SettingsPage() {
         </AlertDialog>
     );
   };
+  
+  const renderConfirmationDialog = () => {
+    if (!confirmation) return null;
+    return (
+        <AlertDialog open={!!confirmation} onOpenChange={() => setConfirmation(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>{confirmation.title}</AlertDialogTitle>
+                    <AlertDialogDescription>{confirmation.description}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel onClick={() => setConfirmation(null)}>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={confirmation.onConfirm} disabled={isSaving}>
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Confirm
+                    </AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+  };
+
+  const renderKickPairConfirmationDialog = () => {
+    if (!kickPairConfirmation) return null;
+    const { member, partner } = kickPairConfirmation;
+    return (
+        <AlertDialog open={!!kickPairConfirmation} onOpenChange={() => setKickPairConfirmation(null)}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Kick Paired Member?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        {member.displayName} is paired with {partner.displayName}. How would you like to proceed?
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                 <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:items-stretch w-full">
+                    <Button
+                        className="bg-destructive hover:bg-destructive/90"
+                        onClick={() => executeMemberAction(member.uid, 'kick', { kickBothPaired: true })}
+                        disabled={isSaving}
+                    >
+                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Kick Both {member.displayName} & {partner.displayName}
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => executeMemberAction(member.uid, 'kick')}
+                        disabled={isSaving}
+                    >
+                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        Kick Only {member.displayName} (will unpair them)
+                    </Button>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+    );
+};
 
 
   return (
@@ -1083,6 +1217,8 @@ export default function SettingsPage() {
         </Tabs>
 
         {renderGroupConflictDialog()}
+        {renderConfirmationDialog()}
+        {renderKickPairConfirmationDialog()}
 
        </div>
     </div>
