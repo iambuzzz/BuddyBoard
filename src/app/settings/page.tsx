@@ -20,23 +20,29 @@ import {
   RadioGroupItem,
 } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
-import { useUser, useStorage } from '@/firebase';
-import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
-import { doc, updateDoc, setDoc, getDoc, writeBatch, collection, query, where, getDocs, onSnapshot, DocumentData, QuerySnapshot, serverTimestamp, addDoc, deleteDoc } from 'firebase/firestore';
+import { useUser } from '@/firebase';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { doc, updateDoc, setDoc, getDoc, writeBatch, collection, query, where, getDocs, onSnapshot, addDoc, deleteDoc } from 'firebase/firestore';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { useFirestore, useAuth } from '@/firebase';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, LogOut as LogOutIcon, Crown, Link as LinkIcon, Link2Off, Send, X, Check, Edit2, ImagePlus } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, LogOut as LogOutIcon, Crown, Link as LinkIcon, Link2Off, Send, X, Check, MoreVertical, ShieldAlert, Trash2, UserCog, UserCheck, Star } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import type { Group, UserProfile, PairInvitation } from '@/lib/types';
+import type { Group, UserProfile, PairInvitation, GroupInvitation } from '@/lib/types';
 import short from 'short-uuid';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 const profileFormSchema = z.object({
   displayName: z
@@ -69,10 +75,10 @@ const groupCreateSchema = z.object({
 });
 type GroupCreateValues = z.infer<typeof groupCreateSchema>;
 
-const groupJoinSchema = z.object({
-  invitationCode: z.string().min(6, 'Invalid invitation code.'),
+const groupInviteSchema = z.object({
+    email: z.string().email("Please enter a valid email address."),
 });
-type GroupJoinValues = z.infer<typeof groupJoinSchema>;
+type GroupInviteValues = z.infer<typeof groupInviteSchema>;
 
 const pairInviteSchema = z.object({
     email: z.string().email("Please enter a valid email address."),
@@ -98,19 +104,19 @@ export default function SettingsPage() {
   const { user, profile, isLoading: isUserLoading, refetch } = useUser();
   const firestore = useFirestore();
   const auth = useAuth();
-  const storage = useStorage();
   const { toast } = useToast();
   const router = useRouter();
   const [isSaving, setIsSaving] = useState(false);
   const [group, setGroup] = useState<Group | null>(null);
   const [groupMembers, setGroupMembers] = useState<UserProfile[]>([]);
   const [isGroupLoading, setIsGroupLoading] = useState(true);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
-  const [sentInvites, setSentInvites] = useState<PairInvitation[]>([]);
-  const [receivedInvites, setReceivedInvites] = useState<PairInvitation[]>([]);
+  const [sentPairInvites, setSentPairInvites] = useState<PairInvitation[]>([]);
+  const [receivedPairInvites, setReceivedPairInvites] = useState<PairInvitation[]>([]);
   const [isPairingLoading, setIsPairingLoading] = useState(true);
   const [pairedPartner, setPairedPartner] = useState<UserProfile | null>(null);
+
+  const [receivedGroupInvites, setReceivedGroupInvites] = useState<GroupInvitation[]>([]);
 
   const [groupConflict, setGroupConflict] = useState<GroupConflictInfo | null>(null);
 
@@ -132,9 +138,9 @@ export default function SettingsPage() {
     defaultValues: { groupName: '' }
   });
   
-  const joinGroupForm = useForm<GroupJoinValues>({
-    resolver: zodResolver(groupJoinSchema),
-    defaultValues: { invitationCode: '' }
+  const inviteToGroupForm = useForm<GroupInviteValues>({
+      resolver: zodResolver(groupInviteSchema),
+      defaultValues: { email: '' }
   });
 
   const pairInviteForm = useForm<PairInviteValues>({
@@ -142,10 +148,16 @@ export default function SettingsPage() {
       defaultValues: { email: '' }
   });
 
-  const userIsAdmin = useMemo(() => {
-    if (!group || !user) return false;
-    return group.members[user.uid] === 'admin';
+  const userRoleInGroup = useMemo(() => {
+    if (!group || !user) return null;
+    return group.members[user.uid];
   }, [group, user]);
+
+  const canManageGroup = useMemo(() => {
+    const role = userRoleInGroup;
+    return role === 'admin' || role === 'co-admin';
+  }, [userRoleInGroup]);
+
 
   // --- Data Fetching Effects ---
 
@@ -162,7 +174,6 @@ export default function SettingsPage() {
   useEffect(() => {
     if (!profile || !firestore) return;
 
-    // Fetch Group Data
     if (profile.groupId) {
         setIsGroupLoading(true);
         const groupDocRef = doc(firestore, 'groups', profile.groupId);
@@ -193,7 +204,6 @@ export default function SettingsPage() {
     if (!user || !firestore) return;
     setIsPairingLoading(true);
 
-    // Fetch Partner Profile
     if (profile?.pairedWith) {
         const partnerRef = doc(firestore, 'users', profile.pairedWith);
         getDoc(partnerRef).then(docSnap => {
@@ -204,30 +214,40 @@ export default function SettingsPage() {
         setPairedPartner(null);
     }
 
-    // Fetch Sent Invites
     const sentQuery = query(collection(firestore, 'pair_invitations'), where('senderId', '==', user.uid));
     const unsubSent = onSnapshot(sentQuery, (snapshot) => {
         const invites = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PairInvitation));
-        setSentInvites(invites.filter(inv => inv.status === 'pending'));
+        setSentPairInvites(invites.filter(inv => inv.status === 'pending'));
     });
     
-    // Fetch Received Invites
     const receivedQuery = query(collection(firestore, 'pair_invitations'), where('receiverId', '==', user.uid));
     const unsubReceived = onSnapshot(receivedQuery, (snapshot) => {
         const invites = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PairInvitation));
-        setReceivedInvites(invites.filter(inv => inv.status === 'pending'));
+        setReceivedPairInvites(invites.filter(inv => inv.status === 'pending'));
     });
 
     setIsPairingLoading(false);
     return () => { unsubSent(); unsubReceived(); };
   }, [user, firestore, profile?.pairedWith]);
 
+  useEffect(() => {
+    if (!user || !firestore || profile?.groupId) {
+        setReceivedGroupInvites([]);
+        return;
+    };
+    const receivedGroupInvitesQuery = query(collection(firestore, 'group_invitations'), where('receiverEmail', '==', user.email), where('status', '==', 'pending'));
+    const unsubReceivedGroup = onSnapshot(receivedGroupInvitesQuery, snapshot => {
+        const invites = snapshot.docs.map(d => ({id: d.id, ...d.data() } as GroupInvitation));
+        setReceivedGroupInvites(invites);
+    });
+    return () => unsubReceivedGroup();
+  }, [user, firestore, profile?.groupId]);
+
 
   // --- Profile/Password Handler ---
   async function onProfileSubmit(data: ProfileFormValues) {
     if (!user || !firestore || !auth?.currentUser) return;
     setIsSaving(true);
-    // ... (rest of the function is unchanged)
     try {
       const { displayName, cardTheme, newPassword, currentPassword } = data;
       const userProfileRef = doc(firestore, 'users', user.uid);
@@ -285,9 +305,8 @@ export default function SettingsPage() {
         const newGroupRef = doc(firestore, 'groups', newGroupId);
         const userProfileRef = doc(firestore, 'users', user.uid);
 
-        const newMembers: { [uid: string]: 'admin' | 'member' } = { [user.uid]: 'admin' };
+        const newMembers: { [uid: string]: 'admin' | 'co-admin' | 'member' } = { [user.uid]: 'admin' };
 
-        // If the user is paired, add their partner to the group as well
         if (profile.pairedWith) {
             newMembers[profile.pairedWith] = 'member';
             const partnerProfileRef = doc(firestore, 'users', profile.pairedWith);
@@ -316,84 +335,145 @@ export default function SettingsPage() {
     }
   }
 
-  async function onJoinGroup(data: GroupJoinValues) {
-      if (!user || !firestore || !profile) return;
-      setIsSaving(true);
-      try {
-          const q = query(collection(firestore, 'groups'), where('invitationCode', '==', data.invitationCode));
-          const querySnapshot = await getDocs(q);
+  async function handleGroupInvitation(invitation: GroupInvitation, action: 'accept' | 'decline') {
+    if (!user || !firestore) return;
+    setIsSaving(true);
+    const invRef = doc(firestore, 'group_invitations', invitation.id);
 
-          if (querySnapshot.empty) {
-              toast({ title: 'Invalid Code', description: 'No group found with that invitation code.', variant: 'destructive' });
-              setIsSaving(false);
-              return;
-          }
+    try {
+        if(action === 'accept') {
+            const batch = writeBatch(firestore);
+            batch.update(doc(firestore, 'users', user.uid), { groupId: invitation.groupId });
+            batch.update(doc(firestore, 'groups', invitation.groupId), { [`members.${user.uid}`]: 'member' });
+            batch.update(invRef, { status: 'accepted' });
+            await batch.commit();
+            toast({ title: 'Welcome!', description: `You have joined the group: ${invitation.groupName}`});
+            refetch();
+        } else { // decline
+            await updateDoc(invRef, { status: 'declined' });
+            toast({ title: 'Invitation Declined' });
+        }
+    } catch (e: any) {
+        toast({ title: 'Error', description: `Failed to ${action} invitation.`, variant: 'destructive' });
+    } finally {
+        setIsSaving(false);
+    }
+  }
 
-          const groupDoc = querySnapshot.docs[0];
-          const groupData = groupDoc.data() as Group;
-          const groupId = groupDoc.id;
+  async function onInviteToGroup(data: GroupInviteValues) {
+    if (!user || !firestore || !profile || !group) return;
+    setIsSaving(true);
+    try {
+        if (data.email.toLowerCase() === user.email?.toLowerCase()) {
+            toast({ title: "Cannot invite yourself", variant: 'destructive'});
+            setIsSaving(false);
+            return;
+        }
 
-          if (groupData.members[user.uid]) {
-              toast({ title: 'Already a Member', description: 'You are already a member of this group.' });
-              setIsSaving(false);
-              return;
-          }
+        const usersRef = collection(firestore, 'users');
+        const q = query(usersRef, where("email", "==", data.email.toLowerCase()));
+        const querySnapshot = await getDocs(q);
 
-          const batch = writeBatch(firestore);
-
-          // Update current user's groupId
-          const userProfileRef = doc(firestore, 'users', user.uid);
-          batch.update(userProfileRef, { groupId: groupId });
-
-          // Update the group's member list for the current user
-          const groupRef = doc(firestore, 'groups', groupId);
-          batch.update(groupRef, { [`members.${user.uid}`]: 'member' });
-
-          // If the user is paired, add their partner to the group as well
-          if (profile.pairedWith) {
-              // Check if partner is already in the group
-              if (!groupData.members[profile.pairedWith]) {
-                  const partnerProfileRef = doc(firestore, 'users', profile.pairedWith);
-                  batch.update(partnerProfileRef, { groupId: groupId });
-                  batch.update(groupRef, { [`members.${profile.pairedWith}`]: 'member' });
-              }
-          }
-
-          await batch.commit();
-          toast({ title: 'Joined Group!', description: `You have successfully joined ${groupData.name}.` });
-          joinGroupForm.reset();
-          refetch();
-      } catch (error: any) {
-          toast({ title: 'Error Joining Group', description: error.message || 'Failed to join group.', variant: 'destructive' });
-      } finally {
-          setIsSaving(false);
-      }
+        if (querySnapshot.empty) {
+            toast({ title: "User not found", description: `No user with email ${data.email} found.`, variant: 'destructive' });
+        } else {
+            const receiver = querySnapshot.docs[0].data() as UserProfile;
+            if (receiver.groupId === group.id) {
+                toast({ title: "Already a member", description: `${receiver.displayName} is already in this group.`});
+            } else {
+                const newInvite: Omit<GroupInvitation, 'id'> = {
+                    groupId: group.id,
+                    groupName: group.name,
+                    senderId: user.uid,
+                    senderName: profile.displayName,
+                    receiverEmail: receiver.email,
+                    status: 'pending',
+                    createdAt: Date.now(),
+                };
+                await addDoc(collection(firestore, 'group_invitations'), newInvite);
+                toast({ title: "Invite Sent!", description: `Invitation sent to ${receiver.displayName}.` });
+                inviteToGroupForm.reset();
+            }
+        }
+    } catch(e: any) {
+        toast({ title: "Error sending invite", description: e.message, variant: 'destructive' });
+    } finally {
+        setIsSaving(false);
+    }
   }
 
   async function onLeaveGroup() {
     if (!user || !firestore || !group) return;
     setIsSaving(true);
-    const batch = writeBatch(firestore);
-    batch.update(doc(firestore, 'users', user.uid), { groupId: null, pairedWith: null });
-    if(profile?.pairedWith) { batch.update(doc(firestore, 'users', profile.pairedWith), { pairedWith: null }); }
-    const groupRef = doc(firestore, 'groups', group.id);
-    const newMembers = { ...group.members };
-    delete newMembers[user.uid];
-    if (Object.keys(newMembers).length === 0) { batch.delete(groupRef); } 
-    else {
-      if (group.members[user.uid] === 'admin' && !Object.values(newMembers).includes('admin')) {
-         const nextAdminUid = Object.keys(newMembers)[0];
-         newMembers[nextAdminUid] = 'admin';
-      }
-      batch.update(groupRef, { members: newMembers });
+    
+    try {
+        const batch = writeBatch(firestore);
+        
+        // Unpair user and partner if they exist
+        batch.update(doc(firestore, 'users', user.uid), { groupId: null, pairedWith: null });
+        if (profile?.pairedWith) {
+             batch.update(doc(firestore, 'users', profile.pairedWith), { pairedWith: null });
+        }
+
+        const groupRef = doc(firestore, 'groups', group.id);
+        const newMembers = { ...group.members };
+        delete newMembers[user.uid];
+
+        if (Object.keys(newMembers).length === 0) {
+            batch.delete(groupRef);
+        } else {
+            if (group.members[user.uid] === 'admin' && !Object.values(newMembers).includes('admin')) {
+                const nextAdminUid = Object.keys(newMembers)[0];
+                newMembers[nextAdminUid] = 'admin';
+            }
+            batch.update(groupRef, { members: newMembers });
+        }
+        
+        await batch.commit();
+        toast({ title: 'Group Left', description: 'You have successfully left the group.' });
+        refetch();
+    } catch (error: any) {
+        toast({ title: 'Error', description: 'Failed to leave group.', variant: 'destructive' });
+    } finally {
+        setIsSaving(false);
     }
-    try { 
-        await batch.commit(); 
-        toast({ title: 'Group Left', description: 'You have successfully left the group.' }); 
-        refetch(); 
-    } 
-    catch (error: any) { toast({ title: 'Error', description: 'Failed to leave group.', variant: 'destructive' }); } 
-    finally { setIsSaving(false); }
+  }
+
+  async function handleMemberAction(memberUid: string, action: 'make-admin' | 'make-co-admin' | 'make-member' | 'kick') {
+      if (!user || !firestore || !group || user.uid === memberUid) return;
+
+      const groupRef = doc(firestore, 'groups', group.id);
+      setIsSaving(true);
+
+      try {
+        const batch = writeBatch(firestore);
+        const currentMembers = (await getDoc(groupRef)).data()?.members;
+        
+        if (action === 'kick') {
+            delete currentMembers[memberUid];
+            batch.update(groupRef, { members: currentMembers });
+            batch.update(doc(firestore, 'users', memberUid), { groupId: null, pairedWith: null });
+        }
+        else if (action === 'make-admin') {
+            currentMembers[user.uid] = 'member';
+            currentMembers[memberUid] = 'admin';
+            batch.update(groupRef, { members: currentMembers });
+        } else if (action === 'make-co-admin') {
+            currentMembers[memberUid] = 'co-admin';
+            batch.update(groupRef, { members: currentMembers });
+        } else if (action === 'make-member') {
+            currentMembers[memberUid] = 'member';
+            batch.update(groupRef, { members: currentMembers });
+        }
+
+        await batch.commit();
+        toast({ title: 'Success', description: 'Group member updated.' });
+      } catch (error: any) {
+          console.error("Error updating member role: ", error);
+          toast({ title: 'Error', description: 'Could not update member.', variant: 'destructive' });
+      } finally {
+          setIsSaving(false);
+      }
   }
 
   // --- Pairing Handlers ---
@@ -418,14 +498,12 @@ export default function SettingsPage() {
         }
         const receiver = querySnapshot.docs[0].data() as UserProfile;
         
-        // Check if receiver is already paired
         if (receiver.pairedWith) {
             toast({ title: "User already paired", description: `${receiver.displayName} is already paired with someone else.`, variant: 'destructive'});
             setIsSaving(false);
             return;
         }
 
-        // Check for existing pending invitation
         const existingInviteQuery = query(collection(firestore, 'pair_invitations'), 
             where('senderId', '==', user.uid), 
             where('receiverId', '==', receiver.uid),
@@ -438,6 +516,7 @@ export default function SettingsPage() {
         }
 
         const newInvite: Omit<PairInvitation, 'id'> = {
+            id: doc(collection(firestore, 'pair_invitations')).id,
             senderId: user.uid,
             senderName: profile.displayName,
             receiverId: receiver.uid,
@@ -445,7 +524,7 @@ export default function SettingsPage() {
             status: 'pending',
             createdAt: Date.now(),
         };
-        await addDoc(collection(firestore, 'pair_invitations'), newInvite);
+        await setDoc(doc(firestore, 'pair_invitations', newInvite.id), newInvite);
         toast({ title: "Invite Sent!", description: `Pairing invitation sent to ${receiver.displayName}.` });
         pairInviteForm.reset();
     } catch(e: any) {
@@ -465,9 +544,8 @@ export default function SettingsPage() {
     try {
         const senderDoc = await getDoc(senderRef);
         const senderProfile = senderDoc.data() as UserProfile;
-        const receiverProfile = profile; // The current user is the receiver
+        const receiverProfile = profile; 
 
-        // Helper to remove a user from their current group if they are in one
         const leaveCurrentGroup = async (userProfile: UserProfile, userId: string) => {
             if (userProfile.groupId) {
                 const oldGroupRef = doc(firestore, 'groups', userProfile.groupId);
@@ -487,13 +565,13 @@ export default function SettingsPage() {
             batch.update(senderRef, { groupId: null });
             batch.update(receiverRef, { groupId: null });
 
-        } else if (resolution === 'join') { // Receiver joins Sender's group
+        } else if (resolution === 'join') { 
             if (senderProfile.groupId) {
                 await leaveCurrentGroup(receiverProfile, invitation.receiverId);
                 batch.update(receiverRef, { groupId: senderProfile.groupId });
                 batch.update(doc(firestore, 'groups', senderProfile.groupId), { [`members.${invitation.receiverId}`]: 'member' });
             }
-        } else if (resolution === 'invite') { // Sender joins Receiver's group
+        } else if (resolution === 'invite') { 
             if (receiverProfile.groupId) {
                 await leaveCurrentGroup(senderProfile, invitation.senderId);
                 batch.update(senderRef, { groupId: receiverProfile.groupId });
@@ -501,7 +579,6 @@ export default function SettingsPage() {
             }
         }
 
-        // Finalize pairing
         batch.update(invRef, { status: 'accepted' });
         batch.update(senderRef, { pairedWith: invitation.receiverId });
         batch.update(receiverRef, { pairedWith: invitation.senderId });
@@ -520,7 +597,7 @@ export default function SettingsPage() {
 }, [user, firestore, profile, refetch, toast]);
 
 
-    async function handleInvitationAction(invitation: PairInvitation, action: 'accept' | 'decline' | 'cancel') {
+    async function handlePairInvitationAction(invitation: PairInvitation, action: 'accept' | 'decline' | 'cancel') {
         if (!user || !firestore || !profile) return;
         
         if (action === 'accept') {
@@ -533,14 +610,11 @@ export default function SettingsPage() {
             }
             const senderProfile = senderProfileSnap.data() as UserProfile;
 
-            // Check for group conflict
             if (profile.groupId !== senderProfile.groupId) {
-                // Conflict: Groups are different, or one is in a group and the other isn't.
                 setGroupConflict({ invitation, senderProfile });
-                setIsSaving(false); // Stop here, wait for user choice from dialog
+                setIsSaving(false); 
                 return;
             }
-            // No conflict, proceed directly
             await executePairing(invitation, 'none');
 
         } else if (action === 'decline') {
@@ -607,7 +681,6 @@ export default function SettingsPage() {
         );
     }
     
-    // Not paired, show invite UI
     return (
         <Card>
             <CardHeader>
@@ -617,7 +690,6 @@ export default function SettingsPage() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                {/* Send Invite Form */}
                 <div>
                     <h3 className="font-semibold mb-2 flex items-center gap-2"><Send /> Send a Pairing Invite</h3>
                     <Form {...pairInviteForm}>
@@ -630,38 +702,36 @@ export default function SettingsPage() {
                     </Form>
                 </div>
                 <Separator />
-                {/* Received Invites */}
-                {receivedInvites.length > 0 && (
+                {receivedPairInvites.length > 0 && (
                     <div>
                         <h3 className="font-semibold mb-2">Received Invitations</h3>
                         <div className="space-y-2">
-                            {receivedInvites.map(inv => (
+                            {receivedPairInvites.map(inv => (
                                 <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 rounded-md">
                                     <p>From <span className="font-bold">{inv.senderName}</span></p>
                                     <div className="flex gap-2">
-                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-100" onClick={() => handleInvitationAction(inv, 'accept')}><Check className="h-4 w-4"/></Button>
-                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-600 hover:bg-red-100" onClick={() => handleInvitationAction(inv, 'decline')}><X className="h-4 w-4"/></Button>
+                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-100" onClick={() => handlePairInvitationAction(inv, 'accept')}><Check className="h-4 w-4"/></Button>
+                                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-600 hover:bg-red-100" onClick={() => handlePairInvitationAction(inv, 'decline')}><X className="h-4 w-4"/></Button>
                                     </div>
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
-                {/* Sent Invites */}
-                {sentInvites.length > 0 && (
+                {sentPairInvites.length > 0 && (
                      <div>
                         <h3 className="font-semibold mb-2">Sent Invitations</h3>
                         <div className="space-y-2">
-                            {sentInvites.map(inv => (
+                            {sentPairInvites.map(inv => (
                                 <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 rounded-md">
                                     <p>To <span className="font-bold">{inv.receiverName}</span> (pending)</p>
-                                    <Button size="sm" variant="outline" onClick={() => handleInvitationAction(inv, 'cancel')}>Cancel</Button>
+                                    <Button size="sm" variant="outline" onClick={() => handlePairInvitationAction(inv, 'cancel')}>Cancel</Button>
                                 </div>
                             ))}
                         </div>
                     </div>
                 )}
-                {receivedInvites.length === 0 && sentInvites.length === 0 && <p className="text-sm text-slate-500 text-center">No pending invitations.</p>}
+                {receivedPairInvites.length === 0 && sentPairInvites.length === 0 && <p className="text-sm text-slate-500 text-center">No pending invitations.</p>}
             </CardContent>
         </Card>
     );
@@ -679,21 +749,34 @@ export default function SettingsPage() {
              <CardTitle className="flex items-center gap-2"><Users /> Group Details</CardTitle>
              <CardDescription>You are a member of <strong>{group.name}</strong>.</CardDescription>
            </CardHeader>
-           <CardContent className="space-y-4">
-              {userIsAdmin && (
-                <div className="space-y-2">
-                  <Label>Invitation Code</Label>
-                  <div className="flex items-center gap-2">
-                    <Input readOnly value={group.invitationCode} className="bg-slate-100" />
-                    <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(group.invitationCode); toast({title: "Copied!", description: "Invitation code copied to clipboard."}); }}><Copy className="h-4 w-4" /></Button>
+           <CardContent className="space-y-6">
+              {canManageGroup && (
+                <div className="space-y-4">
+                  <div>
+                      <h3 className="font-semibold mb-2 flex items-center gap-2"><UserPlus/> Invite Members by Email</h3>
+                      <Form {...inviteToGroupForm}>
+                          <form onSubmit={inviteToGroupForm.handleSubmit(onInviteToGroup)} className="flex items-start gap-2">
+                            <FormField control={inviteToGroupForm.control} name="email" render={({ field }) => (
+                                  <FormItem className="flex-grow"><FormControl><Input placeholder="User's email to invite" {...field} /></FormControl><FormMessage /></FormItem>
+                              )} />
+                            <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Send Invite'}</Button>
+                          </form>
+                      </Form>
                   </div>
-                  <p className="text-xs text-muted-foreground">Share this code to invite others to your group.</p>
+                  <div className="space-y-2">
+                    <Label>Or use Invitation Code</Label>
+                    <div className="flex items-center gap-2">
+                      <Input readOnly value={group.invitationCode} className="bg-slate-100" />
+                      <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(group.invitationCode); toast({title: "Copied!", description: "Invitation code copied to clipboard."}); }}><Copy className="h-4 w-4" /></Button>
+                    </div>
+                  </div>
+                  <Separator/>
                 </div>
               )}
              <div>
-                <Label>Members ({groupMembers.length})</Label>
+                <h3 className="font-semibold mb-2">Members ({groupMembers.length})</h3>
                 <div className="mt-2 space-y-2 rounded-md border p-2">
-                  {groupMembers.map(member => (
+                  {groupMembers.sort((a,b) => a.displayName.localeCompare(b.displayName)).map(member => (
                     <div key={member.uid} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
@@ -701,10 +784,35 @@ export default function SettingsPage() {
                             <AvatarFallback className="text-xs">{getInitials(member.displayName)}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{member.displayName}</span>
+                        {member.uid === user?.uid && <span className="text-xs text-emerald-600 font-bold">(You)</span>}
                       </div>
-                      {group.members[member.uid] === 'admin' && (
-                        <span className="text-xs font-bold text-amber-600 flex items-center gap-1"><Crown className="h-3 w-3" /> ADMIN</span>
-                      )}
+                      <div className="flex items-center gap-2">
+                        {group.members[member.uid] === 'admin' && (
+                          <span className="text-xs font-bold text-amber-600 flex items-center gap-1"><Crown className="h-3 w-3" /> ADMIN</span>
+                        )}
+                        {group.members[member.uid] === 'co-admin' && (
+                          <span className="text-xs font-bold text-sky-600 flex items-center gap-1"><Star className="h-3 w-3" /> CO-ADMIN</span>
+                        )}
+                        {userRoleInGroup === 'admin' && user.uid !== member.uid && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="h-4 w-4"/></Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuLabel>Manage {member.displayName}</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {group.members[member.uid] !== 'admin' && <DropdownMenuItem onClick={() => handleMemberAction(member.uid, 'make-admin')}><Crown className="mr-2"/> Make Admin</DropdownMenuItem>}
+                                    {group.members[member.uid] === 'member' && <DropdownMenuItem onClick={() => handleMemberAction(member.uid, 'make-co-admin')}><Star className="mr-2"/> Make Co-Admin</DropdownMenuItem>}
+                                    {group.members[member.uid] === 'co-admin' && <DropdownMenuItem onClick={() => handleMemberAction(member.uid, 'make-member')}><UserCog className="mr-2"/> Make Member</DropdownMenuItem>}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-red-500" onClick={() => handleMemberAction(member.uid, 'kick')}><Trash2 className="mr-2"/> Kick Member</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                        {userRoleInGroup === 'co-admin' && user.uid !== member.uid && group.members[member.uid] === 'member' && (
+                            <Button size="sm" variant="outline" onClick={() => handleMemberAction(member.uid, 'make-co-admin')}><Star className="mr-2 h-3 w-3"/> Promote</Button>
+                        )}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -723,21 +831,25 @@ export default function SettingsPage() {
        <Card>
           <CardHeader>
              <CardTitle className="flex items-center gap-2"><Users /> Group Management</CardTitle>
-             <CardDescription>Create a new group or join an existing one.</CardDescription>
+             <CardDescription>Create a new group or join one with an invite.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div>
-              <h3 className="font-semibold mb-2 flex items-center gap-2"><UserPlus /> Join a Group</h3>
-              <Form {...joinGroupForm}>
-                <form onSubmit={joinGroupForm.handleSubmit(onJoinGroup)} className="flex items-start gap-2">
-                   <FormField control={joinGroupForm.control} name="invitationCode" render={({ field }) => (
-                        <FormItem className="flex-grow"><FormControl><Input placeholder="Invitation Code" {...field} /></FormControl><FormMessage /></FormItem>
-                    )} />
-                  <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Join'}</Button>
-                </form>
-              </Form>
-            </div>
-            <Separator />
+            {receivedGroupInvites.length > 0 && (
+                <div>
+                    <h3 className="font-semibold mb-2 flex items-center gap-2"><ShieldAlert /> Pending Group Invitations</h3>
+                    <div className="space-y-2">
+                        {receivedGroupInvites.map(inv => (
+                            <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 rounded-md">
+                                <p>From <span className="font-bold">{inv.senderName}</span> to join <span className="font-bold">{inv.groupName}</span></p>
+                                <div className="flex gap-2">
+                                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-100" onClick={() => handleGroupInvitation(inv, 'accept')}><Check className="h-4 w-4"/></Button>
+                                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-600 hover:bg-red-100" onClick={() => handleGroupInvitation(inv, 'decline')}><X className="h-4 w-4"/></Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
             <div>
               <h3 className="font-semibold mb-2 flex items-center gap-2"><Crown /> Create a New Group</h3>
               <Form {...createGroupForm}>
@@ -770,11 +882,6 @@ export default function SettingsPage() {
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:items-stretch w-full">
-                    {/* This option is always available if there's a conflict */}
-                    <Button variant="outline" onClick={() => executePairing(invitation, 'leave')}>
-                        Both Leave Groups &amp; Pair
-                    </Button>
-
                     {senderIsInGroup && (
                          <Button variant="outline" onClick={() => executePairing(invitation, 'join')}>
                             Join {senderProfile.displayName}'s Group &amp; Pair
@@ -785,6 +892,9 @@ export default function SettingsPage() {
                             Invite {senderProfile.displayName} to My Group &amp; Pair
                         </Button>
                     )}
+                    <Button variant="outline" onClick={() => executePairing(invitation, 'leave')}>
+                        Both Leave Current Groups &amp; Pair
+                    </Button>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                 </AlertDialogFooter>
             </AlertDialogContent>
@@ -835,9 +945,6 @@ export default function SettingsPage() {
                                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Save'}
                                 </Button>
                             </div>
-                            <p className="text-xs text-muted-foreground">
-                                File upload is temporarily disabled. Please paste an image URL.
-                            </p>
                         </div>
                     </div>
 
@@ -887,5 +994,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    

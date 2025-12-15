@@ -51,7 +51,7 @@ export interface Group {
     invitationCode: string;
     createdBy: string; // UID of the user who created the group
     members: {
-        [uid: string]: 'admin' | 'member';
+        [uid: string]: 'admin' | 'co-admin' | 'member';
     };
 }
 
@@ -65,6 +65,19 @@ export interface PairInvitation {
     receiverName: string;
     status: 'pending' | 'accepted' | 'declined' | 'cancelled';
     createdAt: number; // Timestamp
+}
+
+// Represents a group invitation sent via email.
+// This is the schema for documents in the `/group_invitations/{invitationId}` collection.
+export interface GroupInvitation {
+    id: string;
+    groupId: string;
+    groupName: string;
+    senderId: string;
+    senderName: string;
+    receiverEmail: string;
+    status: 'pending' | 'accepted' | 'declined';
+    createdAt: number;
 }
 
 
@@ -92,5 +105,3 @@ export interface AppState {
   connectionStatus: 'connecting' | 'connected' | 'error';
   lastUpdater: LegacyUser | null;
 };
-
-    

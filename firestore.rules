@@ -12,6 +12,19 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
+    function getRole(groupId) {
+      return get(/databases/$(database)/documents/groups/$(groupId)).data.members[request.auth.uid];
+    }
+    
+    function isAdmin(groupId) {
+        return getRole(groupId) == 'admin';
+    }
+
+    function isCoAdmin(groupId) {
+        let role = getRole(groupId);
+        return role == 'admin' || role == 'co-admin';
+    }
+    
     // --- New Scalable Rules ---
 
     match /users/{userId} {
@@ -27,7 +40,7 @@ service cloud.firestore {
     
     match /groups/{groupId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn(); 
+      allow write: if isSignedIn() && (isAdmin(groupId) || isCoAdmin(groupId));
     }
     
     match /pair_invitations/{invitationId} {
@@ -39,6 +52,16 @@ service cloud.firestore {
         allow delete: if isSignedIn() &&
                       ((request.auth.uid == resource.data.senderId && resource.data.status in ['cancelled', 'declined']) ||
                        (request.auth.uid == resource.data.receiverId));
+    }
+    
+    match /group_invitations/{invitationId} {
+      allow read: if isSignedIn() && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == resource.data.receiverEmail || isCoAdmin(resource.data.groupId));
+      allow create: if isSignedIn() && isCoAdmin(request.resource.data.groupId);
+      allow update: if isSignedIn() && (
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == resource.data.receiverEmail) ||
+        isCoAdmin(resource.data.groupId)
+      );
+      allow delete: if isSignedIn() && isCoAdmin(resource.data.groupId);
     }
 
 
@@ -53,4 +76,3 @@ service cloud.firestore {
     }
   }
 }
-// Trigger CORS update

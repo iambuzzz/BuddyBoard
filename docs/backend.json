@@ -29,7 +29,7 @@
           "description": "A map of user UIDs to their roles in the group.",
           "additionalProperties": {
             "type": "string",
-            "enum": ["admin", "member"]
+            "enum": ["admin", "co-admin", "member"]
           }
         }
       },
@@ -81,6 +81,7 @@
       "description": "Represents a pairing invitation between two users.",
       "type": "object",
       "properties": {
+        "id": { "type": "string"},
         "senderId": { "type": "string" },
         "senderName": { "type": "string" },
         "receiverId": { "type": "string" },
@@ -88,7 +89,23 @@
         "status": { "type": "string", "enum": ["pending", "accepted", "declined", "cancelled"] },
         "createdAt": { "type": "number", "description": "Timestamp" }
       },
-      "required": ["senderId", "senderName", "receiverId", "receiverName", "status", "createdAt"]
+      "required": ["id", "senderId", "senderName", "receiverId", "receiverName", "status", "createdAt"]
+    },
+    "GroupInvitation": {
+      "title": "Group Invitation",
+      "description": "Represents a group invitation sent via email.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "groupId": { "type": "string" },
+        "groupName": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "receiverEmail": { "type": "string", "format": "email" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "declined"] },
+        "createdAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["id", "groupId", "groupName", "senderId", "senderName", "receiverEmail", "status", "createdAt"]
     }
   },
   "auth": {
@@ -110,6 +127,10 @@
     "/pair_invitations/{invitationId}": {
         "schema": { "$ref": "#/entities/PairInvitation" },
         "description": "Stores pairing invitations between users."
+    },
+    "/group_invitations/{invitationId}": {
+        "schema": { "$ref": "#/entities/GroupInvitation" },
+        "description": "Stores group invitations sent via email."
     },
     "/riyalTodoState/app": {
       "schema": { "$ref": "#/entities/AppState" },
