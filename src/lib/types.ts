@@ -63,7 +63,7 @@ export interface PairInvitation {
     senderName: string;
     receiverId: string;
     receiverName: string;
-    status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+    status: 'pending' | 'accepted' | 'declined' | 'cancelled' | 'pending_leave_and_pair';
     createdAt: number; // Timestamp
 }
 

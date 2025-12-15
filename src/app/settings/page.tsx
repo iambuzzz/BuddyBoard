@@ -243,13 +243,13 @@ export default function SettingsPage() {
     const sentQuery = query(collection(firestore, 'pair_invitations'), where('senderId', '==', user.uid));
     const unsubSent = onSnapshot(sentQuery, (snapshot) => {
         const invites = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PairInvitation));
-        setSentPairInvites(invites.filter(inv => inv.status === 'pending'));
+        setSentPairInvites(invites.filter(inv => inv.status === 'pending' || inv.status === 'pending_leave_and_pair'));
     });
     
     const receivedQuery = query(collection(firestore, 'pair_invitations'), where('receiverId', '==', user.uid));
     const unsubReceived = onSnapshot(receivedQuery, (snapshot) => {
         const invites = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PairInvitation));
-        setReceivedPairInvites(invites.filter(inv => inv.status === 'pending'));
+        setReceivedPairInvites(invites.filter(inv => inv.status === 'pending' || inv.status === 'pending_leave_and_pair'));
     });
 
     setIsPairingLoading(false);
@@ -679,64 +679,76 @@ export default function SettingsPage() {
     } finally { setIsSaving(false); }
   }
 
-  const executePairing = useCallback(async (invitation: PairInvitation, resolution: 'leave' | 'join' | 'invite' | 'none' = 'none') => {
+  const executePairing = useCallback(async (invitation: PairInvitation) => {
     if (!user || !firestore || !profile) return;
     setIsSaving(true);
-
+  
     try {
       await runTransaction(firestore, async (transaction) => {
         const senderRef = doc(firestore, 'users', invitation.senderId);
         const receiverRef = doc(firestore, 'users', user.uid);
         const invRef = doc(firestore, 'pair_invitations', invitation.id);
-
+  
         const senderDoc = await transaction.get(senderRef);
         const receiverDoc = await transaction.get(receiverRef);
-
+  
         if (!senderDoc.exists() || !receiverDoc.exists()) {
           throw new Error("One or both users not found.");
         }
-        
+  
         const senderProfile = senderDoc.data() as UserProfile;
         const receiverProfile = receiverDoc.data() as UserProfile;
-
-        const leaveGroup = async (userProfile: UserProfile, userId: string, batch: any) => {
+  
+        // Helper to leave a group within the transaction
+        const leaveGroup = async (userProfile: UserProfile, userId: string) => {
           if (userProfile.groupId) {
-            const oldGroupRef = doc(firestore, 'groups', userProfile.groupId);
-            const oldGroupDoc = await transaction.get(oldGroupRef);
-            if (oldGroupDoc.exists()) {
-                const oldGroupData = oldGroupDoc.data() as Group;
-                const newMembers = { ...oldGroupData.members };
-                delete newMembers[userId];
-                transaction.update(oldGroupRef, { members: newMembers });
+            const groupRef = doc(firestore, 'groups', userProfile.groupId);
+            const groupDoc = await transaction.get(groupRef);
+            if (groupDoc.exists()) {
+              const groupData = groupDoc.data() as Group;
+              const newMembers = { ...groupData.members };
+              delete newMembers[userId];
+              if (Object.keys(newMembers).length === 0) {
+                transaction.delete(groupRef);
+              } else {
+                if (groupData.members[userId] === 'admin' && !Object.values(newMembers).includes('admin')) {
+                    const nextAdminUid = Object.keys(newMembers)[0];
+                    newMembers[nextAdminUid] = 'admin';
+                }
+                transaction.update(groupRef, { members: newMembers });
+              }
             }
           }
         };
 
-        if (resolution === 'leave') {
-            await leaveGroup(senderProfile, invitation.senderId, transaction);
-            await leaveGroup(receiverProfile, user.uid, transaction);
-            transaction.update(senderRef, { groupId: null });
-            transaction.update(receiverRef, { groupId: null });
-        } else if (resolution === 'join' && senderProfile.groupId) {
-            await leaveGroup(receiverProfile, user.uid, transaction);
-            transaction.update(receiverRef, { groupId: senderProfile.groupId });
+        if (invitation.status === 'pending_leave_and_pair') {
+            await leaveGroup(senderProfile, invitation.senderId);
+            await leaveGroup(receiverProfile, user.uid);
+            transaction.update(senderRef, { groupId: null, pairedWith: user.uid });
+            transaction.update(receiverRef, { groupId: null, pairedWith: invitation.senderId });
+        } else if (senderProfile.groupId) { // Join sender's group
+            if (receiverProfile.groupId) await leaveGroup(receiverProfile, user.uid);
             const groupRef = doc(firestore, 'groups', senderProfile.groupId);
             transaction.update(groupRef, { [`members.${user.uid}`]: 'member' });
-        } else if (resolution === 'invite' && receiverProfile.groupId) {
-            await leaveGroup(senderProfile, invitation.senderId, transaction);
-            transaction.update(senderRef, { groupId: receiverProfile.groupId });
+            transaction.update(receiverRef, { groupId: senderProfile.groupId, pairedWith: invitation.senderId });
+            transaction.update(senderRef, { pairedWith: user.uid });
+        } else if (receiverProfile.groupId) { // Invite sender to receiver's group
+            if (senderProfile.groupId) await leaveGroup(senderProfile, invitation.senderId);
             const groupRef = doc(firestore, 'groups', receiverProfile.groupId);
             transaction.update(groupRef, { [`members.${invitation.senderId}`]: 'member' });
+            transaction.update(senderRef, { groupId: receiverProfile.groupId, pairedWith: user.uid });
+            transaction.update(receiverRef, { pairedWith: invitation.senderId });
+        } else { // No groups involved
+            transaction.update(senderRef, { pairedWith: user.uid });
+            transaction.update(receiverRef, { pairedWith: invitation.senderId });
         }
-
+  
         transaction.update(invRef, { status: 'accepted' });
-        transaction.update(senderRef, { pairedWith: user.uid });
-        transaction.update(receiverRef, { pairedWith: invitation.senderId });
       });
-
+  
       toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` });
       refetch();
-
+  
     } catch (e: any) {
       console.error("Error executing pairing:", e);
       toast({ title: 'Error', description: 'Could not complete pairing action.', variant: 'destructive' });
@@ -745,6 +757,36 @@ export default function SettingsPage() {
       setGroupConflict(null);
     }
   }, [user, firestore, profile, refetch, toast]);
+
+
+  const handleGroupConflictResolution = async (invitation: PairInvitation, resolution: 'join' | 'invite' | 'propose_leave') => {
+    if (!user || !firestore) return;
+    setIsSaving(true);
+    setGroupConflict(null);
+
+    if (resolution === 'propose_leave') {
+        try {
+            const invRef = doc(firestore, 'pair_invitations', invitation.id);
+            await updateDoc(invRef, { status: 'pending_leave_and_pair' });
+            toast({ title: 'Proposal Sent', description: `A request to leave groups and pair has been sent to ${invitation.senderName}.` });
+        } catch (e: any) {
+            toast({ title: 'Error', description: 'Could not send proposal.', variant: 'destructive' });
+        } finally {
+            setIsSaving(false);
+        }
+        return;
+    }
+    
+    // For 'join' and 'invite', we need to modify the invitation temporarily before executing
+    let tempInvitation = { ...invitation };
+    if (resolution === 'join') {
+        // We will join the sender's group. The executePairing logic for sender's group handles this.
+    } else if (resolution === 'invite') {
+        // We will invite the sender to our group. The executePairing logic for receiver's group handles this.
+    }
+    
+    await executePairing(tempInvitation);
+  }
 
 
     async function handlePairInvitationAction(invitation: PairInvitation, action: 'accept' | 'decline' | 'cancel') {
@@ -760,12 +802,18 @@ export default function SettingsPage() {
             }
             const senderProfile = senderProfileSnap.data() as UserProfile;
 
+            // If a special "leave and pair" request is pending, execute it directly.
+            if (invitation.status === 'pending_leave_and_pair') {
+                await executePairing(invitation);
+                return;
+            }
+
             if (profile.groupId !== senderProfile.groupId) {
                 setGroupConflict({ invitation, senderProfile });
                 setIsSaving(false); 
                 return;
             }
-            await executePairing(invitation, 'none');
+            await executePairing(invitation);
 
         } else if (action === 'decline') {
             setIsSaving(true);
@@ -858,7 +906,11 @@ export default function SettingsPage() {
                         <div className="space-y-2">
                             {receivedPairInvites.map(inv => (
                                 <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 rounded-md">
-                                    <p>From <span className="font-bold">{inv.senderName}</span></p>
+                                    {inv.status === 'pending_leave_and_pair' ? (
+                                        <p className="font-semibold text-orange-600">{inv.senderName} wants to pair, and you both need to leave your current groups.</p>
+                                    ) : (
+                                        <p>From <span className="font-bold">{inv.senderName}</span></p>
+                                    )}
                                     <div className="flex gap-2">
                                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-100" onClick={() => handlePairInvitationAction(inv, 'accept')}><Check className="h-4 w-4"/></Button>
                                         <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-600 hover:bg-red-100" onClick={() => handlePairInvitationAction(inv, 'decline')}><X className="h-4 w-4"/></Button>
@@ -874,7 +926,11 @@ export default function SettingsPage() {
                         <div className="space-y-2">
                             {sentPairInvites.map(inv => (
                                 <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 rounded-md">
-                                    <p>To <span className="font-bold">{inv.receiverName}</span> (pending)</p>
+                                     {inv.status === 'pending_leave_and_pair' ? (
+                                        <p>Proposal sent to <span className="font-bold">{inv.receiverName}</span> to leave groups and pair.</p>
+                                     ) : (
+                                        <p>To <span className="font-bold">{inv.receiverName}</span> (pending)</p>
+                                     )}
                                     <Button size="sm" variant="outline" onClick={() => handlePairInvitationAction(inv, 'cancel')}>Cancel</Button>
                                 </div>
                             ))}
@@ -1055,17 +1111,17 @@ export default function SettingsPage() {
                 </AlertDialogHeader>
                 <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:items-stretch w-full">
                     {senderIsInGroup && (
-                         <Button variant="outline" onClick={() => executePairing(invitation, 'join')}>
+                         <Button variant="outline" onClick={() => handleGroupConflictResolution(invitation, 'join')}>
                             Join {senderProfile.displayName}'s Group &amp; Pair
                         </Button>
                     )}
                      {receiverIsInGroup && (
-                        <Button className="bg-[--riya-primary] hover:bg-violet-500" onClick={() => executePairing(invitation, 'invite')}>
+                        <Button className="bg-[--riya-primary] hover:bg-violet-500" onClick={() => handleGroupConflictResolution(invitation, 'invite')}>
                             Invite {senderProfile.displayName} to My Group &amp; Pair
                         </Button>
                     )}
-                    <Button variant="destructive" onClick={() => executePairing(invitation, 'leave')}>
-                        Both Leave Current Groups &amp; Pair
+                    <Button variant="destructive" onClick={() => handleGroupConflictResolution(invitation, 'propose_leave')}>
+                        Propose to Leave Groups &amp; Pair
                     </Button>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                 </AlertDialogFooter>
