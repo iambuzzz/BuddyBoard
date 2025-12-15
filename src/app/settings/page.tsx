@@ -589,7 +589,7 @@ export default function SettingsPage() {
                         </Avatar>
                         <p>You are currently paired with <span className="font-bold">{pairedPartner.displayName}</span>.</p>
                     </div>
-                    <Button variant="destructive" onClick={onUnpair} disabled={isSaving} className="w-full">
+                    <Button onClick={onUnpair} disabled={isSaving} className="w-full bg-[--riya-primary] hover:bg-violet-500">
                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2Off className="mr-2 h-4 w-4" />}
                         Unpair
                     </Button>
@@ -701,7 +701,7 @@ export default function SettingsPage() {
                 </div>
              </div>
              <Separator />
-             <Button variant="destructive" onClick={onLeaveGroup} disabled={isSaving} className="w-full">
+             <Button onClick={onLeaveGroup} disabled={isSaving} className="w-full bg-[--riya-primary] hover:bg-violet-500">
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LogOutIcon className="mr-2 h-4 w-4" />}
                 Leave Group
              </Button>
