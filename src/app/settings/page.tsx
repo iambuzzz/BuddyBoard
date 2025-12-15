@@ -343,10 +343,20 @@ export default function SettingsPage() {
     try {
         if(action === 'accept') {
             const batch = writeBatch(firestore);
+            // This needs to be a separate operation to comply with security rules
+            // You can't update a group you aren't a member of yet.
+            // Let's do this sequentially.
+            
+            // Step 1: Add user to the group
+            const groupRef = doc(firestore, 'groups', invitation.groupId);
+            await updateDoc(groupRef, { [`members.${user.uid}`]: 'member' });
+            
+            // Step 2: Update user profile and invitation status
             batch.update(doc(firestore, 'users', user.uid), { groupId: invitation.groupId });
-            batch.update(doc(firestore, 'groups', invitation.groupId), { [`members.${user.uid}`]: 'member' });
             batch.update(invRef, { status: 'accepted' });
+            
             await batch.commit();
+            
             toast({ title: 'Welcome!', description: `You have joined the group: ${invitation.groupName}`});
             refetch();
         } else { // decline
@@ -354,7 +364,8 @@ export default function SettingsPage() {
             toast({ title: 'Invitation Declined' });
         }
     } catch (e: any) {
-        toast({ title: 'Error', description: `Failed to ${action} invitation.`, variant: 'destructive' });
+        console.error("Error accepting invitation:", e);
+        toast({ title: 'Error', description: `Failed to ${action} invitation. Please try again.`, variant: 'destructive' });
     } finally {
         setIsSaving(false);
     }
@@ -471,7 +482,7 @@ export default function SettingsPage() {
             }
 
         } else if (action === 'make-admin') {
-            currentMembers[user.uid] = 'member'; // Demote current admin
+            currentMembers[user.uid] = 'co-admin'; // Demote current admin
             currentMembers[memberUid] = 'admin';
             batch.update(groupRef, { members: currentMembers });
         } else if (action === 'make-co-admin') {
@@ -817,9 +828,11 @@ export default function SettingsPage() {
                                 <DropdownMenuContent>
                                     <DropdownMenuLabel>Manage {member.displayName}</DropdownMenuLabel>
                                     <DropdownMenuSeparator />
+                                    {group.members[member.uid] !== 'co-admin' ?
+                                      <DropdownMenuItem onClick={() => handleMemberAction(member.uid, 'make-co-admin')}><Star className="mr-2"/> Make Co-Admin</DropdownMenuItem>
+                                      : <DropdownMenuItem onClick={() => handleMemberAction(member.uid, 'make-member')}><UserCog className="mr-2"/> Make Member</DropdownMenuItem>
+                                    }
                                     {group.members[member.uid] !== 'admin' && <DropdownMenuItem onClick={() => handleMemberAction(member.uid, 'make-admin')}><Crown className="mr-2"/> Make Admin</DropdownMenuItem>}
-                                    {group.members[member.uid] === 'member' && <DropdownMenuItem onClick={() => handleMemberAction(member.uid, 'make-co-admin')}><Star className="mr-2"/> Make Co-Admin</DropdownMenuItem>}
-                                    {group.members[member.uid] === 'co-admin' && <DropdownMenuItem onClick={() => handleMemberAction(member.uid, 'make-member')}><UserCog className="mr-2"/> Make Member</DropdownMenuItem>}
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-red-500" onClick={() => handleMemberAction(member.uid, 'kick')}><Trash2 className="mr-2"/> Kick Member</DropdownMenuItem>
                                 </DropdownMenuContent>
