@@ -59,7 +59,7 @@ service cloud.firestore {
       allow read: if isSignedIn() && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == resource.data.receiverEmail || isCoAdmin(resource.data.groupId));
       allow create: if isSignedIn() && isCoAdmin(request.resource.data.groupId);
       allow update: if isSignedIn() && (
-        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == resource.data.receiverEmail) ||
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == resource.data.receiverEmail && request.resource.data.status in ['accepted', 'declined']) ||
         isCoAdmin(resource.data.groupId)
       );
       allow delete: if isSignedIn() && isCoAdmin(resource.data.groupId);
