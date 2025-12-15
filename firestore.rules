@@ -32,7 +32,7 @@ service cloud.firestore {
       // Allow write if owner.
       // Also allow write if the user is being unpaired by their partner.
       allow write: if isOwner(userId) ||
-                     (request.resource.data.pairedWith == null && resource.data.pairedWith == request.auth.uid);
+                     (resource.data.pairedWith == request.auth.uid && request.resource.data.pairedWith == null);
     }
     
     match /task_lists/{userId} {
@@ -45,12 +45,12 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
       // Admins can update anything.
-      // Co-admins can only update the members list (for inviting).
-      // Normal users can only add themselves to the members list.
+      // Co-admins can only kick normal members.
+      // Normal users can only remove themselves from the members list.
       allow update: if isSignedIn() && (
         isAdmin(groupId) ||
-        (isCoAdmin(groupId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])) ||
-        (request.auth.uid in request.resource.data.members && !(request.auth.uid in resource.data.members))
+        (isCoAdmin(groupId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) && !((request.auth.uid in resource.data.members) && (getRole(groupId) in ['admin', 'co-admin']))) ||
+        (request.auth.uid in resource.data.members && !(request.auth.uid in request.resource.data.members) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']))
       );
       allow delete: if isSignedIn() && isAdmin(groupId);
     }
