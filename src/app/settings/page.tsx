@@ -35,6 +35,7 @@ import short from 'short-uuid';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 
 const profileFormSchema = z.object({
@@ -386,7 +387,11 @@ export default function SettingsPage() {
       }
       batch.update(groupRef, { members: newMembers });
     }
-    try { await batch.commit(); toast({ title: 'Group Left', description: 'You have successfully left the group.' }); refetch(); } 
+    try { 
+        await batch.commit(); 
+        toast({ title: 'Group Left', description: 'You have successfully left the group.' }); 
+        refetch(); 
+    } 
     catch (error: any) { toast({ title: 'Error', description: 'Failed to leave group.', variant: 'destructive' }); } 
     finally { setIsSaving(false); }
   }
@@ -559,7 +564,11 @@ export default function SettingsPage() {
     const batch = writeBatch(firestore);
     batch.update(doc(firestore, 'users', user.uid), { pairedWith: null });
     batch.update(doc(firestore, 'users', profile.pairedWith), { pairedWith: null });
-    try { await batch.commit(); toast({ title: 'Unpaired', description: 'You are no longer paired.' }); refetch(); } 
+    try { 
+        await batch.commit(); 
+        toast({ title: 'Unpaired', description: 'You are no longer paired.' }); 
+        refetch(); 
+    } 
     catch (e) { toast({ title: 'Error', description: 'Could not unpair.', variant: 'destructive' }); }
     finally { setIsSaving(false); }
   }
@@ -786,79 +795,91 @@ export default function SettingsPage() {
 
   return (
      <div className="min-h-screen w-full flex flex-col items-center bg-[#e3eeff] p-4 pb-12">
-       <div className="w-full max-w-md space-y-8">
-        <div>
-          <Button variant="ghost" onClick={() => router.push('/')} className="mb-4">
+       <div className="w-full max-w-md">
+        <Button variant="ghost" onClick={() => router.push('/')} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
-          </Button>
-          <Card>
-            <CardHeader>
-              <CardTitle>Profile Settings</CardTitle>
-              <CardDescription>Manage your account and card appearance.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col items-center space-y-4 mb-8">
-                <Avatar className="h-24 w-24 border">
-                    <AvatarImage src={profile?.photoURL} />
-                    <AvatarFallback className="text-3xl">{profile ? getInitials(profile.displayName) : ''}</AvatarFallback>
-                </Avatar>
-                
-                {/* Workaround: URL input instead of file upload */}
-                <div className="w-full space-y-2">
-                    <Label htmlFor="photo-url">Profile Photo URL</Label>
-                    <div className="flex items-center gap-2">
-                        <Input 
-                            id="photo-url"
-                            type="url"
-                            placeholder="https://example.com/image.png"
-                            value={photoUrlInput}
-                            onChange={(e) => setPhotoUrlInput(e.target.value)}
-                            disabled={isSaving}
-                        />
-                        <Button onClick={handleSavePhotoUrl} disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">
-                            {isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Save'}
-                        </Button>
+        </Button>
+
+        <Tabs defaultValue="profile" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="profile">Profile</TabsTrigger>
+                <TabsTrigger value="pairing">Pairing</TabsTrigger>
+                <TabsTrigger value="group">Group</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="profile">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Profile Settings</CardTitle>
+                        <CardDescription>Manage your account and card appearance.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                    <div className="flex flex-col items-center space-y-4 mb-8">
+                        <Avatar className="h-24 w-24 border">
+                            <AvatarImage src={profile?.photoURL} />
+                            <AvatarFallback className="text-3xl">{profile ? getInitials(profile.displayName) : ''}</AvatarFallback>
+                        </Avatar>
+                        
+                        <div className="w-full space-y-2">
+                            <Label htmlFor="photo-url">Profile Photo URL</Label>
+                            <div className="flex items-center gap-2">
+                                <Input 
+                                    id="photo-url"
+                                    type="url"
+                                    placeholder="https://example.com/image.png"
+                                    value={photoUrlInput}
+                                    onChange={(e) => setPhotoUrlInput(e.target.value)}
+                                    disabled={isSaving}
+                                />
+                                <Button onClick={handleSavePhotoUrl} disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">
+                                    {isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Save'}
+                                </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                                File upload is temporarily disabled. Please paste an image URL.
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                        File upload is temporarily disabled. Please paste an image URL.
-                    </p>
-                </div>
-              </div>
 
-              <Form {...profileForm}>
-                <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
-                  <FormField control={profileForm.control} name="displayName" render={({ field }) => (
-                      <FormItem><FormLabel>Display Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} /></FormControl><FormDescription>This name will be displayed on your task card.</FormDescription><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={profileForm.control} name="cardTheme" render={({ field }) => (
-                    <FormItem className="space-y-3"><FormLabel>Card Theme</FormLabel>
-                      <FormControl>
-                        <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
-                          <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="riya" /></FormControl><FormLabel className="font-normal">Periwinkle (Riya's Theme)</FormLabel></FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="naitik" /></FormControl><FormLabel className="font-normal">Cyan (Naitik's Theme)</FormLabel></FormItem>
-                          <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="ambuj" /></FormControl><FormLabel className="font-normal">Emerald (Ambuj's Theme)</FormLabel></FormItem>
-                        </RadioGroup>
-                      </FormControl><FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={profileForm.control} name="currentPassword" render={({ field }) => (
-                      <FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" placeholder="Enter current password" {...field} /></FormControl><FormDescription>Required only if you want to change your password.</FormDescription><FormMessage /></FormItem>
-                  )} />
-                  <FormField control={profileForm.control} name="newPassword" render={({ field }) => (
-                      <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormItem>
-                  )} />
-                  <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">
-                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        </div>
-        
-        {renderPairingManagement()}
+                    <Form {...profileForm}>
+                        <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
+                        <FormField control={profileForm.control} name="displayName" render={({ field }) => (
+                            <FormItem><FormLabel>Display Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} /></FormControl><FormDescription>This name will be displayed on your task card.</FormDescription><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={profileForm.control} name="cardTheme" render={({ field }) => (
+                            <FormItem className="space-y-3"><FormLabel>Card Theme</FormLabel>
+                            <FormControl>
+                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
+                                <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="riya" /></FormControl><FormLabel className="font-normal">Periwinkle (Riya's Theme)</FormLabel></FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="naitik" /></FormControl><FormLabel className="font-normal">Cyan (Naitik's Theme)</FormLabel></FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="ambuj" /></FormControl><FormLabel className="font-normal">Emerald (Ambuj's Theme)</FormLabel></FormItem>
+                                </RadioGroup>
+                            </FormControl><FormMessage />
+                            </FormItem>
+                        )} />
+                        <FormField control={profileForm.control} name="currentPassword" render={({ field }) => (
+                            <FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" placeholder="Enter current password" {...field} /></FormControl><FormDescription>Required only if you want to change your password.</FormDescription><FormMessage /></FormItem>
+                        )} />
+                        <FormField control={profileForm.control} name="newPassword" render={({ field }) => (
+                            <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormItem>
+                        )} />
+                        <Button type="submit" disabled={isSaving} className="w-full bg-[--riya-primary] hover:bg-violet-500">
+                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
+                        </Button>
+                        </form>
+                    </Form>
+                    </CardContent>
+                </Card>
+            </TabsContent>
 
-        {renderGroupManagement()}
+            <TabsContent value="pairing">
+                {renderPairingManagement()}
+            </TabsContent>
+
+            <TabsContent value="group">
+                {renderGroupManagement()}
+            </TabsContent>
+        </Tabs>
 
         {renderGroupConflictDialog()}
 
