@@ -47,10 +47,12 @@ service cloud.firestore {
       // Admins can update anything.
       // Co-admins can only kick normal members.
       // Normal users can only remove themselves from the members list.
+      // Any signed-in user can add themselves to the members list if they are not already a member.
       allow update: if isSignedIn() && (
         isAdmin(groupId) ||
-        (isCoAdmin(groupId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) && !((request.auth.uid in resource.data.members) && (getRole(groupId) in ['admin', 'co-admin']))) ||
-        (request.auth.uid in resource.data.members && !(request.auth.uid in request.resource.data.members) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']))
+        (isCoAdmin(groupId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) && !(getRole(groupId) in ['admin', 'co-admin']) && !(request.auth.uid in resource.data.members) ) ||
+        (request.auth.uid in resource.data.members && !(request.auth.uid in request.resource.data.members) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members'])) ||
+        (!(request.auth.uid in resource.data.members) && (request.auth.uid in request.resource.data.members) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']))
       );
       allow delete: if isSignedIn() && isAdmin(groupId);
     }
