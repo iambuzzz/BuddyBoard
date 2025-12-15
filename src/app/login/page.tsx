@@ -96,7 +96,7 @@ export default function LoginPage() {
         toast({ title: 'Success', description: 'Logged in successfully!' });
       }
       router.push('/');
-    } catch (error: any) => {
+    } catch (error: any) {
       let description = error.message || 'An unknown error occurred.';
       if (error.code === 'auth/invalid-credential') {
         description = 'Invalid email or password. Please try again.';
