@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -698,7 +699,7 @@ export default function SettingsPage() {
         const senderProfile = senderDoc.data() as UserProfile;
         const receiverProfile = receiverDoc.data() as UserProfile;
 
-        const leaveGroup = async (userProfile: UserProfile, userId: string) => {
+        const leaveGroup = async (userProfile: UserProfile, userId: string, batch: any) => {
           if (userProfile.groupId) {
             const oldGroupRef = doc(firestore, 'groups', userProfile.groupId);
             const oldGroupDoc = await transaction.get(oldGroupRef);
@@ -712,24 +713,24 @@ export default function SettingsPage() {
         };
 
         if (resolution === 'leave') {
-            await leaveGroup(senderProfile, invitation.senderId);
-            await leaveGroup(receiverProfile, invitation.receiverId);
+            await leaveGroup(senderProfile, invitation.senderId, transaction);
+            await leaveGroup(receiverProfile, user.uid, transaction);
             transaction.update(senderRef, { groupId: null });
             transaction.update(receiverRef, { groupId: null });
         } else if (resolution === 'join' && senderProfile.groupId) {
-            await leaveGroup(receiverProfile, invitation.receiverId);
+            await leaveGroup(receiverProfile, user.uid, transaction);
             transaction.update(receiverRef, { groupId: senderProfile.groupId });
             const groupRef = doc(firestore, 'groups', senderProfile.groupId);
-            transaction.update(groupRef, { [`members.${invitation.receiverId}`]: 'member' });
+            transaction.update(groupRef, { [`members.${user.uid}`]: 'member' });
         } else if (resolution === 'invite' && receiverProfile.groupId) {
-            await leaveGroup(senderProfile, invitation.senderId);
+            await leaveGroup(senderProfile, invitation.senderId, transaction);
             transaction.update(senderRef, { groupId: receiverProfile.groupId });
             const groupRef = doc(firestore, 'groups', receiverProfile.groupId);
             transaction.update(groupRef, { [`members.${invitation.senderId}`]: 'member' });
         }
 
         transaction.update(invRef, { status: 'accepted' });
-        transaction.update(senderRef, { pairedWith: invitation.receiverId });
+        transaction.update(senderRef, { pairedWith: user.uid });
         transaction.update(receiverRef, { pairedWith: invitation.senderId });
       });
 
@@ -1063,7 +1064,7 @@ export default function SettingsPage() {
                             Invite {senderProfile.displayName} to My Group &amp; Pair
                         </Button>
                     )}
-                    <Button variant="outline" onClick={() => executePairing(invitation, 'leave')}>
+                    <Button variant="destructive" onClick={() => executePairing(invitation, 'leave')}>
                         Both Leave Current Groups &amp; Pair
                     </Button>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
