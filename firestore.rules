@@ -30,6 +30,7 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, list: if isSignedIn();
       allow write: if isOwner(userId) || 
+                      (resource.data.groupId != null && isCoAdmin(resource.data.groupId)) ||
                       (request.resource.data.pairedWith == request.auth.uid || resource.data.pairedWith == request.auth.uid);
     }
     

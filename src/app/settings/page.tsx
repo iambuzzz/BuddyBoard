@@ -462,11 +462,14 @@ export default function SettingsPage() {
             const memberUserRef = doc(firestore, 'users', memberUid);
             batch.update(memberUserRef, { groupId: null, pairedWith: null });
 
-            // If the kicked member was paired, unpair their partner too
             if (memberProfile.pairedWith) {
-                const partnerRef = doc(firestore, 'users', memberProfile.pairedWith);
-                batch.update(partnerRef, { pairedWith: null });
+                const partnerDoc = await getDoc(doc(firestore, 'users', memberProfile.pairedWith));
+                if (partnerDoc.exists() && partnerDoc.data().groupId === group.id) {
+                    const partnerRef = doc(firestore, 'users', memberProfile.pairedWith);
+                    batch.update(partnerRef, { pairedWith: null });
+                }
             }
+
         } else if (action === 'make-admin') {
             currentMembers[user.uid] = 'member'; // Demote current admin
             currentMembers[memberUid] = 'admin';
@@ -821,9 +824,6 @@ export default function SettingsPage() {
                                     <DropdownMenuItem className="text-red-500" onClick={() => handleMemberAction(member.uid, 'kick')}><Trash2 className="mr-2"/> Kick Member</DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                        )}
-                        {userRoleInGroup === 'co-admin' && user.uid !== member.uid && group.members[member.uid] === 'member' && (
-                            <Button size="sm" variant="outline" onClick={() => handleMemberAction(member.uid, 'make-co-admin')}><Star className="mr-2 h-3 w-3"/> Promote</Button>
                         )}
                       </div>
                     </div>
