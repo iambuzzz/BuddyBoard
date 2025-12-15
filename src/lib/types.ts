@@ -37,7 +37,7 @@ export interface UserProfile {
     uid: string;
     displayName: string;
     email: string;
-    photoURL?: string;
+    photoURL?: string | null;
     cardTheme: string; // e.g., 'default', 'periwinkle', 'lavender'
     groupId?: string | null; // ID of the group the user belongs to
     pairedWith?: string | null; // UID of the paired user
@@ -63,7 +63,7 @@ export interface PairInvitation {
     senderName: string;
     receiverId: string;
     receiverName: string;
-    status: 'pending' | 'accepted' | 'declined' | 'cancelled' | 'pending_leave_and_pair';
+    status: 'pending' | 'accepted' | 'declined' | 'cancelled';
     createdAt: number; // Timestamp
 }
 
@@ -105,3 +105,5 @@ export interface AppState {
   connectionStatus: 'connecting' | 'connected' | 'error';
   lastUpdater: LegacyUser | null;
 };
+
+    
