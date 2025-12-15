@@ -679,46 +679,39 @@ export default function SettingsPage() {
   }
 
   const executePairing = useCallback(async (invitation: PairInvitation) => {
-    if (!user || !firestore || !profile) return;
+    if (!user || !firestore) return;
     setIsSaving(true);
-  
+
     const senderRef = doc(firestore, 'users', invitation.senderId);
     const receiverRef = doc(firestore, 'users', user.uid);
     const invRef = doc(firestore, 'pair_invitations', invitation.id);
 
     try {
-        // Step 1: Update sender's profile
-        await updateDoc(senderRef, { pairedWith: user.uid });
-        
-        // Step 2: Update receiver's profile
-        await updateDoc(receiverRef, { pairedWith: invitation.senderId });
-        
-        // Step 3: Update the invitation status
-        await updateDoc(invRef, { status: 'accepted' });
-  
+        await runTransaction(firestore, async (transaction) => {
+            // Step 1: Read the documents within the transaction
+            const senderDoc = await transaction.get(senderRef);
+            const receiverDoc = await transaction.get(receiverRef);
+
+            if (!senderDoc.exists() || !receiverDoc.exists()) {
+                throw new Error("User not found.");
+            }
+
+            // Step 2: Perform the writes
+            transaction.update(senderRef, { pairedWith: user.uid });
+            transaction.update(receiverRef, { pairedWith: invitation.senderId });
+            transaction.update(invRef, { status: 'accepted' });
+        });
+
         toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` });
         refetch();
-  
+
     } catch (e: any) {
-      console.error("Error executing pairing:", e);
-      toast({ title: 'Error', description: 'Could not complete pairing action.', variant: 'destructive' });
-      // Attempt to revert changes if something went wrong
-      try {
-        const senderDoc = await getDoc(senderRef);
-        if (senderDoc.data()?.pairedWith === user.uid) {
-            await updateDoc(senderRef, { pairedWith: null });
-        }
-        const receiverDoc = await getDoc(receiverRef);
-        if (receiverDoc.data()?.pairedWith === invitation.senderId) {
-             await updateDoc(receiverRef, { pairedWith: null });
-        }
-      } catch (revertError) {
-          console.error("Failed to revert pairing changes:", revertError);
-      }
+        console.error("Error executing pairing:", e);
+        toast({ title: 'Error', description: 'Could not complete pairing action.', variant: 'destructive' });
     } finally {
-      setIsSaving(false);
+        setIsSaving(false);
     }
-  }, [user, firestore, profile, refetch, toast]);
+}, [user, firestore, refetch, toast]);
 
 
     async function handlePairInvitationAction(invitation: PairInvitation, action: 'accept' | 'decline' | 'cancel') {
