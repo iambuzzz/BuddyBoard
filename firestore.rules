@@ -28,7 +28,7 @@ service cloud.firestore {
     // --- New Scalable Rules ---
 
     match /users/{userId} {
-      allow read, list: if isSignedIn();
+      allow read: if isSignedIn();
       // Allow write if owner.
       // Also allow write if the user is being paired by another user (transactional update).
       allow write: if isOwner(userId) || 
@@ -37,6 +37,7 @@ service cloud.firestore {
     
     match /task_lists/{userId} {
       allow read: if isOwner(userId) || 
+                     (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.pairedWith == userId) ||
                      (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.groupId != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.groupId == get(/databases/$(database)/documents/users/$(userId)).data.groupId);
       allow write: if isOwner(userId);
     }
