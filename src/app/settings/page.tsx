@@ -555,11 +555,12 @@ export default function SettingsPage() {
                 }
     
             } else if (action === 'make-admin') {
-                currentMembers = { ...currentMembers, [user.uid]: 'co-admin', [memberUid]: 'admin' };
+                currentMembers[user.uid] = 'co-admin';
+                currentMembers[memberUid] = 'admin';
             } else if (action === 'make-co-admin') {
-                currentMembers = { ...currentMembers, [memberUid]: 'co-admin' };
+                currentMembers[memberUid] = 'co-admin';
             } else if (action === 'make-member') {
-                 currentMembers = { ...currentMembers, [memberUid]: 'member' };
+                 currentMembers[memberUid] = 'member';
             }
     
             batch.update(groupRef, { members: currentMembers });
@@ -681,18 +682,19 @@ export default function SettingsPage() {
     if (!user || !firestore || !profile) return;
     setIsSaving(true);
   
-    try {
-        const batch = writeBatch(firestore);
+    const senderRef = doc(firestore, 'users', invitation.senderId);
+    const receiverRef = doc(firestore, 'users', user.uid);
+    const invRef = doc(firestore, 'pair_invitations', invitation.id);
 
-        const senderRef = doc(firestore, 'users', invitation.senderId);
-        const receiverRef = doc(firestore, 'users', user.uid);
-        const invRef = doc(firestore, 'pair_invitations', invitation.id);
+    try {
+        // Step 1: Update sender's profile
+        await updateDoc(senderRef, { pairedWith: user.uid });
         
-        batch.update(senderRef, { pairedWith: user.uid });
-        batch.update(receiverRef, { pairedWith: invitation.senderId });
-        batch.update(invRef, { status: 'accepted' });
+        // Step 2: Update receiver's profile
+        await updateDoc(receiverRef, { pairedWith: invitation.senderId });
         
-        await batch.commit();
+        // Step 3: Update the invitation status
+        await updateDoc(invRef, { status: 'accepted' });
   
         toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` });
         refetch();
@@ -700,6 +702,19 @@ export default function SettingsPage() {
     } catch (e: any) {
       console.error("Error executing pairing:", e);
       toast({ title: 'Error', description: 'Could not complete pairing action.', variant: 'destructive' });
+      // Attempt to revert changes if something went wrong
+      try {
+        const senderDoc = await getDoc(senderRef);
+        if (senderDoc.data()?.pairedWith === user.uid) {
+            await updateDoc(senderRef, { pairedWith: null });
+        }
+        const receiverDoc = await getDoc(receiverRef);
+        if (receiverDoc.data()?.pairedWith === invitation.senderId) {
+             await updateDoc(receiverRef, { pairedWith: null });
+        }
+      } catch (revertError) {
+          console.error("Failed to revert pairing changes:", revertError);
+      }
     } finally {
       setIsSaving(false);
     }
