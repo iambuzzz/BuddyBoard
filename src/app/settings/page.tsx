@@ -616,7 +616,7 @@ export default function SettingsPage() {
                            <FormField control={pairInviteForm.control} name="email" render={({ field }) => (
                                 <FormItem className="flex-grow"><FormControl><Input placeholder="User's email address" {...field} /></FormControl><FormMessage /></FormItem>
                            )} />
-                           <Button type="submit" disabled={isSaving}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Invite'}</Button>
+                           <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Invite'}</Button>
                         </form>
                     </Form>
                 </div>
@@ -646,7 +646,7 @@ export default function SettingsPage() {
                             {sentInvites.map(inv => (
                                 <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 rounded-md">
                                     <p>To <span className="font-bold">{inv.receiverName}</span> (pending)</p>
-                                    <Button size="sm" variant="outline" className="h-7" onClick={() => handleInvitationAction(inv, 'cancel')}>Cancel</Button>
+                                    <Button size="sm" variant="outline" onClick={() => handleInvitationAction(inv, 'cancel')}>Cancel</Button>
                                 </div>
                             ))}
                         </div>
@@ -724,7 +724,7 @@ export default function SettingsPage() {
                    <FormField control={joinGroupForm.control} name="invitationCode" render={({ field }) => (
                         <FormItem className="flex-grow"><FormControl><Input placeholder="Invitation Code" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                  <Button type="submit" disabled={isSaving}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Join'}</Button>
+                  <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Join'}</Button>
                 </form>
               </Form>
             </div>
@@ -736,7 +736,7 @@ export default function SettingsPage() {
                    <FormField control={createGroupForm.control} name="groupName" render={({ field }) => (
                         <FormItem className="flex-grow"><FormControl><Input placeholder="My Awesome Group" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                  <Button type="submit" disabled={isSaving}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Create'}</Button>
+                  <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Create'}</Button>
                 </form>
               </Form>
             </div>
@@ -772,7 +772,7 @@ export default function SettingsPage() {
                         </Button>
                     )}
                      {receiverIsInGroup && (
-                        <Button variant="default" onClick={() => executePairing(invitation, 'invite')}>
+                        <Button className="bg-[--riya-primary] hover:bg-violet-500" onClick={() => executePairing(invitation, 'invite')}>
                             Invite {senderProfile.displayName} to My Group &amp; Pair
                         </Button>
                     )}
@@ -815,7 +815,7 @@ export default function SettingsPage() {
                             onChange={(e) => setPhotoUrlInput(e.target.value)}
                             disabled={isSaving}
                         />
-                        <Button onClick={handleSavePhotoUrl} disabled={isSaving}>
+                        <Button onClick={handleSavePhotoUrl} disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">
                             {isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Save'}
                         </Button>
                     </div>
@@ -847,7 +847,7 @@ export default function SettingsPage() {
                   <FormField control={profileForm.control} name="newPassword" render={({ field }) => (
                       <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormItem>
                   )} />
-                  <Button type="submit" disabled={isSaving}>
+                  <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
                   </Button>
                 </form>

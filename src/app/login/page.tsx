@@ -132,11 +132,11 @@ export default function LoginPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="login-password">Password</Label>
-                <Input id="login-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <Input id="login-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={() => handleAuthAction(false)} disabled={loading} className="w-full">
+              <Button onClick={() => handleAuthAction(false)} disabled={loading} className="w-full bg-[--riya-primary] hover:bg-violet-500">
                 {loading ? 'Logging in...' : 'Login'}
               </Button>
             </CardFooter>
@@ -159,11 +159,11 @@ export default function LoginPage() {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="signup-password">Password</Label>
-                <Input id="signup-password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                <Input id="signup-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
               </div>
             </CardContent>
             <CardFooter>
-              <Button onClick={() => handleAuthAction(true)} disabled={loading} className="w-full">
+              <Button onClick={() => handleAuthAction(true)} disabled={loading} className="w-full bg-[--riya-primary] hover:bg-violet-500">
                 {loading ? 'Creating Account...' : 'Sign Up'}
               </Button>
             </CardFooter>
