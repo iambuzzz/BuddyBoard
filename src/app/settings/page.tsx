@@ -22,12 +22,12 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { useEffect, useState, useMemo, useCallback } from 'react';
-import { doc, updateDoc, setDoc, getDoc, writeBatch, collection, query, where, getDocs, onSnapshot, addDoc, deleteDoc } from 'firebase/firestore';
+import { doc, updateDoc, setDoc, getDoc, writeBatch, collection, query, where, getDocs, onSnapshot, addDoc, deleteDoc, runTransaction } from 'firebase/firestore';
 import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { useFirestore, useAuth } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
-import { Loader2, ArrowLeft, Copy, Users, UserPlus, LogOut as LogOutIcon, Crown, Link as LinkIcon, Link2Off, Send, X, Check, MoreVertical, ShieldAlert, Trash2, UserCog, UserCheck, Star } from 'lucide-react';
+import { Loader2, ArrowLeft, Copy, Users, UserPlus, LogOut as LogOutIcon, Crown, Link as LinkIcon, Link2Off, Send, X, Check, MoreVertical, ShieldAlert, Trash2, UserCog, UserCheck, Star, KeyRound } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import type { Group, UserProfile, PairInvitation, GroupInvitation } from '@/lib/types';
 import short from 'short-uuid';
@@ -74,6 +74,11 @@ const groupCreateSchema = z.object({
   groupName: z.string().min(3, 'Group name must be at least 3 characters.').max(50, 'Group name too long.'),
 });
 type GroupCreateValues = z.infer<typeof groupCreateSchema>;
+
+const groupJoinSchema = z.object({
+  invitationCode: z.string().min(6, 'Invalid invitation code.'),
+});
+type GroupJoinValues = z.infer<typeof groupJoinSchema>;
 
 const groupInviteSchema = z.object({
     email: z.string().email("Please enter a valid email address."),
@@ -136,6 +141,11 @@ export default function SettingsPage() {
   const createGroupForm = useForm<GroupCreateValues>({
     resolver: zodResolver(groupCreateSchema),
     defaultValues: { groupName: '' }
+  });
+
+  const joinGroupForm = useForm<GroupJoinValues>({
+      resolver: zodResolver(groupJoinSchema),
+      defaultValues: { invitationCode: '' }
   });
   
   const inviteToGroupForm = useForm<GroupInviteValues>({
@@ -335,6 +345,40 @@ export default function SettingsPage() {
     }
   }
 
+  async function onJoinGroup(data: GroupJoinValues) {
+    if (!user || !firestore) return;
+    setIsSaving(true);
+    try {
+        const groupsQuery = query(collection(firestore, 'groups'), where("invitationCode", "==", data.invitationCode));
+        const groupSnapshot = await getDocs(groupsQuery);
+        
+        if (groupSnapshot.empty) {
+            toast({ title: "Invalid Code", description: "No group found with that invitation code.", variant: "destructive"});
+            setIsSaving(false);
+            return;
+        }
+
+        const groupDoc = groupSnapshot.docs[0];
+        const groupRef = doc(firestore, 'groups', groupDoc.id);
+        const userRef = doc(firestore, 'users', user.uid);
+
+        await runTransaction(firestore, async (transaction) => {
+            transaction.update(groupRef, { [`members.${user.uid}`]: 'member' });
+            transaction.update(userRef, { groupId: groupDoc.id });
+        });
+
+        toast({ title: 'Joined Group!', description: `You are now a member of ${groupDoc.data().name}.`});
+        joinGroupForm.reset();
+        refetch();
+
+    } catch (error: any) {
+        console.error("Error joining group:", error);
+        toast({ title: "Error", description: "Could not join the group. Please try again.", variant: 'destructive'});
+    } finally {
+        setIsSaving(false);
+    }
+}
+
   async function handleGroupInvitation(invitation: GroupInvitation, action: 'accept' | 'decline') {
     if (!user || !firestore) return;
     setIsSaving(true);
@@ -342,20 +386,20 @@ export default function SettingsPage() {
 
     try {
         if(action === 'accept') {
-            const batch = writeBatch(firestore);
-            // This needs to be a separate operation to comply with security rules
-            // You can't update a group you aren't a member of yet.
-            // Let's do this sequentially.
-            
-            // Step 1: Add user to the group
-            const groupRef = doc(firestore, 'groups', invitation.groupId);
-            await updateDoc(groupRef, { [`members.${user.uid}`]: 'member' });
-            
-            // Step 2: Update user profile and invitation status
-            batch.update(doc(firestore, 'users', user.uid), { groupId: invitation.groupId });
-            batch.update(invRef, { status: 'accepted' });
-            
-            await batch.commit();
+             // Use a transaction to ensure atomicity
+            await runTransaction(firestore, async (transaction) => {
+                const groupRef = doc(firestore, 'groups', invitation.groupId);
+                const userRef = doc(firestore, 'users', user.uid);
+
+                // Add the user to the group's member list first
+                transaction.update(groupRef, { [`members.${user.uid}`]: 'member' });
+                
+                // Then, update the user's profile to set their groupId
+                transaction.update(userRef, { groupId: invitation.groupId });
+
+                // Finally, update the invitation status
+                transaction.update(invRef, { status: 'accepted' });
+            });
             
             toast({ title: 'Welcome!', description: `You have joined the group: ${invitation.groupName}`});
             refetch();
@@ -473,8 +517,9 @@ export default function SettingsPage() {
             const memberUserRef = doc(firestore, 'users', memberUid);
             batch.update(memberUserRef, { groupId: null, pairedWith: null });
 
-            if (memberProfile.pairedWith) {
+             if (memberProfile.pairedWith) {
                 const partnerDoc = await getDoc(doc(firestore, 'users', memberProfile.pairedWith));
+                // Only unpair the partner if they are also in the same group.
                 if (partnerDoc.exists() && partnerDoc.data().groupId === group.id) {
                     const partnerRef = doc(firestore, 'users', memberProfile.pairedWith);
                     batch.update(partnerRef, { pairedWith: null });
@@ -838,6 +883,16 @@ export default function SettingsPage() {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                         )}
+                         {userRoleInGroup === 'co-admin' && group.members[member.uid] === 'member' && user.uid !== member.uid && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="h-4 w-4"/></Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                    <DropdownMenuItem className="text-red-500" onClick={() => handleMemberAction(member.uid, 'kick')}><Trash2 className="mr-2"/> Kick Member</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -874,8 +929,21 @@ export default function SettingsPage() {
                             </div>
                         ))}
                     </div>
+                    <Separator className="my-4"/>
                 </div>
             )}
+             <div>
+              <h3 className="font-semibold mb-2 flex items-center gap-2"><KeyRound /> Join a Group with Code</h3>
+              <Form {...joinGroupForm}>
+                <form onSubmit={joinGroupForm.handleSubmit(onJoinGroup)} className="flex items-start gap-2">
+                   <FormField control={joinGroupForm.control} name="invitationCode" render={({ field }) => (
+                        <FormItem className="flex-grow"><FormControl><Input placeholder="Enter invitation code" {...field} /></FormControl><FormMessage /></FormItem>
+                    )} />
+                  <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Join'}</Button>
+                </form>
+              </Form>
+            </div>
+             <Separator />
             <div>
               <h3 className="font-semibold mb-2 flex items-center gap-2"><Crown /> Create a New Group</h3>
               <Form {...createGroupForm}>
