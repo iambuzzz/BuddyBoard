@@ -440,22 +440,35 @@ export default function SettingsPage() {
   }
 
   async function handleMemberAction(memberUid: string, action: 'make-admin' | 'make-co-admin' | 'make-member' | 'kick') {
-      if (!user || !firestore || !group || user.uid === memberUid) return;
+    if (!user || !firestore || !group || user.uid === memberUid) return;
 
-      const groupRef = doc(firestore, 'groups', group.id);
-      setIsSaving(true);
+    const groupRef = doc(firestore, 'groups', group.id);
+    setIsSaving(true);
 
-      try {
+    try {
         const batch = writeBatch(firestore);
-        const currentMembers = (await getDoc(groupRef)).data()?.members;
+        const groupDoc = await getDoc(groupRef);
+        if (!groupDoc.exists()) throw new Error("Group not found.");
         
+        const currentMembers = groupDoc.data().members;
+        const memberProfileSnap = await getDoc(doc(firestore, 'users', memberUid));
+        if (!memberProfileSnap.exists()) throw new Error("Member profile not found.");
+        const memberProfile = memberProfileSnap.data() as UserProfile;
+
         if (action === 'kick') {
             delete currentMembers[memberUid];
             batch.update(groupRef, { members: currentMembers });
-            batch.update(doc(firestore, 'users', memberUid), { groupId: null, pairedWith: null });
-        }
-        else if (action === 'make-admin') {
-            currentMembers[user.uid] = 'member';
+            
+            const memberUserRef = doc(firestore, 'users', memberUid);
+            batch.update(memberUserRef, { groupId: null, pairedWith: null });
+
+            // If the kicked member was paired, unpair their partner too
+            if (memberProfile.pairedWith) {
+                const partnerRef = doc(firestore, 'users', memberProfile.pairedWith);
+                batch.update(partnerRef, { pairedWith: null });
+            }
+        } else if (action === 'make-admin') {
+            currentMembers[user.uid] = 'member'; // Demote current admin
             currentMembers[memberUid] = 'admin';
             batch.update(groupRef, { members: currentMembers });
         } else if (action === 'make-co-admin') {
@@ -468,13 +481,13 @@ export default function SettingsPage() {
 
         await batch.commit();
         toast({ title: 'Success', description: 'Group member updated.' });
-      } catch (error: any) {
-          console.error("Error updating member role: ", error);
-          toast({ title: 'Error', description: 'Could not update member.', variant: 'destructive' });
-      } finally {
-          setIsSaving(false);
-      }
-  }
+    } catch (error: any) {
+        console.error("Error updating member role: ", error);
+        toast({ title: 'Error', description: 'Could not update member.', variant: 'destructive' });
+    } finally {
+        setIsSaving(false);
+    }
+}
 
   // --- Pairing Handlers ---
   
