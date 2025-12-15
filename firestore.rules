@@ -30,10 +30,9 @@ service cloud.firestore {
     match /users/{userId} {
       allow read, list: if isSignedIn();
       // Allow write if owner.
-      // Also allow write if the user is being unpaired by their partner.
-      // Also allow write if a user is accepting a pair invitation from the user.
+      // Also allow write if the user is being paired by another user (transactional update).
       allow write: if isOwner(userId) || 
-                     (request.resource.data.pairedWith == get(/databases/$(database)/documents/users/$(userId)).data.pairedWith);
+                     (request.resource.data.pairedWith != resource.data.pairedWith);
     }
     
     match /task_lists/{userId} {
