@@ -116,13 +116,13 @@ export default function LoginPage() {
   return (
     <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff] p-4 relative">
       <div className="w-[420px]">
-        <Tabs defaultValue="login" className="w-full border-2 border-[--riya-primary] rounded-xl card-glow-riya p-2">
+        <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           <TabsContent value="login">
-            <Card>
+            <Card className="border-2 border-[--riya-primary] rounded-xl card-glow-riya p-2">
               <CardHeader>
                 <CardTitle>Login</CardTitle>
                 <CardDescription>Enter your credentials to access your task list.</CardDescription>
@@ -145,7 +145,7 @@ export default function LoginPage() {
             </Card>
           </TabsContent>
           <TabsContent value="signup">
-            <Card>
+            <Card className="border-2 border-[--riya-primary] rounded-xl card-glow-riya p-2">
               <CardHeader>
                 <CardTitle>Create an Account</CardTitle>
                 <CardDescription>Start your productivity journey with a new account.</CardDescription>
