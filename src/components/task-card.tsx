@@ -273,12 +273,16 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     cardTheme === 'cyan' ? 'border-2 border-[--theme-cyan-primary]' :
     'border-2 border-[--theme-emerald-primary]';
 
-  const glowClass =
-    userState.isLocked && !userState.isFinished ? (
-      cardTheme === 'periwinkle' ? 'card-glow-periwinkle' :
-      cardTheme === 'cyan' ? 'card-glow-cyan' :
-      cardTheme === 'emerald' ? 'card-glow-emerald' : ''
-    ) : '';
+  let glowClass = '';
+  if (userState.isLocked && !userState.isFinished) {
+    if (cardTheme === 'periwinkle') {
+      glowClass = 'card-glow-periwinkle';
+    } else if (cardTheme === 'cyan') {
+      glowClass = 'card-glow-cyan';
+    } else if (cardTheme === 'emerald') {
+      glowClass = 'card-glow-emerald';
+    }
+  }
 
   const addBtnStyle =
     cardTheme === 'periwinkle' ? 'bg-[--theme-periwinkle-primary] hover:bg-purple-500' :
