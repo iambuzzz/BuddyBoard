@@ -289,10 +289,23 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-500' :
     'bg-[--theme-emerald-primary] hover:bg-emerald-500';
 
-  const actionBtnStyle = undoState.active ? 'bg-emerald-400 hover:bg-emerald-500' :
-    cardTheme === 'periwinkle' ? 'bg-[--theme-periwinkle-primary] hover:bg-purple-500' :
-    cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-500' :
-    'bg-[--theme-emerald-primary] hover:bg-emerald-500';
+  const getActionBtnStyle = () => {
+    const baseStyle =
+      cardTheme === 'periwinkle' ? 'bg-[--theme-periwinkle-primary] hover:bg-purple-500' :
+      cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-500' :
+      'bg-[--theme-emerald-primary] hover:bg-emerald-500';
+
+    if (undoState.active) {
+        const undoStyle =
+            cardTheme === 'periwinkle' ? 'bg-purple-400 hover:bg-purple-500' :
+            cardTheme === 'cyan' ? 'bg-cyan-400 hover:bg-cyan-500' :
+            'bg-emerald-400 hover:bg-emerald-500';
+        return undoStyle;
+    }
+    return baseStyle;
+  };
+  
+  const actionBtnStyle = getActionBtnStyle();
 
   const ringStyle =
     cardTheme === 'periwinkle' ? 'focus-visible:ring-[--theme-periwinkle-primary]' :
