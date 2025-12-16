@@ -475,7 +475,7 @@ export default function SettingsPage() {
   const confirmLeaveGroup = () => {
     setConfirmation({
         title: "Are you sure you want to leave?",
-        description: "You will need a new invitation to rejoin this group. If you are paired, your pairing will be broken.",
+        description: "You will need a new invitation to rejoin this group. If you are the last admin, another member will be promoted.",
         onConfirm: handleLeaveGroup
     });
   };
@@ -483,47 +483,73 @@ export default function SettingsPage() {
   async function handleLeaveGroup() {
     if (!user || !firestore || !group || !profile) return;
     setIsSaving(true);
-    
+
     try {
-        const batch = writeBatch(firestore);
-        
-        // Update current user's profile
-        const userProfileRef = doc(firestore, 'users', user.uid);
-        batch.update(userProfileRef, { groupId: null, pairedWith: null });
-
-        // If paired, update the partner's profile as well
-        if (profile.pairedWith) {
-             const partnerProfileRef = doc(firestore, 'users', profile.pairedWith);
-             batch.update(partnerProfileRef, { pairedWith: null });
-        }
-
-        const groupRef = doc(firestore, 'groups', group.id);
-        const newMembers = { ...group.members };
-        delete newMembers[user.uid];
-
-        if (Object.keys(newMembers).length === 0) {
-            // If the user is the last member, delete the group
-            batch.delete(groupRef);
-        } else {
-            // If the user was an admin and the only admin, promote another member
-            if (group.members[user.uid] === 'admin' && !Object.values(newMembers).includes('admin')) {
-                const nextAdminUid = Object.keys(newMembers)[0];
-                newMembers[nextAdminUid] = 'admin';
+        await runTransaction(firestore, async (transaction) => {
+            const groupRef = doc(firestore, 'groups', group.id);
+            const userProfileRef = doc(firestore, 'users', user.uid);
+            
+            const groupDoc = await transaction.get(groupRef);
+            if (!groupDoc.exists()) {
+                // Group might have been deleted by another user, just update user profile
+                transaction.update(userProfileRef, { groupId: null, pairedWith: null });
+                if (profile.pairedWith) {
+                    const partnerRef = doc(firestore, 'users', profile.pairedWith);
+                    transaction.update(partnerRef, { pairedWith: null });
+                }
+                return;
             }
-            batch.update(groupRef, { members: newMembers });
-        }
+
+            const currentGroupData = groupDoc.data() as Group;
+            const newMembers = { ...currentGroupData.members };
+            delete newMembers[user.uid];
+
+            // Update user's profile
+            transaction.update(userProfileRef, { groupId: null, pairedWith: null });
+
+            // Unpair the partner if they exist
+            if (profile.pairedWith) {
+                const partnerProfileRef = doc(firestore, 'users', profile.pairedWith);
+                transaction.update(partnerProfileRef, { pairedWith: null });
+            }
+
+            if (Object.keys(newMembers).length === 0) {
+                // If the user is the last member, delete the group
+                transaction.delete(groupRef);
+            } else {
+                let groupUpdateData: { members: any, [key: string]: any } = { members: newMembers };
+
+                // If the leaving user was an admin and the only admin, promote another member.
+                const wasAdmin = currentGroupData.members[user.uid] === 'admin';
+                const otherAdmins = Object.keys(newMembers).filter(uid => newMembers[uid] === 'admin');
+
+                if (wasAdmin && otherAdmins.length === 0) {
+                    // Find a co-admin to promote
+                    let newAdminUid = Object.keys(newMembers).find(uid => newMembers[uid] === 'co-admin');
+                    // If no co-admin, find any member to promote
+                    if (!newAdminUid) {
+                        newAdminUid = Object.keys(newMembers)[0];
+                    }
+                    if(newAdminUid) {
+                        newMembers[newAdminUid] = 'admin';
+                        groupUpdateData.members = newMembers;
+                    }
+                }
+                transaction.update(groupRef, groupUpdateData);
+            }
+        });
         
-        await batch.commit();
         toast({ title: 'Group Left', description: 'You have successfully left the group.' });
-        refetch(); // Refetch user data to update UI
+        refetch();
     } catch (error: any) {
         console.error("Error leaving group:", error);
-        toast({ title: 'Error', description: 'Failed to leave group.', variant: 'destructive' });
+        toast({ title: 'Error', description: 'Failed to leave group. Please try again.', variant: 'destructive' });
     } finally {
         setIsSaving(false);
         setConfirmation(null);
     }
   }
+
 
   async function executeMemberAction(
     memberUid: string, 
@@ -562,7 +588,7 @@ export default function SettingsPage() {
                     delete currentMembers[memberToKick.pairedWith];
                     batch.update(partnerRef, { groupId: null, pairedWith: null });
                 } else {
-                     // Always unpair the partner
+                     // Always unpair the partner, even if not kicking them
                      batch.update(partnerRef, { pairedWith: null });
                 }
             }
