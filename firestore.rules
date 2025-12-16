@@ -29,7 +29,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isOwner(userId) || (request.resource.data.pairedWith != resource.data.pairedWith);
+      allow write: if isSignedIn() && (isOwner(userId) || request.resource.data.pairedWith != resource.data.pairedWith);
     }
     
     match /task_lists/{userId} {
