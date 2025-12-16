@@ -314,7 +314,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
 
 
   return (
-    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card pt-4 px-6 pb-6 ${themeClass} ${cardBorderStyle} ${glowClass}`}>
+    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card pt-4 px-6 pb-6 rounded-2xl ${themeClass} ${cardBorderStyle} ${glowClass}`}>
       <AnimatePresence>
         {userState.isFinished && (
           <CelebrationOverlay
@@ -427,3 +427,5 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     </Card>
   );
 }
+
+    
