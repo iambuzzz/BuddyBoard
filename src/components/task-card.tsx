@@ -274,7 +274,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     'border-2 border-[--theme-emerald-primary]';
 
   const glowClass =
-    userState.isLocked ? (
+    userState.isLocked && !userState.isFinished ? (
       cardTheme === 'periwinkle' ? 'card-glow-periwinkle' :
       cardTheme === 'cyan' ? 'card-glow-cyan' :
       'card-glow-emerald'
