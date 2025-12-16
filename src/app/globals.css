@@ -81,18 +81,36 @@
 }
 
 @keyframes glow-periwinkle {
-  0%, 100% { box-shadow: 0 0 10px 0px rgba(167, 139, 250, 0.4); }
-  50% { box-shadow: 0 0 10px 4px rgba(167, 139, 250, 0.6); }
+  0%, 100% { 
+    box-shadow: 0 0 10px 0px rgba(167, 139, 250, 0.4);
+    border-color: rgba(167, 139, 250, 0.6);
+  }
+  50% { 
+    box-shadow: 0 0 10px 4px rgba(167, 139, 250, 0.6);
+    border-color: rgba(167, 139, 250, 1);
+  }
 }
 
 @keyframes glow-cyan {
-  0%, 100% { box-shadow: 0 0 10px 0px rgba(34, 211, 238, 0.4); }
-  50% { box-shadow: 0 0 10px 4px rgba(34, 211, 238, 0.6); }
+  0%, 100% { 
+    box-shadow: 0 0 10px 0px rgba(34, 211, 238, 0.4);
+    border-color: rgba(34, 211, 238, 0.6);
+  }
+  50% { 
+    box-shadow: 0 0 10px 4px rgba(34, 211, 238, 0.6);
+    border-color: rgba(34, 211, 238, 1);
+  }
 }
 
 @keyframes glow-emerald {
-  0%, 100% { box-shadow: 0 0 10px 0px rgba(52, 211, 153, 0.4); }
-  50% { box-shadow: 0 0 10px 4px rgba(52, 211, 153, 0.6); }
+  0%, 100% { 
+    box-shadow: 0 0 10px 0px rgba(52, 211, 153, 0.4);
+    border-color: rgba(52, 211, 153, 0.6);
+  }
+  50% { 
+    box-shadow: 0 0 10px 4px rgba(52, 211, 153, 0.6);
+    border-color: rgba(52, 211, 153, 1);
+  }
 }
 
 
