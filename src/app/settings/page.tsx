@@ -696,7 +696,6 @@ export default function SettingsPage() {
 
     try {
         await runTransaction(firestore, async (transaction) => {
-            // Step 1: Read the documents within the transaction
             const senderDoc = await transaction.get(senderRef);
             const receiverDoc = await transaction.get(receiverRef);
 
@@ -704,7 +703,14 @@ export default function SettingsPage() {
                 throw new Error("User not found.");
             }
 
-            // Step 2: Perform the writes
+            const senderProfile = senderDoc.data() as UserProfile;
+            const receiverProfile = receiverDoc.data() as UserProfile;
+
+            // CRITICAL CHECK: Ensure both users are in the same pairing state (same group or both solo)
+            if (senderProfile.groupId !== receiverProfile.groupId) {
+                throw new Error("Pairing failed. Both users must be in the same group, or both must not be in a group.");
+            }
+
             transaction.update(senderRef, { pairedWith: user.uid });
             transaction.update(receiverRef, { pairedWith: invitation.senderId });
             transaction.update(invRef, { status: 'accepted' });
@@ -715,7 +721,7 @@ export default function SettingsPage() {
 
     } catch (e: any) {
         console.error("Error executing pairing:", e);
-        toast({ title: 'Error', description: 'Could not complete pairing action.', variant: 'destructive' });
+        toast({ title: 'Error', description: e.message || 'Could not complete pairing action.', variant: 'destructive' });
     } finally {
         setIsSaving(false);
     }
@@ -778,7 +784,7 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                     <div className="flex items-center gap-4">
                         <Avatar className="h-12 w-12">
-                            <AvatarImage src={pairedPartner.photoURL} />
+                            <AvatarImage src={pairedPartner.photoURL || ''} />
                             <AvatarFallback>{getInitials(pairedPartner.displayName)}</AvatarFallback>
                         </Avatar>
                         <p>You are currently paired with <span className="font-bold">{pairedPartner.displayName}</span>.</p>
@@ -891,7 +897,7 @@ export default function SettingsPage() {
                     <div key={member.uid} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                            <AvatarImage src={member.photoURL} alt={member.displayName} />
+                            <AvatarImage src={member.photoURL || ''} alt={member.displayName} />
                             <AvatarFallback className="text-xs">{getInitials(member.displayName)}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{member.displayName}</span>
@@ -904,7 +910,7 @@ export default function SettingsPage() {
                         {group.members[member.uid] === 'co-admin' && (
                           <span className="text-xs font-bold text-sky-600 flex items-center gap-1"><Star className="h-3 w-3" /> CO-ADMIN</span>
                         )}
-                        {user.uid !== member.uid && (
+                        {user?.uid !== member.uid && (
                             <DropdownMenu>
                                 {userRoleInGroup === 'admin' && (
                                     <DropdownMenuTrigger asChild>
@@ -1084,7 +1090,7 @@ export default function SettingsPage() {
                     <CardContent>
                     <div className="flex flex-col items-center space-y-4 mb-8">
                         <Avatar className="h-24 w-24 border">
-                            <AvatarImage src={profile?.photoURL} />
+                            <AvatarImage src={profile?.photoURL || ''} />
                             <AvatarFallback className="text-3xl">{profile ? getInitials(profile.displayName) : ''}</AvatarFallback>
                         </Avatar>
                         
