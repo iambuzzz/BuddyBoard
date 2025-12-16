@@ -31,6 +31,10 @@
             "type": "string",
             "enum": ["admin", "co-admin", "member"]
           }
+        },
+        "lastKickedUid": {
+            "type": "string",
+            "description": "UID of the last user kicked, for security rules."
         }
       },
       "required": ["name", "invitationCode", "createdBy", "members"]

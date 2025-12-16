@@ -53,6 +53,7 @@ export interface Group {
     members: {
         [uid: string]: 'admin' | 'co-admin' | 'member';
     };
+    lastKickedUid?: string; // UID of the last user kicked, for security rules
 }
 
 // Represents a pairing invitation.

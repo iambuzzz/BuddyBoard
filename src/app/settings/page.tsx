@@ -338,7 +338,7 @@ export default function SettingsPage() {
             batch.update(partnerProfileRef, { groupId: newGroupId });
         }
 
-        const newGroup: Omit<Group, 'id'> = {
+        const newGroup: Omit<Group, 'id' | 'lastKickedUid'> = {
             name: data.groupName,
             invitationCode: short.generate(),
             createdBy: user.uid,
@@ -519,62 +519,70 @@ export default function SettingsPage() {
   }
 
   async function executeMemberAction(
-        memberUid: string, 
-        action: 'make-admin' | 'make-co-admin' | 'make-member' | 'kick', 
-        options: { kickBothPaired?: boolean } = {}
-    ) {
-        if (!user || !firestore || !group || user.uid === memberUid) return;
-    
-        setIsSaving(true);
-    
-        try {
-            const batch = writeBatch(firestore);
-            const groupRef = doc(firestore, 'groups', group.id);
-    
-            const groupDoc = await getDoc(groupRef);
-            if (!groupDoc.exists()) throw new Error("Group not found.");
-            
-            let currentMembers = groupDoc.data().members;
-    
-            if (action === 'kick') {
-                const memberToKickSnap = await getDoc(doc(firestore, 'users', memberUid));
-                if (!memberToKickSnap.exists()) throw new Error("Member to kick not found.");
-                const memberToKick = memberToKickSnap.data() as UserProfile;
+    memberUid: string, 
+    action: 'make-admin' | 'make-co-admin' | 'make-member' | 'kick', 
+    options: { kickBothPaired?: boolean } = {}
+  ) {
+    if (!user || !firestore || !group || user.uid === memberUid) return;
+  
+    setIsSaving(true);
+  
+    try {
+        const batch = writeBatch(firestore);
+        const groupRef = doc(firestore, 'groups', group.id);
+  
+        const groupDoc = await getDoc(groupRef);
+        if (!groupDoc.exists()) throw new Error("Group not found.");
+        
+        let currentMembers = groupDoc.data().members;
+        const updatePayload: { [key: string]: any } = {};
 
-                delete currentMembers[memberUid];
-                batch.update(doc(firestore, 'users', memberUid), { groupId: null, pairedWith: null });
-    
-                if (memberToKick.pairedWith) {
-                    const partnerRef = doc(firestore, 'users', memberToKick.pairedWith);
-                    if (options.kickBothPaired) {
-                        delete currentMembers[memberToKick.pairedWith];
-                        batch.update(partnerRef, { groupId: null, pairedWith: null });
-                    } else {
-                         batch.update(partnerRef, { pairedWith: null });
-                    }
+        if (action === 'kick') {
+            const memberToKickSnap = await getDoc(doc(firestore, 'users', memberUid));
+            if (!memberToKickSnap.exists()) throw new Error("Member to kick not found.");
+            const memberToKick = memberToKickSnap.data() as UserProfile;
+            
+            // Set lastKickedUid for the security rule
+            updatePayload.lastKickedUid = memberUid;
+
+            delete currentMembers[memberUid];
+            batch.update(doc(firestore, 'users', memberUid), { groupId: null, pairedWith: null });
+  
+            if (memberToKick.pairedWith) {
+                const partnerRef = doc(firestore, 'users', memberToKick.pairedWith);
+                if (options.kickBothPaired) {
+                    delete currentMembers[memberToKick.pairedWith];
+                    batch.update(partnerRef, { groupId: null, pairedWith: null });
+                } else {
+                     batch.update(partnerRef, { pairedWith: null });
                 }
-    
-            } else if (action === 'make-admin') {
-                currentMembers[user.uid] = 'co-admin';
-                currentMembers[memberUid] = 'admin';
-            } else if (action === 'make-co-admin') {
-                currentMembers[memberUid] = 'co-admin';
-            } else if (action === 'make-member') {
-                 currentMembers[memberUid] = 'member';
             }
-    
-            batch.update(groupRef, { members: currentMembers });
-            await batch.commit();
-            toast({ title: 'Success', description: 'Group member updated.' });
-        } catch (error: any) {
-            console.error("Error updating member role: ", error);
-            toast({ title: 'Error', description: 'Could not update member.', variant: 'destructive' });
-        } finally {
-            setIsSaving(false);
-            setConfirmation(null);
-            setKickPairConfirmation(null);
+            updatePayload.members = currentMembers;
+  
+        } else if (action === 'make-admin') {
+            currentMembers[user.uid] = 'co-admin';
+            currentMembers[memberUid] = 'admin';
+            updatePayload.members = currentMembers;
+        } else if (action === 'make-co-admin') {
+            currentMembers[memberUid] = 'co-admin';
+            updatePayload.members = currentMembers;
+        } else if (action === 'make-member') {
+             currentMembers[memberUid] = 'member';
+             updatePayload.members = currentMembers;
         }
+  
+        batch.update(groupRef, updatePayload);
+        await batch.commit();
+        toast({ title: 'Success', description: 'Group member updated.' });
+    } catch (error: any) {
+        console.error("Error updating member role: ", error);
+        toast({ title: 'Error', description: 'Could not update member.', variant: 'destructive' });
+    } finally {
+        setIsSaving(false);
+        setConfirmation(null);
+        setKickPairConfirmation(null);
     }
+  }
   
   const handleMemberAction = (member: UserProfile, action: 'make-admin' | 'make-co-admin' | 'make-member' | 'kick') => {
       const memberUid = member.uid;

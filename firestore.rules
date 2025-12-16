@@ -12,17 +12,12 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
-    function getRole(groupId) {
-      return get(/databases/$(database)/documents/groups/$(groupId)).data.members[request.auth.uid];
+    function role(group) {
+      return group.members[request.auth.uid];
     }
     
-    function isAdmin(groupId) {
-        return getRole(groupId) == 'admin';
-    }
-
-    function isCoAdmin(groupId) {
-        let role = getRole(groupId);
-        return role == 'admin' || role == 'co-admin';
+    function kickedUserRole(group) {
+      return group.members[request.resource.data.lastKickedUid];
     }
     
     // --- New Scalable Rules ---
@@ -42,9 +37,18 @@ service cloud.firestore {
     match /groups/{groupId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn();
-      // Temporarily allowing any signed-in user to update to unblock group management.
-      allow update: if isSignedIn();
-      allow delete: if isSignedIn() && isAdmin(groupId);
+      allow update: if isSignedIn() && (
+        // ADMIN -> CAN DO ANYTHING
+        role(resource.data) == "admin"
+        ||
+        // CO-ADMIN -> CAN KICK ONLY MEMBERS
+        (role(resource.data) == "co-admin" && kickedUserRole(resource.data) == "member")
+        ||
+        // MEMBER -> CAN LEAVE SELF or JOIN
+        (request.auth.uid in resource.data.members && !(request.auth.uid in request.resource.data.members)) ||
+        (!(request.auth.uid in resource.data.members) && request.auth.uid in request.resource.data.members)
+      );
+      allow delete: if role(resource.data) == "admin";
     }
     
     match /pair_invitations/{invitationId} {
@@ -58,13 +62,13 @@ service cloud.firestore {
     }
     
     match /group_invitations/{invitationId} {
-      allow read: if isSignedIn() && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == resource.data.receiverEmail || isCoAdmin(resource.data.groupId));
-      allow create: if isSignedIn() && isCoAdmin(request.resource.data.groupId);
+      allow read: if isSignedIn() && (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == resource.data.receiverEmail || role(get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data) == 'admin' || role(get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data) == 'co-admin');
+      allow create: if isSignedIn() && (role(get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data) == 'admin' || role(get(/databases/$(database)/documents/groups/$(request.resource.data.groupId)).data) == 'co-admin');
       allow update: if isSignedIn() && (
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.email == resource.data.receiverEmail && request.resource.data.status in ['accepted', 'declined']) ||
-        isCoAdmin(resource.data.groupId)
+        role(get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data) == 'admin' || role(get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data) == 'co-admin'
       );
-      allow delete: if isSignedIn() && isCoAdmin(resource.data.groupId);
+      allow delete: if isSignedIn() && (role(get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data) == 'admin' || role(get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data) == 'co-admin');
     }
 
 
