@@ -689,43 +689,49 @@ export default function SettingsPage() {
   const executePairing = useCallback(async (invitation: PairInvitation) => {
     if (!user || !firestore) return;
     setIsSaving(true);
-
+  
     const senderRef = doc(firestore, 'users', invitation.senderId);
     const receiverRef = doc(firestore, 'users', user.uid);
     const invRef = doc(firestore, 'pair_invitations', invitation.id);
-
+  
     try {
-        await runTransaction(firestore, async (transaction) => {
-            const senderDoc = await transaction.get(senderRef);
-            const receiverDoc = await transaction.get(receiverRef);
-
-            if (!senderDoc.exists() || !receiverDoc.exists()) {
-                throw new Error("User not found.");
-            }
-
-            const senderProfile = senderDoc.data() as UserProfile;
-            const receiverProfile = receiverDoc.data() as UserProfile;
-
-            // CRITICAL CHECK: Ensure both users are in the same pairing state (same group or both solo)
-            if (senderProfile.groupId !== receiverProfile.groupId) {
-                throw new Error("Pairing failed. Both users must be in the same group, or both must not be in a group.");
-            }
-
-            transaction.update(senderRef, { pairedWith: user.uid });
-            transaction.update(receiverRef, { pairedWith: invitation.senderId });
-            transaction.update(invRef, { status: 'accepted' });
-        });
-
-        toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` });
-        refetch();
-
+      await runTransaction(firestore, async (transaction) => {
+        const senderDoc = await transaction.get(senderRef);
+        const receiverDoc = await transaction.get(receiverRef);
+  
+        if (!senderDoc.exists() || !receiverDoc.exists()) {
+          throw new Error("User not found.");
+        }
+  
+        const senderProfile = senderDoc.data() as UserProfile;
+        const receiverProfile = receiverDoc.data() as UserProfile;
+  
+        // CRITICAL CHECK: Ensure both users are in the same pairing state (same group or both solo)
+        if (senderProfile.groupId !== receiverProfile.groupId) {
+          throw new Error("Pairing failed. Both users must be in the same group, or both must not be in a group.");
+        }
+  
+        transaction.update(senderRef, { pairedWith: user.uid });
+        transaction.update(receiverRef, { pairedWith: invitation.senderId });
+        transaction.update(invRef, { status: 'accepted' });
+      });
+  
+      toast({ title: "Pairing successful!", description: `You are now paired with ${invitation.senderName}.` });
+      refetch();
+  
     } catch (e: any) {
-        console.error("Error executing pairing:", e);
-        toast({ title: 'Error', description: e.message || 'Could not complete pairing action.', variant: 'destructive' });
+      console.error("Error executing pairing:", e);
+      toast({ 
+        title: 'Pairing Failed', 
+        description: e.message || 'Could not complete pairing action. The other user\'s status might have changed.', 
+        variant: 'destructive' 
+      });
+      // Also mark the invite as declined so it doesn't show up anymore
+      await updateDoc(invRef, { status: 'declined' });
     } finally {
-        setIsSaving(false);
+      setIsSaving(false);
     }
-}, [user, firestore, refetch, toast]);
+  }, [user, firestore, refetch, toast]);
 
 
     async function handlePairInvitationAction(invitation: PairInvitation, action: 'accept' | 'decline' | 'cancel') {
@@ -1159,5 +1165,7 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+    
 
     
