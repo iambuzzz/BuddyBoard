@@ -72,7 +72,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const userName = userProfile?.displayName || 'My';
   const isCurrentUserCard = authUser?.uid === userId;
   
-  const cardTheme = userProfile?.cardTheme as CardTheme || 'periwinkle';
+  const cardTheme = userProfile?.cardTheme ?? 'periwinkle';
   const themeClass = getThemeClass(cardTheme);
   
   const updateFirestore = useCallback(async (updatePayload: Partial<UserState>) => {
@@ -277,7 +277,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     userState.isLocked && !userState.isFinished ? (
       cardTheme === 'periwinkle' ? 'card-glow-periwinkle' :
       cardTheme === 'cyan' ? 'card-glow-cyan' :
-      'card-glow-emerald'
+      cardTheme === 'emerald' ? 'card-glow-emerald' : ''
     ) : '';
 
   const addBtnStyle =
