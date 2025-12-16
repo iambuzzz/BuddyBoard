@@ -33,10 +33,7 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn();
-      // Allow write if owner.
-      // Also allow write if the user is being paired by another user (transactional update).
-      allow write: if isOwner(userId) || 
-                     (request.resource.data.pairedWith != resource.data.pairedWith);
+      allow write: if isOwner(userId) || (request.resource.data.pairedWith != resource.data.pairedWith);
     }
     
     match /task_lists/{userId} {
