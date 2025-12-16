@@ -2,6 +2,7 @@
 
 import { Trophy } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import type { CardTheme } from '@/lib/types';
 
 type ScoreBadgeProps = {
   dailyCompleted: number;
@@ -9,7 +10,7 @@ type ScoreBadgeProps = {
   lifetimeCompleted: number;
   lifetimeTotal: number;
   isLocked: boolean;
-  theme: 'riya' | 'naitik' | 'ambuj' | 'default';
+  theme: CardTheme;
 };
 
 export function ScoreBadge({
@@ -36,9 +37,9 @@ export function ScoreBadge({
   };
 
   const themeClass = 
-    theme === 'riya' ? 'bg-[--riya-secondary] text-[--riya-text] border-[--riya-primary]' : 
-    theme === 'naitik' ? 'bg-[--naitik-secondary] text-[--naitik-text] border-[--naitik-primary]' :
-    'bg-[--ambuj-secondary] text-[--ambuj-text] border-[--ambuj-primary]';
+    theme === 'periwinkle' ? 'bg-[--theme-periwinkle-secondary] text-[--theme-periwinkle-text] border-[--theme-periwinkle-primary]' : 
+    theme === 'cyan' ? 'bg-[--theme-cyan-secondary] text-[--theme-cyan-text] border-[--theme-cyan-primary]' :
+    'bg-[--theme-emerald-secondary] text-[--theme-emerald-text] border-[--theme-emerald-primary]';
 
 
   return (

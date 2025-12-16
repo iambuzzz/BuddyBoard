@@ -9,11 +9,12 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import type { CardTheme } from '@/lib/types';
 
 type StreakBadgeProps = {
   currentStreak: number;
   maxStreak: number;
-  theme: 'riya' | 'naitik' | 'ambuj' | 'default';
+  theme: CardTheme;
 };
 
 export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProps) {
@@ -22,13 +23,13 @@ export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProp
   const handleToggle = () => setIsFlipped(!isFlipped);
 
   const themeClasses = {
-    riya: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
-    naitik: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
-    ambuj: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
+    periwinkle: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
+    cyan: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
+    emerald: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
     default: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
   };
   
-  const currentTheme = themeClasses[theme];
+  const currentTheme = themeClasses[theme] || themeClasses.default;
   
   return (
     <TooltipProvider>

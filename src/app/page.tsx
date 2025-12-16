@@ -10,7 +10,7 @@ import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
 import { useAuth, useFirestore } from '@/firebase';
-import type { UserState, UserProfile, Group } from '@/lib/types';
+import type { UserState, UserProfile, Group, CardTheme } from '@/lib/types';
 import Link from 'next/link';
 import { collection, doc, onSnapshot, query, where, writeBatch, getDocs } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,7 +49,7 @@ const CreateProfile = () => {
             uid: user.uid,
             email: user.email!,
             displayName: displayName.trim(),
-            cardTheme: 'riya',
+            cardTheme: 'periwinkle',
         };
         batch.set(userProfileRef, newUserProfile);
 
@@ -220,12 +220,12 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
     const visibleUser = showBack ? secondaryUser : primaryUser;
     const hiddenUser = showBack ? primaryUser : secondaryUser;
 
-    const getButtonThemeClass = (theme: string) => {
+    const getButtonThemeClass = (theme: CardTheme) => {
         switch(theme) {
-            case 'riya': return 'bg-[--riya-primary] hover:bg-violet-500 text-white';
-            case 'naitik': return 'bg-[--naitik-primary] hover:bg-cyan-500 text-white';
-            case 'ambuj': return 'bg-[--ambuj-primary] hover:bg-emerald-500 text-white';
-            default: return 'bg-[--riya-primary] hover:bg-violet-500 text-white';
+            case 'periwinkle': return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
+            case 'cyan': return 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white';
+            case 'emerald': return 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white';
+            default: return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
         }
     }
     
@@ -649,12 +649,12 @@ const PairedTaskWrapper = ({ user1, user2, showBack, setShowBack, isFirstCardInG
     const visibleUser = showBack ? user2 : user1;
     const hiddenUser = showBack ? user1 : user2;
 
-    const getButtonThemeClass = (theme: string) => {
+    const getButtonThemeClass = (theme: CardTheme) => {
         switch(theme) {
-            case 'riya': return 'bg-[--riya-primary] hover:bg-violet-500 text-white';
-            case 'naitik': return 'bg-[--naitik-primary] hover:bg-cyan-500 text-white';
-            case 'ambuj': return 'bg-[--ambuj-primary] hover:bg-emerald-500 text-white';
-            default: return 'bg-[--riya-primary] hover:bg-violet-500 text-white';
+            case 'periwinkle': return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
+            case 'cyan': return 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white';
+            case 'emerald': return 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white';
+            default: return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
         }
     };
 

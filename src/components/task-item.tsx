@@ -5,7 +5,7 @@ import { Circle, CheckCircle2, Edit, Trash2, Play, Pause, Timer, Check } from 'l
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
-import type { Task } from '@/lib/types';
+import type { Task, CardTheme } from '@/lib/types';
 
 type TaskItemProps = {
   task: Task;
@@ -14,7 +14,7 @@ type TaskItemProps = {
   onUpdate: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
   onToggleTimer: (id: string) => void;
-  theme: 'riya' | 'naitik' | 'ambuj' | 'default';
+  theme: CardTheme;
   isCurrentUserCard: boolean;
 };
 
@@ -25,7 +25,7 @@ const formatTime = (totalSeconds: number) => {
   return `${hours > 0 ? `${hours}:` : ''}${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const TaskTimer = ({ task, onToggleTimer, theme, isLocked, isCurrentUserCard }: { task: Task; onToggleTimer: () => void; theme: 'riya' | 'naitik' | 'ambuj' | 'default', isLocked: boolean, isCurrentUserCard: boolean }) => {
+const TaskTimer = ({ task, onToggleTimer, theme, isLocked, isCurrentUserCard }: { task: Task; onToggleTimer: () => void; theme: CardTheme, isLocked: boolean, isCurrentUserCard: boolean }) => {
   const [displayTime, setDisplayTime] = useState(task.timeSpent);
 
   useEffect(() => {
@@ -43,14 +43,14 @@ const TaskTimer = ({ task, onToggleTimer, theme, isLocked, isCurrentUserCard }: 
   }, [task.timerState, task.timeSpent, task.timerStartedAt]);
 
   const timerColor = task.timerState === 'running' ? (
-    theme === 'riya' ? 'text-violet-500' :
-    theme === 'naitik' ? 'text-cyan-500' :
+    theme === 'periwinkle' ? 'text-violet-500' :
+    theme === 'cyan' ? 'text-cyan-500' :
     'text-emerald-500'
   ) : 'text-slate-400';
 
   const timerButtonHover = 
-    theme === 'riya' ? 'hover:text-violet-600' :
-    theme === 'naitik' ? 'hover:text-cyan-600' :
+    theme === 'periwinkle' ? 'hover:text-violet-600' :
+    theme === 'cyan' ? 'hover:text-cyan-600' :
     'hover:text-emerald-600';
 
   if (task.isCompleted) {
@@ -91,9 +91,9 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
   const [text, setText] = useState(task.text);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const editBtnHoverClass = theme === 'riya' ? 'hover:text-[--riya-text]' 
-    : theme === 'naitik' ? 'hover:text-[--naitik-text]'
-    : 'hover:text-[--ambuj-text]';
+  const editBtnHoverClass = theme === 'periwinkle' ? 'hover:text-[--theme-periwinkle-text]' 
+    : theme === 'cyan' ? 'hover:text-[--theme-cyan-text]'
+    : 'hover:text-[--theme-emerald-text]';
 
   useEffect(() => {
     if (isEditing) {

@@ -31,6 +31,8 @@ export interface UserState {
   lastLockedAt: number | null; // Timestamp of the previously locked list
 }
 
+export type CardTheme = 'periwinkle' | 'cyan' | 'emerald';
+
 // Represents a user's public profile.
 // This is the schema for documents in the `/users/{userId}` collection.
 export interface UserProfile {
@@ -38,7 +40,7 @@ export interface UserProfile {
     displayName: string;
     email: string;
     photoURL?: string | null;
-    cardTheme: string; // e.g., 'default', 'periwinkle', 'lavender'
+    cardTheme: CardTheme;
     groupId?: string | null; // ID of the group the user belongs to
     pairedWith?: string | null; // UID of the paired user
 }

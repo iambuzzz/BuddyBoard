@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-import type { UserState, Task, PreviousTask, UserProfile } from '@/lib/types';
+import type { UserState, Task, PreviousTask, UserProfile, CardTheme } from '@/lib/types';
 import { useFirestore, useUser as useAuthUser } from '@/firebase'; // Renamed to avoid conflict
 import { doc, updateDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -37,16 +37,16 @@ type TaskCardProps = {
 };
 
 // Helper function to get theme classes
-const getThemeClass = (theme: string | undefined) => {
+const getThemeClass = (theme: CardTheme | undefined) => {
   switch (theme) {
-    case 'riya':
-      return 'theme-riya';
-    case 'naitik':
-      return 'theme-naitik';
-    case 'ambuj':
-      return 'theme-ambuj';
+    case 'periwinkle':
+      return 'theme-periwinkle';
+    case 'cyan':
+      return 'theme-cyan';
+    case 'emerald':
+      return 'theme-emerald';
     default:
-      return 'theme-riya'; // Default theme
+      return 'theme-periwinkle'; // Default theme
   }
 };
 
@@ -72,7 +72,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const userName = userProfile?.displayName || 'My';
   const isCurrentUserCard = authUser?.uid === userId;
   
-  const cardTheme = userProfile?.cardTheme || 'riya';
+  const cardTheme = userProfile?.cardTheme as CardTheme || 'periwinkle';
   const themeClass = getThemeClass(cardTheme);
   
   const updateFirestore = useCallback(async (updatePayload: Partial<UserState>) => {
@@ -269,48 +269,48 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   };
 
   const cardBorderStyle =
-    cardTheme === 'riya' ? 'border-2 border-[--riya-primary]' :
-    cardTheme === 'naitik' ? 'border-2 border-[--naitik-primary]' :
-    'border-2 border-[--ambuj-primary]';
+    cardTheme === 'periwinkle' ? 'border-2 border-[--theme-periwinkle-primary]' :
+    cardTheme === 'cyan' ? 'border-2 border-[--theme-cyan-primary]' :
+    'border-2 border-[--theme-emerald-primary]';
 
   const glowClass =
     userState.isLocked ? (
-      cardTheme === 'riya' ? 'card-glow-riya' :
-      cardTheme === 'naitik' ? 'card-glow-naitik' :
-      'card-glow-ambuj'
+      cardTheme === 'periwinkle' ? 'card-glow-periwinkle' :
+      cardTheme === 'cyan' ? 'card-glow-cyan' :
+      'card-glow-emerald'
     ) : '';
 
   const addBtnStyle =
-    cardTheme === 'riya' ? 'bg-[--riya-primary] hover:bg-purple-500' :
-    cardTheme === 'naitik' ? 'bg-[--naitik-primary] hover:bg-cyan-500' :
-    'bg-[--ambuj-primary] hover:bg-emerald-500';
+    cardTheme === 'periwinkle' ? 'bg-[--theme-periwinkle-primary] hover:bg-purple-500' :
+    cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-500' :
+    'bg-[--theme-emerald-primary] hover:bg-emerald-500';
 
   const actionBtnStyle = undoState.active ? 'bg-emerald-400 hover:bg-emerald-500' :
-    cardTheme === 'riya' ? 'bg-[--riya-primary] hover:bg-purple-500' :
-    cardTheme === 'naitik' ? 'bg-[--naitik-primary] hover:bg-cyan-500' :
-    'bg-[--ambuj-primary] hover:bg-emerald-500';
+    cardTheme === 'periwinkle' ? 'bg-[--theme-periwinkle-primary] hover:bg-purple-500' :
+    cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-500' :
+    'bg-[--theme-emerald-primary] hover:bg-emerald-500';
 
   const ringStyle =
-    cardTheme === 'riya' ? 'focus-visible:ring-[--riya-primary]' :
-    cardTheme === 'naitik' ? 'focus-visible:ring-[--naitik-primary]' :
-    'focus-visible:ring-[--ambuj-primary]';
+    cardTheme === 'periwinkle' ? 'focus-visible:ring-[--theme-periwinkle-primary]' :
+    cardTheme === 'cyan' ? 'focus-visible:ring-[--theme-cyan-primary]' :
+    'focus-visible:ring-[--theme-emerald-primary]';
   
   const titleColor =
-    cardTheme === 'riya' ? 'text-[--riya-text]' :
-    cardTheme === 'naitik' ? 'text-[--naitik-text]' :
-    'text-[--ambuj-text]';
+    cardTheme === 'periwinkle' ? 'text-[--theme-periwinkle-text]' :
+    cardTheme === 'cyan' ? 'text-[--theme-cyan-text]' :
+    'text-[--theme-emerald-text]';
 
   const confirmButtonStyle = 
-    cardTheme === 'riya' ? 'bg-purple-600 hover:bg-purple-700' :
-    cardTheme === 'naitik' ? 'bg-cyan-600 hover:bg-cyan-700' :
+    cardTheme === 'periwinkle' ? 'bg-purple-600 hover:bg-purple-700' :
+    cardTheme === 'cyan' ? 'bg-cyan-600 hover:bg-cyan-700' :
     'bg-emerald-600 hover:bg-emerald-700';
     
-  const effectiveTheme = cardTheme as 'riya' | 'naitik' | 'ambuj';
+  const effectiveTheme = cardTheme;
 
   const avatarBorderStyle =
-    cardTheme === 'riya' ? 'border-[--riya-text]' :
-    cardTheme === 'naitik' ? 'border-[--naitik-text]' :
-    'border-[--ambuj-text]';
+    cardTheme === 'periwinkle' ? 'border-[--theme-periwinkle-text]' :
+    cardTheme === 'cyan' ? 'border-[--theme-cyan-text]' :
+    'border-[--theme-emerald-text]';
 
 
   return (

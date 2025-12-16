@@ -51,7 +51,7 @@ export default function LoginPage() {
       email: email,
       displayName: displayName,
       photoURL: null,
-      cardTheme: 'riya', // Default theme set to 'riya'
+      cardTheme: 'periwinkle', // Default theme
     });
   };
 
@@ -122,7 +122,7 @@ export default function LoginPage() {
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
           </TabsList>
           <TabsContent value="login">
-            <Card className="border-2 border-[--riya-primary] rounded-xl card-glow-riya p-2">
+            <Card className="border-2 border-[--theme-periwinkle-primary] rounded-xl card-glow-periwinkle p-2">
               <CardHeader>
                 <CardTitle>Login</CardTitle>
                 <CardDescription>Enter your credentials to access your task list.</CardDescription>
@@ -138,14 +138,14 @@ export default function LoginPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button onClick={() => handleAuthAction(false)} disabled={loading} className="w-full bg-[--riya-primary] hover:bg-violet-500">
+                <Button onClick={() => handleAuthAction(false)} disabled={loading} className="w-full bg-[--theme-periwinkle-primary] hover:bg-violet-500">
                   {loading ? 'Logging in...' : 'Login'}
                 </Button>
               </CardFooter>
             </Card>
           </TabsContent>
           <TabsContent value="signup">
-            <Card className="border-2 border-[--riya-primary] rounded-xl card-glow-riya p-2">
+            <Card className="border-2 border-[--theme-periwinkle-primary] rounded-xl card-glow-periwinkle p-2">
               <CardHeader>
                 <CardTitle>Create an Account</CardTitle>
                 <CardDescription>Start your productivity journey with a new account.</CardDescription>
@@ -165,7 +165,7 @@ export default function LoginPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                <Button onClick={() => handleAuthAction(true)} disabled={loading} className="w-full bg-[--riya-primary] hover:bg-violet-500">
+                <Button onClick={() => handleAuthAction(true)} disabled={loading} className="w-full bg-[--theme-periwinkle-primary] hover:bg-violet-500">
                   {loading ? 'Creating Account...' : 'Sign Up'}
                 </Button>
               </CardFooter>

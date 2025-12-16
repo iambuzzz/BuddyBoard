@@ -3,6 +3,7 @@
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
 import { History, Plus, Timer } from 'lucide-react';
+import type { CardTheme } from '@/lib/types';
 
 type CelebrationOverlayProps = {
   completed: number;
@@ -11,7 +12,7 @@ type CelebrationOverlayProps = {
   onNewList: () => void;
   onRestorePrevious: () => void;
   canRestore: boolean;
-  theme: 'riya' | 'naitik' | 'ambuj' | 'default'; // Added default
+  theme: CardTheme;
 };
 
 const formatTotalTime = (totalSeconds: number) => {
@@ -31,12 +32,12 @@ const formatTotalTime = (totalSeconds: number) => {
 
 export function CelebrationOverlay({ completed, total, totalTimeSpent, onNewList, onRestorePrevious, canRestore, theme }: CelebrationOverlayProps) {
   
-  const buttonClass = theme === 'riya' ? 'bg-purple-500 hover:bg-purple-600 focus:ring-purple-400' 
-    : theme === 'naitik' ? 'bg-cyan-500 hover:bg-cyan-600 focus:ring-cyan-400'
+  const buttonClass = theme === 'periwinkle' ? 'bg-purple-500 hover:bg-purple-600 focus:ring-purple-400' 
+    : theme === 'cyan' ? 'bg-cyan-500 hover:bg-cyan-600 focus:ring-cyan-400'
     : 'bg-emerald-500 hover:bg-emerald-600 focus:ring-emerald-400';
 
-  const restoreButtonClass = theme === 'riya' ? 'text-purple-600 border-purple-300 hover:bg-purple-50' 
-    : theme === 'naitik' ? 'text-cyan-600 border-cyan-300 hover:bg-cyan-50'
+  const restoreButtonClass = theme === 'periwinkle' ? 'text-purple-600 border-purple-300 hover:bg-purple-50' 
+    : theme === 'cyan' ? 'text-cyan-600 border-cyan-300 hover:bg-cyan-50'
     : 'text-emerald-600 border-emerald-300 hover:bg-emerald-50';
 
 

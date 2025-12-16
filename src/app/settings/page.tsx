@@ -54,7 +54,7 @@ const profileFormSchema = z.object({
     .max(30, {
       message: 'Name must not be longer than 30 characters.',
     }),
-  cardTheme: z.enum(['riya', 'naitik', 'ambuj'], {
+  cardTheme: z.enum(['periwinkle', 'cyan', 'emerald'], {
     required_error: 'You need to select a theme.',
   }),
   newPassword: z.string().optional(),
@@ -140,7 +140,7 @@ export default function SettingsPage() {
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
       displayName: '',
-      cardTheme: 'riya',
+      cardTheme: 'periwinkle',
       newPassword: '',
       currentPassword: '',
     },
@@ -184,7 +184,7 @@ export default function SettingsPage() {
     if (profile) {
       profileForm.reset({
         displayName: profile.displayName || '',
-        cardTheme: profile.cardTheme || 'riya',
+        cardTheme: profile.cardTheme || 'periwinkle',
       });
       setPhotoUrlInput(profile.photoURL || '');
     }
@@ -834,7 +834,7 @@ export default function SettingsPage() {
                         </Avatar>
                         <p>You are currently paired with <span className="font-bold">{pairedPartner.displayName}</span>.</p>
                     </div>
-                    <Button onClick={onUnpair} disabled={isSaving} className="w-full bg-[--riya-primary] hover:bg-violet-500">
+                    <Button onClick={onUnpair} disabled={isSaving} className="w-full bg-[--theme-periwinkle-primary] hover:bg-violet-500">
                         {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2Off className="mr-2 h-4 w-4" />}
                         Unpair
                     </Button>
@@ -859,7 +859,7 @@ export default function SettingsPage() {
                            <FormField control={pairInviteForm.control} name="email" render={({ field }) => (
                                 <FormItem className="flex-grow"><FormControl><Input placeholder="User's email address" {...field} /></FormControl><FormMessage /></FormItem>
                            )} />
-                           <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Invite'}</Button>
+                           <Button type="submit" disabled={isSaving} className="bg-[--theme-periwinkle-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Invite'}</Button>
                         </form>
                     </Form>
                 </div>
@@ -921,7 +921,7 @@ export default function SettingsPage() {
                             <FormField control={inviteToGroupForm.control} name="email" render={({ field }) => (
                                   <FormItem className="flex-grow"><FormControl><Input placeholder="User's email to invite" {...field} /></FormControl><FormMessage /></FormItem>
                               )} />
-                            <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Send Invite'}</Button>
+                            <Button type="submit" disabled={isSaving} className="bg-[--theme-periwinkle-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Send Invite'}</Button>
                           </form>
                       </Form>
                   </div>
@@ -993,7 +993,7 @@ export default function SettingsPage() {
                 </div>
              </div>
              <Separator />
-             <Button onClick={confirmLeaveGroup} disabled={isSaving} className="w-full bg-[--riya-primary] hover:bg-violet-500">
+             <Button onClick={confirmLeaveGroup} disabled={isSaving} className="w-full bg-[--theme-periwinkle-primary] hover:bg-violet-500">
                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LogOutIcon className="mr-2 h-4 w-4" />}
                 Leave Group
              </Button>
@@ -1033,7 +1033,7 @@ export default function SettingsPage() {
                    <FormField control={joinGroupForm.control} name="invitationCode" render={({ field }) => (
                         <FormItem className="flex-grow"><FormControl><Input placeholder="Enter invitation code" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                  <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Join'}</Button>
+                  <Button type="submit" disabled={isSaving} className="bg-[--theme-periwinkle-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Join'}</Button>
                 </form>
               </Form>
             </div>
@@ -1045,7 +1045,7 @@ export default function SettingsPage() {
                    <FormField control={createGroupForm.control} name="groupName" render={({ field }) => (
                         <FormItem className="flex-grow"><FormControl><Input placeholder="My Awesome Group" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
-                  <Button type="submit" disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Create'}</Button>
+                  <Button type="submit" disabled={isSaving} className="bg-[--theme-periwinkle-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Create'}</Button>
                 </form>
               </Form>
             </div>
@@ -1118,6 +1118,14 @@ export default function SettingsPage() {
     );
 };
 
+const ColorSwatch = ({ primary, secondary, text }: { primary: string; secondary: string; text: string; }) => (
+    <div className="flex items-center gap-1.5 ml-auto">
+        <div style={{ backgroundColor: secondary }} className="w-4 h-4 rounded-full border border-slate-300"></div>
+        <div style={{ backgroundColor: primary }} className="w-4 h-4 rounded-full border border-slate-300"></div>
+        <div style={{ backgroundColor: text }} className="w-4 h-4 rounded-full border border-slate-300"></div>
+    </div>
+);
+
 
   return (
      <div className="min-h-screen w-full flex flex-col items-center bg-[#e3eeff] p-4 pb-12">
@@ -1157,7 +1165,7 @@ export default function SettingsPage() {
                                     onChange={(e) => setPhotoUrlInput(e.target.value)}
                                     disabled={isSaving}
                                 />
-                                <Button onClick={handleSavePhotoUrl} disabled={isSaving} className="bg-[--riya-primary] hover:bg-violet-500">
+                                <Button onClick={handleSavePhotoUrl} disabled={isSaving} className="bg-[--theme-periwinkle-primary] hover:bg-violet-500">
                                     {isSaving ? <Loader2 className="h-4 w-4 animate-spin"/> : 'Save'}
                                 </Button>
                             </div>
@@ -1173,9 +1181,24 @@ export default function SettingsPage() {
                             <FormItem className="space-y-3"><FormLabel>Card Theme</FormLabel>
                             <FormControl>
                                 <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
-                                <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="riya" /></FormControl><FormLabel className="font-normal">Periwinkle (Riya's Theme)</FormLabel></FormItem>
-                                <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="naitik" /></FormControl><FormLabel className="font-normal">Cyan (Naitik's Theme)</FormLabel></FormItem>
-                                <FormItem className="flex items-center space-x-3 space-y-0"><FormControl><RadioGroupItem value="ambuj" /></FormControl><FormLabel className="font-normal">Emerald (Ambuj's Theme)</FormLabel></FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl><RadioGroupItem value="periwinkle" /></FormControl>
+                                    <FormLabel className="font-normal flex-1 flex items-center">Periwinkle
+                                      <ColorSwatch primary="#a78bfa" secondary="#f5f3ff" text="#6d28d9" />
+                                    </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl><RadioGroupItem value="cyan" /></FormControl>
+                                    <FormLabel className="font-normal flex-1 flex items-center">Cyan
+                                      <ColorSwatch primary="#22d3ee" secondary="#ecfeff" text="#0e7490" />
+                                    </FormLabel>
+                                </FormItem>
+                                <FormItem className="flex items-center space-x-3 space-y-0">
+                                    <FormControl><RadioGroupItem value="emerald" /></FormControl>
+                                    <FormLabel className="font-normal flex-1 flex items-center">Emerald
+                                      <ColorSwatch primary="#34d399" secondary="#ecfdf5" text="#065f46" />
+                                    </FormLabel>
+                                </FormItem>
                                 </RadioGroup>
                             </FormControl><FormMessage />
                             </FormItem>
@@ -1186,7 +1209,7 @@ export default function SettingsPage() {
                         <FormField control={profileForm.control} name="newPassword" render={({ field }) => (
                             <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormItem>
                         )} />
-                        <Button type="submit" disabled={isSaving} className="w-full bg-[--riya-primary] hover:bg-violet-500">
+                        <Button type="submit" disabled={isSaving} className="w-full bg-[--theme-periwinkle-primary] hover:bg-violet-500">
                             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
                         </Button>
                         </form>
@@ -1211,7 +1234,3 @@ export default function SettingsPage() {
     </div>
   );
 }
-
-    
-
-    

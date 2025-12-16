@@ -1,6 +1,6 @@
 "use client";
 
-import type { Task } from '@/lib/types';
+import type { Task, CardTheme } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { TaskItem } from './task-item';
 import { History } from 'lucide-react';
@@ -13,7 +13,7 @@ type TaskListProps = {
   onUpdate: (id: string, newText: string) => void;
   onDelete: (id: string) => void;
   onToggleTimer: (id: string) => void;
-  theme: 'riya' | 'naitik' | 'ambuj' | 'default';
+  theme: CardTheme;
   onRestore: () => void;
   canRestore: boolean;
   isCurrentUserCard: boolean;
