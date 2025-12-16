@@ -1180,7 +1180,7 @@ const ColorSwatch = ({ primary, secondary, text }: { primary: string; secondary:
                         <FormField control={profileForm.control} name="cardTheme" render={({ field }) => (
                             <FormItem className="space-y-3"><FormLabel>Card Theme</FormLabel>
                             <FormControl>
-                                <RadioGroup onValueChange={field.onChange} defaultValue={field.value} className="flex flex-col space-y-1">
+                                <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-1">
                                 <FormItem className="flex items-center space-x-3 space-y-0">
                                     <FormControl><RadioGroupItem value="periwinkle" /></FormControl>
                                     <FormLabel className="font-normal flex-1 flex items-center">Periwinkle
