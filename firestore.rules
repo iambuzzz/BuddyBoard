@@ -24,7 +24,9 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow read: if isSignedIn();
-      allow write: if isSignedIn() && (isOwner(userId) || request.resource.data.pairedWith != resource.data.pairedWith);
+      // Allow writes if you are the owner, OR if the groupId is being removed (by an admin),
+      // OR if the pairing status is changing.
+      allow write: if isSignedIn() && (isOwner(userId) || (request.resource.data.groupId == null && resource.data.groupId != null) || request.resource.data.pairedWith != resource.data.pairedWith);
     }
     
     match /task_lists/{userId} {
