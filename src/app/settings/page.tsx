@@ -487,10 +487,14 @@ export default function SettingsPage() {
     try {
         const batch = writeBatch(firestore);
         
-        // Break pairing if user is paired
-        batch.update(doc(firestore, 'users', user.uid), { groupId: null, pairedWith: null });
+        // Update current user's profile
+        const userProfileRef = doc(firestore, 'users', user.uid);
+        batch.update(userProfileRef, { groupId: null, pairedWith: null });
+
+        // If paired, update the partner's profile as well
         if (profile.pairedWith) {
-             batch.update(doc(firestore, 'users', profile.pairedWith), { pairedWith: null });
+             const partnerProfileRef = doc(firestore, 'users', profile.pairedWith);
+             batch.update(partnerProfileRef, { pairedWith: null });
         }
 
         const groupRef = doc(firestore, 'groups', group.id);
@@ -498,8 +502,10 @@ export default function SettingsPage() {
         delete newMembers[user.uid];
 
         if (Object.keys(newMembers).length === 0) {
+            // If the user is the last member, delete the group
             batch.delete(groupRef);
         } else {
+            // If the user was an admin and the only admin, promote another member
             if (group.members[user.uid] === 'admin' && !Object.values(newMembers).includes('admin')) {
                 const nextAdminUid = Object.keys(newMembers)[0];
                 newMembers[nextAdminUid] = 'admin';
@@ -509,8 +515,9 @@ export default function SettingsPage() {
         
         await batch.commit();
         toast({ title: 'Group Left', description: 'You have successfully left the group.' });
-        refetch();
+        refetch(); // Refetch user data to update UI
     } catch (error: any) {
+        console.error("Error leaving group:", error);
         toast({ title: 'Error', description: 'Failed to leave group.', variant: 'destructive' });
     } finally {
         setIsSaving(false);
@@ -542,7 +549,7 @@ export default function SettingsPage() {
             if (!memberToKickSnap.exists()) throw new Error("Member to kick not found.");
             const memberToKick = memberToKickSnap.data() as UserProfile;
             
-            // Set lastKickedUid for the security rule
+            // This field is used by security rules to check permission
             updatePayload.lastKickedUid = memberUid;
 
             delete currentMembers[memberUid];
@@ -550,10 +557,12 @@ export default function SettingsPage() {
   
             if (memberToKick.pairedWith) {
                 const partnerRef = doc(firestore, 'users', memberToKick.pairedWith);
-                if (options.kickBothPaired) {
+                // If kickBoth is true AND the partner is not the current user (admin/co-admin)
+                if (options.kickBothPaired && memberToKick.pairedWith !== user.uid) {
                     delete currentMembers[memberToKick.pairedWith];
                     batch.update(partnerRef, { groupId: null, pairedWith: null });
                 } else {
+                     // Always unpair the partner
                      batch.update(partnerRef, { pairedWith: null });
                 }
             }
@@ -576,7 +585,7 @@ export default function SettingsPage() {
         toast({ title: 'Success', description: 'Group member updated.' });
     } catch (error: any) {
         console.error("Error updating member role: ", error);
-        toast({ title: 'Error', description: 'Could not update member.', variant: 'destructive' });
+        toast({ title: 'Error', description: error.message || 'Could not update member.', variant: 'destructive' });
     } finally {
         setIsSaving(false);
         setConfirmation(null);
@@ -727,7 +736,11 @@ export default function SettingsPage() {
         variant: 'destructive' 
       });
       // Also mark the invite as declined so it doesn't show up anymore
-      await updateDoc(invRef, { status: 'declined' });
+      try {
+        await updateDoc(invRef, { status: 'declined' });
+      } catch (declineError) {
+        // Ignore errors on declining the failed invite
+      }
     } finally {
       setIsSaving(false);
     }
@@ -1037,8 +1050,12 @@ export default function SettingsPage() {
   };
 
   const renderKickPairConfirmationDialog = () => {
-    if (!kickPairConfirmation) return null;
+    if (!kickPairConfirmation || !user) return null;
     const { member, partner } = kickPairConfirmation;
+
+    // The user performing the action is the current user. Check if they are the partner.
+    const isCurrentUserThePartner = partner.uid === user.uid;
+
     return (
         <AlertDialog open={!!kickPairConfirmation} onOpenChange={() => setKickPairConfirmation(null)}>
             <AlertDialogContent>
@@ -1049,14 +1066,17 @@ export default function SettingsPage() {
                     </AlertDialogDescription>
                 </AlertDialogHeader>
                  <AlertDialogFooter className="flex-col gap-2 sm:flex-col sm:items-stretch w-full">
-                    <Button
-                        className="bg-destructive hover:bg-destructive/90"
-                        onClick={() => executeMemberAction(member.uid, 'kick', { kickBothPaired: true })}
-                        disabled={isSaving}
-                    >
-                         {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Kick Both {member.displayName} & {partner.displayName}
-                    </Button>
+                    {/* Don't show "Kick Both" if the partner is the one doing the kicking */}
+                    {!isCurrentUserThePartner && (
+                        <Button
+                            className="bg-destructive hover:bg-destructive/90"
+                            onClick={() => executeMemberAction(member.uid, 'kick', { kickBothPaired: true })}
+                            disabled={isSaving}
+                        >
+                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Kick Both {member.displayName} & {partner.displayName}
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
                         onClick={() => executeMemberAction(member.uid, 'kick')}
