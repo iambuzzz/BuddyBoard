@@ -345,15 +345,15 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
           />
         )}
       </AnimatePresence>
-      <header className="flex justify-between items-center pb-4 mb-4 border-b">
-        <div className="flex items-center gap-3">
-          <Avatar className={`h-8 w-8 border ${avatarBorderStyle}`}>
+      <header className="flex justify-between items-center gap-2 pb-4 mb-4 border-b">
+        <div className="flex items-center gap-3 min-w-0">
+          <Avatar className={`h-8 w-8 border flex-shrink-0 ${avatarBorderStyle}`}>
             <AvatarImage src={userProfile?.photoURL} alt={userName} />
             <AvatarFallback>{getInitials(userName)}</AvatarFallback>
           </Avatar>
-          <div className="flex items-center gap-1">
-            <h2 className={`text-xl sm:text-2xl font-bold ${titleColor}`}>{userName}</h2>
-            <div className="h-7 w-12">
+          <div className="flex items-center gap-1 min-w-0">
+            <h2 className={`text-xl sm:text-2xl font-bold truncate ${titleColor}`}>{userName}</h2>
+            <div className="h-7 w-12 flex-shrink-0">
                 <StreakBadge
                     currentStreak={userState.currentStreak}
                     maxStreak={userState.maxStreak}
@@ -362,7 +362,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
             </div>
           </div>
         </div>
-        <div className="score-badge-container">
+        <div className="score-badge-container flex-shrink-0">
           <ScoreBadge
             dailyCompleted={userState.tasks.filter(t => t.isCompleted).length}
             dailyTotal={userState.tasks.length}

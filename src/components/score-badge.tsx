@@ -27,8 +27,8 @@ export function ScoreBadge({
     setIsFlipped(isLocked);
   }, [isLocked]);
 
-  const frontText = `Total: ${lifetimeCompleted}/${lifetimeTotal}`;
-  const backText = `Today: ${dailyCompleted}/${dailyTotal}`;
+  const frontText = `${lifetimeCompleted}/${lifetimeTotal}`;
+  const backText = `${+dailyCompleted}/${dailyTotal}`;
 
   const handleToggle = () => {
     if (isLocked) {
@@ -43,19 +43,19 @@ export function ScoreBadge({
 
 
   return (
-    <div className="score-badge-container w-32 sm:w-40">
+    <div className="score-badge-container w-24 sm:w-40 h-12 flex justify-center items-center">
       <div
-        className={`score-badge w-full h-full rounded-full font-semibold text-sm sm:text-base border ${isLocked ? 'cursor-pointer' : 'cursor-default'} ${themeClass} ${isFlipped ? 'is-flipped' : ''}`}
+        className={`score-badge w-full h-full rounded-xl font-semibold text-sm sm:text-base border ${isLocked ? 'cursor-pointer' : 'cursor-default'} ${themeClass} ${isFlipped ? 'is-flipped' : ''}`}
         onClick={handleToggle}
-        title={isLocked ? 'Click to toggle score' : ''}
+        title={isLocked ? 'Click to toggle score' : ' '}
       >
         <div className="score-face score-front">
           <Trophy className="w-4 h-4 flex-shrink-0" />
-          {/* <span className="whitespace-nowrap"></span> */}
+          <span className="whitespace-nowrap">{frontText}</span>
         </div>
         <div className="score-face score-back">
           <Trophy className="w-4 h-4 flex-shrink-0" />
-          {/* <span className="whitespace-nowrap"></span> */}
+          <span className="whitespace-nowrap">{backText}</span>
         </div>
       </div>
     </div>
