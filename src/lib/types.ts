@@ -6,6 +6,7 @@ export interface Task {
   text: string;
   isCompleted: boolean;
   createdAt: number;
+  completedAt?: number | null; // Timestamp when the task was completed
   timeSpent: number; // in seconds
   timerState: 'stopped' | 'running' | 'paused';
   timerStartedAt: number | null;

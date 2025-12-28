@@ -5,7 +5,7 @@
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Loader2, LogOut, Settings, RefreshCw, ArrowUp, Users } from 'lucide-react';
+import { Loader2, LogOut, Settings, RefreshCw, ArrowUp, Users, AreaChart } from 'lucide-react';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
@@ -218,7 +218,6 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
     };
 
     const visibleUser = showBack ? secondaryUser : primaryUser;
-    const hiddenUser = showBack ? primaryUser : secondaryUser;
 
     const getButtonThemeClass = (theme: CardTheme) => {
         switch(theme) {
@@ -240,14 +239,16 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
                     </Link>
                  </div>
                  <Button
-                    onClick={() => setShowBack(p => !p)}
+                    onClick={() => router.push(`/stats/${visibleUser.profile.uid}`)}
                     className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
-                    aria-pressed={showBack}
                 >
-                    <RefreshCw className="h-4 w-4" />
-                    <span>Switch to {hiddenUser.profile.displayName}</span>
+                    <AreaChart className="h-4 w-4" />
+                    <span>Stats</span>
                 </Button>
-                <div className="w-40 flex justify-end">
+                <div className="w-40 flex justify-end items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => setShowBack(p => !p)} className="text-slate-600 hover:bg-slate-100" aria-label="Switch User">
+                        <RefreshCw className="h-5 w-5" />
+                    </Button>
                     {isFirstCardInGroup ? (
                         <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
                             <LogOut className="h-5 w-5" />
@@ -647,7 +648,6 @@ const PairedTaskWrapper = ({ user1, user2, showBack, setShowBack, isFirstCardInG
     const handleGoToTop = () => { const listEl = document.querySelector('.snap-y'); if (listEl) { listEl.scrollTo({ top: 0, behavior: 'smooth' }); } };
     
     const visibleUser = showBack ? user2 : user1;
-    const hiddenUser = showBack ? user1 : user2;
 
     const getButtonThemeClass = (theme: CardTheme) => {
         switch(theme) {
@@ -671,15 +671,17 @@ const PairedTaskWrapper = ({ user1, user2, showBack, setShowBack, isFirstCardInG
                        </Button>
                    </Link>
                 </div>
-                 <Button
-                    onClick={() => setShowBack(!showBack)}
+                <Button
+                    onClick={() => router.push(`/stats/${visibleUser.profile.uid}`)}
                     className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
-                    aria-pressed={showBack}
                 >
-                    <RefreshCw className="h-4 w-4" />
-                    <span>Switch to {hiddenUser.profile.displayName}</span>
+                    <AreaChart className="h-4 w-4" />
+                    <span>Stats</span>
                 </Button>
-               <div className="w-40 flex justify-end">
+               <div className="w-40 flex justify-end items-center gap-2">
+                   <Button variant="ghost" size="icon" onClick={() => setShowBack(!showBack)} className="text-slate-600 hover:bg-slate-100" aria-label="Switch User">
+                        <RefreshCw className="h-5 w-5" />
+                    </Button>
                    {isFirstCardInGroup ? (
                        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
                            <LogOut className="h-5 w-5" />
