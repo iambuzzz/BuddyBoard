@@ -43,7 +43,7 @@ export function ScoreBadge({
 
 
   return (
-    <div className="score-badge-container w-24 sm:w-40 h-12 flex justify-center items-center">
+    <div className="score-badge-container w-20 sm:w-32 h-12 flex justify-center items-center">
       <div
         className={`score-badge w-full h-full rounded-xl font-semibold text-sm sm:text-base border ${isLocked ? 'cursor-pointer' : 'cursor-default'} ${themeClass} ${isFlipped ? 'is-flipped' : ''}`}
         onClick={handleToggle}
