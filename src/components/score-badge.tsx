@@ -27,7 +27,7 @@ export function ScoreBadge({
   return (
     <div className="flex justify-center items-center">
       <div
-        className={`flex items-center justify-center gap-2 h-12 px-3 rounded-xl font-semibold text-sm sm:text-base border ${themeClass}`}
+        className={`flex items-center w-24 md:w-32 justify-center rounded-full gap-2 h-12 px-3 font-semibold text-sm  border ${themeClass}`}
       >
           <Trophy className="w-4 h-4 flex-shrink-0" />
           <span className="whitespace-nowrap">{displayText}</span>
