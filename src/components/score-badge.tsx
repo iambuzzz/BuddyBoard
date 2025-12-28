@@ -51,11 +51,11 @@ export function ScoreBadge({
       >
         <div className="score-face score-front">
           <Trophy className="w-4 h-4 flex-shrink-0" />
-          <span className="whitespace-nowrap">{frontText}</span>
+          {/* <span className="whitespace-nowrap"></span> */}
         </div>
         <div className="score-face score-back">
           <Trophy className="w-4 h-4 flex-shrink-0" />
-          <span className="whitespace-nowrap">{backText}</span>
+          {/* <span className="whitespace-nowrap"></span> */}
         </div>
       </div>
     </div>
