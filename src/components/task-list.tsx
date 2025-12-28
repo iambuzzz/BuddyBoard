@@ -23,7 +23,7 @@ type TaskListProps = {
 export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, onToggleTimer, theme, onRestore, canRestore, isCurrentUserCard }: TaskListProps) {
   if (tasks.length === 0) {
     return (
-      <div className="text-center text-slate-400 p-8 flex flex-col items-center gap-4 -ml-2">
+      <div className="text-center text-slate-400 p-8 flex flex-col items-center gap-4">
         <span>Add a task to begin!</span>
         {canRestore && !isLocked && isCurrentUserCard && (
            <Button
