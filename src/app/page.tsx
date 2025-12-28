@@ -135,6 +135,15 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
         }
     };
 
+    const getButtonThemeClass = (theme: CardTheme) => {
+        switch(theme) {
+            case 'periwinkle': return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
+            case 'cyan': return 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white';
+            case 'emerald': return 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white';
+            default: return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
+        }
+    };
+
     useEffect(() => {
         if (!firestore) return;
         const taskListRef = doc(firestore, 'task_lists', userId);
@@ -169,6 +178,13 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
                         </Button>
                     </Link>
                  </div>
+                 <Button
+                    onClick={() => router.push(`/stats/${profile.uid}`)}
+                    className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 ${getButtonThemeClass(profile.cardTheme)}`}
+                >
+                    <AreaChart className="h-4 w-4" />
+                    <span>Stats</span>
+                </Button>
                  <div className="w-40 flex justify-end">
                     {isFirstCardInGroup ? (
                         <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
@@ -511,11 +527,21 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
         )
     }
 
-    const renderTopBarButtons = (isFirstCard: boolean) => {
-        return (
+    const getButtonThemeClass = (theme: CardTheme | undefined) => {
+        if (!theme) return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
+        switch(theme) {
+            case 'periwinkle': return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
+            case 'cyan': return 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white';
+            case 'emerald': return 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white';
+            default: return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
+        }
+    };
+
+    const renderSoloTopBar = (member: UserProfile, isFirstCard: boolean) => {
+         return (
             <div className="flex justify-between items-center mb-4">
-                <div className="w-40 flex justify-start items-center gap-2">
-                     <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Group Members" onClick={() => setSheetOpen(true)}>
+                 <div className="w-40 flex justify-start items-center gap-2">
+                    <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Group Members" onClick={() => setSheetOpen(true)}>
                         <Users className="h-5 w-5" />
                     </Button>
                     <Link href="/settings">
@@ -524,7 +550,13 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                        </Button>
                    </Link>
                 </div>
-
+                <Button
+                    onClick={() => router.push(`/stats/${member.uid}`)}
+                    className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 ${getButtonThemeClass(member.cardTheme)}`}
+                >
+                    <AreaChart className="h-4 w-4" />
+                    <span>Stats</span>
+                </Button>
                <div className="w-40 flex justify-end">
                    {isFirstCard ? (
                        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
@@ -599,7 +631,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                     const userState = userStates[member.uid];
                                     return (
                                         <div className="h-full w-full flex flex-col">
-                                            {renderTopBarButtons(isFirstCard)}
+                                            {renderSoloTopBar(member, isFirstCard)}
                                             <div className="flex-grow min-h-0">
                                             {userState ? (
                                                 <TaskCard 
