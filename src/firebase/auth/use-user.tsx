@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useContext, useCallback } from 'react';
@@ -40,13 +41,20 @@ export const useUser = (): UserHookState => {
     if (user) {
       // Set loading to true when starting to fetch a profile
       setUserState(prevState => ({ ...prevState, user, isLoading: true }));
-      const userProfileRef = doc(firestore, 'users', user.uid);
-      const userProfileSnap = await getDoc(userProfileRef);
-      
-      if (userProfileSnap.exists()) {
-        const userProfile = userProfileSnap.data() as UserProfile;
-        setUserState({ user, profile: userProfile, isLoading: false });
-      } else {
+      try {
+        const userProfileRef = doc(firestore, 'users', user.uid);
+        const userProfileSnap = await getDoc(userProfileRef);
+        
+        if (userProfileSnap.exists()) {
+          const userProfile = userProfileSnap.data() as UserProfile;
+          setUserState({ user, profile: userProfile, isLoading: false });
+        } else {
+          // User exists in Auth, but no profile document in Firestore yet.
+          // This is a valid state (e.g., during profile creation).
+          setUserState({ user, profile: null, isLoading: false });
+        }
+      } catch (error) {
+        console.error("Error fetching user profile:", error);
         setUserState({ user, profile: null, isLoading: false });
       }
     } else {
@@ -55,7 +63,10 @@ export const useUser = (): UserHookState => {
   }, [auth, firestore]);
 
   useEffect(() => {
-    if (!auth) return;
+    if (!auth) {
+        setUserState(s => ({...s, isLoading: false}));
+        return;
+    };
     const unsubscribe = onAuthStateChanged(auth, (user) => {
         fetchUserProfile(user);
     });
@@ -65,6 +76,9 @@ export const useUser = (): UserHookState => {
   const refetch = useCallback(() => {
     if(auth?.currentUser) {
         fetchUserProfile(auth.currentUser);
+    } else {
+        // If there's no current user, ensure we reflect that state
+        fetchUserProfile(null);
     }
   }, [auth, fetchUserProfile]);
 

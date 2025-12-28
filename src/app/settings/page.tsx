@@ -185,6 +185,8 @@ export default function SettingsPage() {
       profileForm.reset({
         displayName: profile.displayName || '',
         cardTheme: profile.cardTheme || 'periwinkle',
+        newPassword: '',
+        currentPassword: '',
       });
       setPhotoUrlInput(profile.photoURL || '');
     }
@@ -384,7 +386,7 @@ export default function SettingsPage() {
 
         toast({ title: 'Joined Group!', description: `You are now a member of ${groupDoc.data().name}.`});
         joinGroupForm.reset();
-        refetch();
+        refetch(); // Refetch user data to update the UI with the new group info
 
     } catch (error: any) {
         console.error("Error joining group:", error);
