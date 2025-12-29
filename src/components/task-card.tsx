@@ -6,8 +6,9 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Lock, Check, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Plus, Lock, Check, AlertTriangle, RotateCcw, History } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
+import { isSameDay, startOfToday } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -19,9 +20,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-import type { UserState, Task, PreviousTask, UserProfile, CardTheme } from '@/lib/types';
+import type { UserState, Task, PreviousTask, UserProfile, CardTheme, DailyStat } from '@/lib/types';
 import { useFirestore, useUser as useAuthUser } from '@/firebase'; // Renamed to avoid conflict
-import { doc, updateDoc } from 'firebase/firestore';
+import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 import { TaskList } from './task-list';
@@ -29,6 +30,7 @@ import { ScoreBadge } from './score-badge';
 import { CelebrationOverlay } from './celebration-overlay';
 import { StreakBadge } from './streak-badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
+import { PreviousListViewer } from './previous-list-viewer';
 
 type TaskCardProps = {
   userState: UserState;
@@ -68,6 +70,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const [showLockWarning, setShowLockWarning] = useState(false);
   const [undoState, setUndoState] = useState<{ active: boolean; countdown: number }>({ active: false, countdown: 5 });
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showPreviousList, setShowPreviousList] = useState(false);
 
   const userName = userProfile?.displayName || 'My';
   const isCurrentUserCard = authUser?.uid === userId;
@@ -86,7 +89,27 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     }
   }, [firestore, userId, toast]);
 
+  // Auto-finish logic when the app loads
+  useEffect(() => {
+    if (userState.isLocked && userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date())) {
+        if (isCurrentUserCard) {
+            handleActionButton(true); // Force finish the list
+            toast({
+                title: "New Day!",
+                description: "Your previous day's list has been automatically saved.",
+            });
+        }
+    }
+  }, [userState.isLocked, userState.lockedAt, isCurrentUserCard]);
+
+
   const addTask = (text: string) => {
+    // Prevent adding tasks to a list from a previous day that hasn't been auto-finished yet.
+    if (userState.isLocked && userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date())) {
+        toast({ title: "Day has ended", description: "Please start a new list for today.", variant: 'destructive'});
+        return;
+    }
+
     const newTask: Task = {
       id: crypto.randomUUID(),
       text,
@@ -134,37 +157,77 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
         const isCompleting = !t.isCompleted;
         let finalTimeSpent = t.timeSpent;
         let timerState: 'stopped' | 'running' | 'paused' = t.timerState;
-        if (isCompleting && t.timerState === 'running') {
-          const elapsed = (now - (t.timerStartedAt || now)) / 1000;
-          finalTimeSpent += elapsed;
+        
+        if (t.timerState === 'running') {
+            const elapsed = (now - (t.timerStartedAt || now)) / 1000;
+            finalTimeSpent += elapsed;
         }
-        if (isCompleting) timerState = 'stopped';
-        return { ...t, isCompleted: isCompleting, timeSpent: finalTimeSpent, timerState, timerStartedAt: isCompleting ? null : t.timerStartedAt };
+
+        if (isCompleting) {
+            timerState = 'stopped';
+        }
+
+        return { ...t, isCompleted: isCompleting, timeSpent: finalTimeSpent, timerState, completedAt: isCompleting ? now : null, timerStartedAt: isCompleting ? null : t.timerStartedAt };
       }
       return t;
     });
     updateFirestore({ tasks: newTasks });
   };
   
-  const handleActionButton = () => {
+  const handleActionButton = (isAutoFinish = false) => {
     if (!isCurrentUserCard) return;
     const now = Date.now();
 
     if (!userState.isLocked && userState.tasks.length === 0) {
-      toast({ title: 'List is empty', description: 'Add at least one task to lock in your list.', variant: 'destructive' });
+      if (!isAutoFinish) toast({ title: 'List is empty', description: 'Add at least one task to lock in your list.', variant: 'destructive' });
       return;
     }
+    
+    // Prevent locking if the list is from a previous day
+    if (!userState.isLocked && userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date())) {
+        if (!isAutoFinish) toast({ title: 'New Day!', description: "This list has expired. Starting a new list for you.", variant: "destructive" });
+        // Force finish and reset
+        handleActionButton(true);
+        return;
+    }
+
 
     let newUserData: Partial<UserState>;
 
-    if (userState.isFinished) {
+    if (userState.isFinished) { // Action: Start New List
       newUserData = { tasks: [], isLocked: false, isFinished: false, lockedAt: null };
-    } else if (userState.isLocked) {
+    } else if (userState.isLocked) { // Action: Finish List
       const completedCount = userState.tasks.filter(t => t.isCompleted).length;
       const totalTasks = userState.tasks.length;
       const allTasksCompleted = totalTasks > 0 && completedCount === totalTasks;
       let newCurrentStreak = userState.currentStreak;
       if (allTasksCompleted) newCurrentStreak++; else newCurrentStreak = 0;
+
+      const totalTimeSpentSeconds = userState.tasks.reduce((acc, task) => {
+        let taskTime = task.timeSpent;
+        if(task.timerState === 'running' && task.timerStartedAt) {
+            taskTime += (Date.now() - task.timerStartedAt) / 1000;
+        }
+        return acc + taskTime;
+      }, 0);
+
+      const today = new Date(userState.lockedAt || now).toISOString().split('T')[0];
+      const newStat: DailyStat = {
+        date: today,
+        hours: totalTimeSpentSeconds / 3600
+      };
+
+      const existingStats = userState.historical_stats || [];
+      const todayStatIndex = existingStats.findIndex(s => s.date === today);
+
+      let updatedStats;
+      if (todayStatIndex > -1) {
+        updatedStats = [...existingStats];
+        updatedStats[todayStatIndex] = newStat;
+      } else {
+        updatedStats = [...existingStats, newStat];
+      }
+
       newUserData = {
         isFinished: true,
         totalCompleted: (userState.totalCompleted ?? 0) + completedCount,
@@ -173,8 +236,17 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
         currentStreak: newCurrentStreak,
         maxStreak: Math.max(userState.maxStreak, newCurrentStreak),
         lastLockedAt: userState.lockedAt,
+        historical_stats: updatedStats
       };
-    } else {
+    } else { // Action: Lock-In List
+      // If list is from yesterday, don't allow lock-in, force a reset
+      const isFromPreviousDay = userState.tasks.length > 0 && userState.tasks.some(t => !isSameDay(new Date(t.createdAt), new Date()));
+       if(isFromPreviousDay && !userState.lockedAt) {
+          updateFirestore({ tasks: [] });
+          if (!isAutoFinish) toast({ title: "New Day!", description: "Cleared yesterday's draft list."});
+          return;
+       }
+
       let currentStreak = userState.currentStreak;
       if (userState.lastLockedAt) {
         const timeSinceLastLock = now - userState.lastLockedAt;
@@ -245,12 +317,26 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     if (!isCurrentUserCard) return;
     const text = (e.currentTarget.elements.namedItem('task-input') as HTMLInputElement).value.trim();
     if (!text) return;
-    if (userState.isLocked) {
-      setTaskToAdd(text);
-      setShowLockWarning(true);
-    } else {
+
+    if (userState.isLocked && !userState.isFinished) {
+      // Allow adding tasks if locked but not finished and it's the same day
+      if (userState.lockedAt && isSameDay(new Date(userState.lockedAt), new Date())) {
+        setTaskToAdd(text);
+        setShowLockWarning(true);
+      } else {
+        toast({ title: "Day has ended", description: "You cannot add tasks to a finished or expired list.", variant: 'destructive'});
+      }
+    } else if (userState.isFinished) {
+        // Can add to a new list which will appear, but it can't be locked until next day
+        if (userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date())) {
+             addTask(text);
+        } else {
+            toast({ title: "List already finished", description: "You can start a new list after 12:00 AM.", variant: 'destructive'});
+        }
+    } else { // Not locked
       addTask(text);
     }
+
     (e.currentTarget.elements.namedItem('task-input') as HTMLInputElement).value = '';
   };
   
@@ -329,8 +415,16 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     cardTheme === 'cyan' ? 'border-[--theme-cyan-text]' :
     'border-[--theme-emerald-text]';
 
+  const canLock = !userState.isLocked || (userState.lockedAt && isSameDay(new Date(userState.lockedAt), new Date()));
 
   return (
+    <>
+    <PreviousListViewer
+        isOpen={showPreviousList}
+        onOpenChange={setShowPreviousList}
+        previousTasks={userState.previousTasks || []}
+        userName={userName}
+    />
     <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card pt-4 px-6 pb-6 rounded-2xl ${themeClass} ${cardBorderStyle} ${glowClass}`}>
       <AnimatePresence>
         {userState.isFinished && (
@@ -345,14 +439,14 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
           />
         )}
       </AnimatePresence>
-      <header className="flex justify-between items-center gap-2 pb-4 mb-4 border-b">
-        <div className="flex items-center gap-3 min-w-0">
+      <header className="flex justify-between items-center gap-2 pb-4 mb-4 border-b flex-wrap">
+        <div className="flex items-center gap-3 min-w-0 flex-shrink">
           <Avatar className={`h-8 w-8 border flex-shrink-0 ${avatarBorderStyle}`}>
             <AvatarImage src={userProfile?.photoURL || ''} alt={userName} />
             <AvatarFallback>{getInitials(userName)}</AvatarFallback>
           </Avatar>
           <div className="flex items-center gap-1 min-w-0 flex-shrink">
-            <h2 className={`text-xl sm:text-2xl font-bold truncate ${titleColor}`}>{userName}</h2>
+            <h2 className="text-xl sm:text-2xl font-bold overflow-hidden text-nowrap truncate">{userName}</h2>
             <div className="h-7 w-12 flex-shrink-0">
                 <StreakBadge
                     currentStreak={userState.currentStreak}
@@ -377,12 +471,12 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
           name="task-input"
           placeholder={isCurrentUserCard ? "Add a task..." : `This is ${userName}'s list`}
           className={`bg-white/80 border-slate-300 transition focus:border-transparent ${ringStyle}`}
-          disabled={userState.isFinished || !isCurrentUserCard}
+          disabled={userState.isFinished || !isCurrentUserCard || (userState.isLocked && userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date()))}
         />
         <Button
           type="submit"
           className={`text-white font-bold p-3 rounded-lg shadow-md transition transform hover:scale-105 ${addBtnStyle}`}
-          disabled={userState.isFinished || !isCurrentUserCard}
+          disabled={userState.isFinished || !isCurrentUserCard || (userState.isLocked && userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date()))}
           aria-label="Add task"
         >
           <Plus />
@@ -390,7 +484,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
       </form>
 
       <div className="flex-grow min-h-0">
-      <ScrollArea className="h-full task-list-container -mr-2 pr-2" style={{ scrollbarGutter: 'stable', touchAction: 'pan-y' }}>
+      <ScrollArea className="h-full pr-2">
           <TaskList
             tasks={userState.tasks}
             isLocked={userState.isLocked || userState.isFinished}
@@ -406,15 +500,27 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
         </ScrollArea>
       </div>
       
-      <div className="flex flex-col gap-2 mt-6 flex-shrink-0">
+      <div className="flex items-center gap-2 mt-6 flex-shrink-0">
          <Button
             onClick={isCurrentUserCard ? (undoState.active ? handleCancelUndo : triggerUndo) : undefined}
             className={`w-full font-semibold transition py-3 text-base h-auto text-white ${actionBtnStyle} ${ringStyle}`}
-            disabled={!isCurrentUserCard}
+            disabled={!isCurrentUserCard || !canLock && !userState.isFinished}
           >
             {getActionButtonIcon()}
             {getActionButtonText()}
           </Button>
+          {isCurrentUserCard && (
+            <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowPreviousList(true)}
+                className="text-slate-500 hover:bg-slate-200"
+                aria-label="View previous list"
+                disabled={!userState.previousTasks || userState.previousTasks.length === 0}
+            >
+                <History className="h-5 w-5"/>
+            </Button>
+          )}
       </div>
 
       <AlertDialog open={showLockWarning} onOpenChange={setShowLockWarning}>
@@ -439,5 +545,6 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
         </AlertDialogContent>
       </AlertDialog>
     </Card>
+    </>
   );
 }

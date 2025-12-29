@@ -63,6 +63,16 @@
       },
       "required": ["text"]
     },
+    "DailyStat": {
+      "title": "Daily Stat",
+      "description": "A record of total study hours for a single day.",
+      "type": "object",
+      "properties": {
+        "date": { "type": "string", "format": "date" },
+        "hours": { "type": "number" }
+      },
+      "required": ["date", "hours"]
+    },
     "TaskList": {
       "title": "User's Task List",
       "description": "The complete state for a single user's task list.",
@@ -77,7 +87,8 @@
         "currentStreak": { "type": "number" },
         "maxStreak": { "type": "number" },
         "lockedAt": { "type": "number", "description": "Timestamp or null" },
-        "lastLockedAt": { "type": "number", "description": "Timestamp or null" }
+        "lastLockedAt": { "type": "number", "description": "Timestamp or null" },
+        "historical_stats": { "type": "array", "items": { "$ref": "#/entities/DailyStat" } }
       }
     },
     "PairInvitation": {

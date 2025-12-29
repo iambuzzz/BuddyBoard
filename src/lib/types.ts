@@ -1,5 +1,4 @@
 
-
 // Represents a single task item for any user.
 export interface Task {
   id: string;
@@ -17,6 +16,12 @@ export interface PreviousTask {
   text: string;
 }
 
+// Represents a single entry for daily historical stats.
+export interface DailyStat {
+  date: string; // ISO string format: "YYYY-MM-DD"
+  hours: number; // Total hours spent on that day
+}
+
 // The complete state for a single user's task list.
 // This is the schema for documents in the `/task_lists/{userId}` collection.
 export interface UserState {
@@ -30,6 +35,7 @@ export interface UserState {
   maxStreak: number;
   lockedAt: number | null; // Timestamp when the list was locked
   lastLockedAt: number | null; // Timestamp of the previously locked list
+  historical_stats: DailyStat[]; // Array to store daily study stats
 }
 
 export type CardTheme = 'periwinkle' | 'cyan' | 'emerald';
@@ -109,5 +115,3 @@ export interface AppState {
   connectionStatus: 'connecting' | 'connected' | 'error';
   lastUpdater: LegacyUser | null;
 };
-
-    
