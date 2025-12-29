@@ -16,7 +16,7 @@ import {
   ResponsiveContainer,
   Brush,
 } from 'recharts';
-import { format, subDays, startOfDay, endOfDay, startOfWeek, startOfMonth, startOfYear, endOfYear, parseISO, subMonths, subYears } from 'date-fns';
+import { format, subDays, startOfDay, parseISO, startOfYear, subMonths } from 'date-fns';
 
 import { useFirestore } from '@/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
@@ -27,6 +27,28 @@ import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 type ViewRange = '7D' | '1M' | '3M' | 'YTD' | 'ALL';
+
+
+const formatYAxis = (value: number) => {
+    if (value === 0) return '0m';
+    const hours = Math.floor(value);
+    const minutes = Math.round((value - hours) * 60);
+    if (hours > 0) {
+        return `${hours}h`;
+    }
+    return `${minutes}m`;
+};
+
+const formatTooltip = (value: number) => {
+    const hours = Math.floor(value);
+    const minutes = Math.floor((value - hours) * 60);
+    const parts = [];
+    if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
+    if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
+    if (parts.length === 0) return '0 minutes';
+    return parts.join(' ');
+};
+
 
 export default function StatsPage() {
   const params = useParams();
@@ -79,10 +101,9 @@ export default function StatsPage() {
     if (sorted.length < 2) return sorted;
 
     const filledStats: DailyStat[] = [];
-    const firstDate = parseISO(sorted[0].date);
-    const lastDate = parseISO(sorted[sorted.length - 1].date);
+    let currentDate = parseISO(sorted[0].date);
+    const lastDate = new Date(); // Go up to today
     
-    let currentDate = firstDate;
     let statIndex = 0;
 
     while(currentDate <= lastDate) {
@@ -155,7 +176,13 @@ export default function StatsPage() {
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={50} interval="preserveStartEnd"/>
-          <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} label={{ value: 'Hours', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }} />
+          <YAxis 
+            stroke="hsl(var(--muted-foreground))" 
+            tick={{ fontSize: 12 }} 
+            label={{ value: 'Hours', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
+            tickFormatter={formatYAxis}
+            domain={[0, 'dataMax']}
+            />
           <Tooltip
             contentStyle={{
               background: 'hsl(var(--background))',
@@ -163,7 +190,7 @@ export default function StatsPage() {
               borderRadius: 'var(--radius)',
             }}
             labelStyle={{ color: 'hsl(var(--foreground))' }}
-             formatter={(value: number) => [`${value.toFixed(2)} hours`, 'Study Time']}
+             formatter={(value: number) => [formatTooltip(value), 'Study Time']}
           />
           <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }}/>
           <DataComponent dataKey="hours" fill="hsl(var(--primary))" stroke="hsl(var(--primary))" name="Study Hours" />
