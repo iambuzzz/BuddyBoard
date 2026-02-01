@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -154,8 +153,8 @@ export default function StatsPage() {
 
   const themeStyle = useMemo(() => {
     const defaultStyles = {
-        '--primary': '302 59% 75%',
-        '--accent': '256 75% 93%',
+        '--primary': '256 92% 76%',
+        '--accent': '256 92% 96%',
     };
 
     if (!userProfile?.cardTheme) return defaultStyles as React.CSSProperties;
@@ -245,17 +244,17 @@ export default function StatsPage() {
   ]
   
   return (
-    <div className="h-screen w-full flex flex-col bg-[#e3eeff] p-4 sm:p-6" style={themeStyle}>
+    <div className="h-screen w-full flex flex-col bg-[#e3eeff] p-2 sm:p-4" style={themeStyle}>
         <div className="flex-shrink-0 w-full max-w-6xl mx-auto">
             <Button variant="ghost" onClick={() => router.back()} className="">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
             </Button>
         </div>
-        <div className="flex-grow w-full max-w-6xl mx-auto flex items-center justify-center min-h-0 py-4">
+        <div className="flex-grow w-full max-w-6xl mx-auto flex items-center justify-center min-h-0 py-2">
             <Card className="w-full h-full flex flex-col">
-                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-4 sm:p-6">
                     <div>
-                        <CardTitle className="text-3xl">
+                        <CardTitle className="text-2xl sm:text-3xl">
                             {userProfile ? `${userProfile.displayName}'s Stats` : 'User Stats'}
                         </CardTitle>
                         <CardDescription>Study time analysis.</CardDescription>
@@ -277,8 +276,8 @@ export default function StatsPage() {
                         </ToggleGroup>
                     </div>
                 </CardHeader>
-                <CardContent className="flex-grow flex flex-col">
-                    <div className="flex justify-center mb-4 flex-shrink-0">
+                <CardContent className="flex-grow flex flex-col min-h-0 pt-0 p-4 sm:p-6">
+                    <div className="flex justify-center mb-2 flex-shrink-0">
                         <ToggleGroup 
                             type="single" 
                             defaultValue={viewRange}
