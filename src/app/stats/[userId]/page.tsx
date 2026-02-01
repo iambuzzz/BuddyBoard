@@ -153,24 +153,31 @@ export default function StatsPage() {
   }, [allTimeStats, viewRange]);
 
   const themeStyle = useMemo(() => {
-    if (!userProfile?.cardTheme) return {};
+    const defaultStyles = {
+        '--primary': '302 59% 75%',
+        '--accent': '256 75% 93%',
+    };
+
+    if (!userProfile?.cardTheme) return defaultStyles as React.CSSProperties;
 
     switch (userProfile.cardTheme) {
-      case 'periwinkle':
-        // Defaults are already periwinkle-ish in globals.css
-        return {};
-      case 'cyan':
-        return {
-          '--primary': '187 85% 53%',
-          '--accent': '187 85% 93%',
-        } as React.CSSProperties;
-      case 'emerald':
-        return {
-          '--primary': '158 64% 52%',
-          '--accent': '158 64% 93%',
-        } as React.CSSProperties;
-      default:
-        return {};
+        case 'periwinkle':
+            return {
+                '--primary': '256 92% 76%',
+                '--accent': '256 92% 96%',
+            } as React.CSSProperties;
+        case 'cyan':
+            return {
+                '--primary': '187 85% 53%',
+                '--accent': '187 85% 96%',
+            } as React.CSSProperties;
+        case 'emerald':
+            return {
+                '--primary': '158 64% 52%',
+                '--accent': '158 64% 96%',
+            } as React.CSSProperties;
+        default:
+            return defaultStyles as React.CSSProperties;
     }
   }, [userProfile?.cardTheme]);
 
