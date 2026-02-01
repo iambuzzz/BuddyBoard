@@ -97,8 +97,7 @@ export default function StatsPage() {
     
     const sorted = [...userState.historical_stats].sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
 
-    // Fill in missing dates with 0 hours
-    if (sorted.length < 2) return sorted;
+    if (sorted.length === 0) return [];
 
     const filledStats: DailyStat[] = [];
     let currentDate = parseISO(sorted[0].date);
@@ -156,11 +155,9 @@ export default function StatsPage() {
   }, [filteredData]);
 
 
-  const hasData = filteredData.some(stat => stat.hours > 0);
-
   const renderChart = () => {
-    if (!hasData) {
-        return <div className="flex items-center justify-center h-full text-slate-500">No study data recorded for this period.</div>
+    if (filteredData.length === 0) {
+        return <div className="flex items-center justify-center h-[400px] text-slate-500">No study data recorded for this period.</div>
     }
 
     const ChartComponent = chartType === 'bar' ? BarChart : LineChart;
@@ -194,14 +191,16 @@ export default function StatsPage() {
           />
           <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }}/>
           <DataComponent dataKey="hours" fill="hsl(var(--primary))" stroke="hsl(var(--primary))" name="Study Hours" />
-          <Brush 
-            dataKey="date" 
-            height={30} 
-            stroke="hsl(var(--primary))"
-            startIndex={brushDomain ? brushDomain[0] : undefined}
-            endIndex={brushDomain ? brushDomain[1] : undefined}
-            y={330}
-          />
+          {filteredData.length > 30 && (
+            <Brush 
+              dataKey="date" 
+              height={30} 
+              stroke="hsl(var(--primary))"
+              startIndex={brushDomain ? brushDomain[0] : undefined}
+              endIndex={brushDomain ? brushDomain[1] : undefined}
+              y={330}
+            />
+          )}
         </ChartComponent>
       </ResponsiveContainer>
     );
