@@ -22,7 +22,7 @@ import { useFirestore } from '@/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, ArrowLeft, BarChart2, LineChartIcon } from 'lucide-react';
-import { UserProfile, UserState, DailyStat } from '@/lib/types';
+import { UserProfile, UserState, DailyStat, CardTheme } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
@@ -152,6 +152,28 @@ export default function StatsPage() {
 
   }, [allTimeStats, viewRange]);
 
+  const themeStyle = useMemo(() => {
+    if (!userProfile?.cardTheme) return {};
+
+    switch (userProfile.cardTheme) {
+      case 'periwinkle':
+        // Defaults are already periwinkle-ish in globals.css
+        return {};
+      case 'cyan':
+        return {
+          '--primary': '187 85% 53%',
+          '--accent': '187 85% 93%',
+        } as React.CSSProperties;
+      case 'emerald':
+        return {
+          '--primary': '158 64% 52%',
+          '--accent': '158 64% 93%',
+        } as React.CSSProperties;
+      default:
+        return {};
+    }
+  }, [userProfile?.cardTheme]);
+
 
   const renderChart = () => {
     if (filteredData.length === 0) {
@@ -217,7 +239,7 @@ export default function StatsPage() {
   ]
   
   return (
-    <div className="min-h-screen w-full flex flex-col items-center bg-[#e3eeff] p-4 pb-12">
+    <div className="min-h-screen w-full flex flex-col items-center bg-[#e3eeff] p-4 pb-12" style={themeStyle}>
       <div className="w-full max-w-4xl">
          <Button variant="ghost" onClick={() => router.back()} className="mb-4">
             <ArrowLeft className="mr-2 h-4 w-4" /> Back
