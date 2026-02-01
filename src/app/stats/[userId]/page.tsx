@@ -62,8 +62,6 @@ export default function StatsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
   const [viewRange, setViewRange] = useState<ViewRange>('1M');
-  const [brushDomain, setBrushDomain] = useState<[number, number] | undefined>(undefined);
-
 
   useEffect(() => {
     if (!firestore || !userId) return;
@@ -120,39 +118,39 @@ export default function StatsPage() {
 
   }, [userState?.historical_stats]);
 
-  const filteredData = useMemo(() => {
+  const { filteredData, brushDomain } = useMemo(() => {
     const now = new Date();
-    if (!allTimeStats.length) return [];
+    if (!allTimeStats.length) {
+      return { filteredData: [], brushDomain: undefined };
+    }
 
-    let startDate: Date;
+    let data;
     switch(viewRange) {
         case '7D':
-            startDate = subDays(now, 6);
+            data = allTimeStats.filter(stat => parseISO(stat.date) >= startOfDay(subDays(now, 6)));
             break;
         case '1M':
-            startDate = subDays(now, 29);
+            data = allTimeStats.filter(stat => parseISO(stat.date) >= startOfDay(subDays(now, 29)));
             break;
         case '3M':
-            startDate = subMonths(now, 3);
+            data = allTimeStats.filter(stat => parseISO(stat.date) >= startOfDay(subMonths(now, 3)));
             break;
         case 'YTD':
-            startDate = startOfYear(now);
+            data = allTimeStats.filter(stat => parseISO(stat.date) >= startOfYear(now));
             break;
         case 'ALL':
-            return allTimeStats;
+        default:
+            data = allTimeStats;
+            break;
     }
     
-    return allTimeStats.filter(stat => parseISO(stat.date) >= startOfDay(startDate));
+    let domain: [number, number] | undefined = undefined;
+    if (data.length > 30) {
+      domain = [data.length - 30, data.length - 1];
+    }
+    return { filteredData: data, brushDomain: domain };
 
   }, [allTimeStats, viewRange]);
-  
-  useEffect(() => {
-    if (filteredData.length > 30) {
-        setBrushDomain([filteredData.length - 30, filteredData.length - 1]);
-    } else {
-        setBrushDomain(undefined);
-    }
-  }, [filteredData]);
 
 
   const renderChart = () => {
