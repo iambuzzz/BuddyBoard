@@ -446,7 +446,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
             <AvatarFallback>{getInitials(userName)}</AvatarFallback>
           </Avatar>
           <div className="flex items-center gap-1 min-w-0 flex-shrink">
-            <h2 className="text-xl sm:text-2xl font-bold overflow-hidden text-nowrap truncate">{userName}</h2>
+            <h2 className={`text-xl sm:text-2xl font-bold overflow-hidden text-nowrap truncate ${titleColor}`}>{userName}</h2>
             <div className="h-7 w-12 flex-shrink-0">
                 <StreakBadge
                     currentStreak={userState.currentStreak}
@@ -509,18 +509,6 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
             {getActionButtonIcon()}
             {getActionButtonText()}
           </Button>
-          {isCurrentUserCard && (
-            <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setShowPreviousList(true)}
-                className="text-slate-500 hover:bg-slate-200"
-                aria-label="View previous list"
-                disabled={!userState.previousTasks || userState.previousTasks.length === 0}
-            >
-                <History className="h-5 w-5"/>
-            </Button>
-          )}
       </div>
 
       <AlertDialog open={showLockWarning} onOpenChange={setShowLockWarning}>
