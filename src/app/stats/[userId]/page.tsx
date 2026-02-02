@@ -344,22 +344,9 @@ export default function StatsPage() {
     );
 
     return (
-        <div className="flex h-full flex-col">
-            <div className="flex-grow">
-                <ResponsiveContainer width="100%" height="100%">
-                    {chart}
-                </ResponsiveContainer>
-            </div>
-            <div className="flex w-full items-center justify-center pt-2">
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span
-                        className="h-3 w-3 rounded-sm"
-                        style={{ backgroundColor: 'hsl(var(--primary))' }}
-                    />
-                    <span>Study Hours</span>
-                </div>
-            </div>
-        </div>
+        <ResponsiveContainer width="100%" height="100%">
+            {chart}
+        </ResponsiveContainer>
     );
 };
   
@@ -376,59 +363,70 @@ export default function StatsPage() {
   ]
   
   return (
-    <div className="min-h-screen w-full flex flex-col bg-[#e3eeff] p-2 sm:p-4" style={themeStyle}>
-        <div className="flex-shrink-0 w-full max-w-6xl mx-auto">
-            <Button variant="ghost" onClick={() => router.back()} className="">
-                <ArrowLeft className="mr-2 h-4 w-4" /> Back
-            </Button>
-        </div>
-        <div className="flex-grow w-full max-w-6xl mx-auto flex items-center justify-center min-h-0 py-2">
-            <Card className="w-full h-full flex flex-col">
-                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-6 pb-0">
-                    <div>
-                        <CardTitle className="text-2xl sm:text-3xl">
-                            {userProfile ? `${userProfile.displayName}'s Stats` : 'User Stats'}
-                        </CardTitle>
-                        <CardDescription>Study time analysis.</CardDescription>
-                    </div>
-                    <div className='flex items-center gap-2'>
-                        <ToggleGroup 
-                            type="single" 
-                            defaultValue={chartType}
-                            aria-label="Chart Type"
-                            onValueChange={(value: 'bar' | 'line') => value && setChartType(value)}
-                            className='bg-background border rounded-md'
-                        >
-                            <ToggleGroupItem value="bar" aria-label="Bar chart">
-                                <BarChart2 className="h-5 w-5" />
-                            </ToggleGroupItem>
-                            <ToggleGroupItem value="line" aria-label="Line chart">
-                                <LineChartIcon className="h-5 w-5" />
-                            </ToggleGroupItem>
-                        </ToggleGroup>
-                    </div>
-                </CardHeader>
-                <CardContent className="flex-grow flex flex-col min-h-0 pt-0 p-4 sm:p-6">
-                    <div className="flex justify-center mb-2 flex-shrink-0">
-                        <ToggleGroup 
-                            type="single" 
-                            defaultValue={viewRange}
-                            aria-label="View Range"
-                            onValueChange={(value: ViewRange) => value && setViewRange(value)}
-                            className='bg-background border rounded-md'
-                        >
-                            {viewRangeButtons.map(item => (
-                                <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label} className="px-3">
-                                    {item.label}
+    <div className="min-h-screen w-full bg-[#e3eeff] p-2 sm:p-4" style={themeStyle}>
+        <div className="w-full max-w-6xl mx-auto">
+            <div className='flex-shrink-0'>
+                <Button variant="ghost" onClick={() => router.back()} className="">
+                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
+                </Button>
+            </div>
+            <div className="py-2">
+                <Card className="w-full">
+                    <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-6 pb-0">
+                        <div>
+                            <CardTitle className="text-2xl sm:text-3xl">
+                                {userProfile ? `${userProfile.displayName}'s Stats` : 'User Stats'}
+                            </CardTitle>
+                            <CardDescription>Study time analysis.</CardDescription>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                            <ToggleGroup 
+                                type="single" 
+                                defaultValue={chartType}
+                                aria-label="Chart Type"
+                                onValueChange={(value: 'bar' | 'line') => value && setChartType(value)}
+                                className='bg-background border rounded-md'
+                            >
+                                <ToggleGroupItem value="bar" aria-label="Bar chart">
+                                    <BarChart2 className="h-5 w-5" />
                                 </ToggleGroupItem>
-                            ))}
-                        </ToggleGroup>
-                    </div>
-                    <div className="flex-grow min-h-0" style={{ minHeight: '450px' }}>
-                        {renderChart()}
-                    </div>
-                </CardContent>
-            </Card>
+                                <ToggleGroupItem value="line" aria-label="Line chart">
+                                    <LineChartIcon className="h-5 w-5" />
+                                </ToggleGroupItem>
+                            </ToggleGroup>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-4 sm:p-6 pt-4">
+                        <div className="flex justify-center mb-2">
+                            <ToggleGroup 
+                                type="single" 
+                                defaultValue={viewRange}
+                                aria-label="View Range"
+                                onValueChange={(value: ViewRange) => value && setViewRange(value)}
+                                className='bg-background border rounded-md'
+                            >
+                                {viewRangeButtons.map(item => (
+                                    <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label} className="px-3">
+                                        {item.label}
+                                    </ToggleGroupItem>
+                                ))}
+                            </ToggleGroup>
+                        </div>
+                        <div className="h-[450px]">
+                            {renderChart()}
+                        </div>
+                        <div className="flex w-full items-center justify-center pt-2">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <span
+                                    className="h-3 w-3 rounded-sm"
+                                    style={{ backgroundColor: 'hsl(var(--primary))' }}
+                                />
+                                <span>Study Hours</span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         </div>
     </div>
   )
