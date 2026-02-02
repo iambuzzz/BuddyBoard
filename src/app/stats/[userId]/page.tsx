@@ -3,10 +3,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
-  Line,
-  LineChart,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -183,29 +183,128 @@ export default function StatsPage() {
 
   const renderChart = () => {
     if (filteredData.length === 0) {
-        return <div className="flex items-center justify-center h-full text-slate-500">No study data recorded for this period.</div>
+      return (
+        <div className="flex h-full items-center justify-center text-slate-500">
+          No study data recorded for this period.
+        </div>
+      );
     }
 
-    const ChartComponent = chartType === 'bar' ? BarChart : LineChart;
-    const DataComponent = chartType === 'bar' ? Bar : Line;
+    const formattedData = filteredData.map((d) => ({
+      ...d,
+      date: format(parseISO(d.date), 'MMM d'),
+    }));
 
-    const formattedData = filteredData.map(d => ({...d, date: format(parseISO(d.date), 'MMM d')}));
+    if (chartType === 'line') {
+      return (
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart
+            data={formattedData}
+            margin={{ top: 5, right: 30, left: 0, bottom: 50 }}
+          >
+            <defs>
+              <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="hsl(var(--primary))"
+                  stopOpacity={0.4}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="hsl(var(--primary))"
+                  stopOpacity={0.1}
+                />
+              </linearGradient>
+            </defs>
+            <CartesianGrid
+              strokeDasharray="3 3"
+              stroke="hsl(var(--border))"
+            />
+            <XAxis
+              dataKey="date"
+              stroke="hsl(var(--muted-foreground))"
+              tick={{ fontSize: 12 }}
+              angle={-45}
+              textAnchor="end"
+              height={50}
+              interval="preserveStartEnd"
+            />
+            <YAxis
+              stroke="hsl(var(--muted-foreground))"
+              tick={{ fontSize: 12 }}
+              label={{
+                value: 'Hours',
+                angle: -90,
+                position: 'insideLeft',
+                fill: 'hsl(var(--muted-foreground))',
+              }}
+              tickFormatter={formatYAxis}
+              domain={[0, 'dataMax']}
+            />
+            <Tooltip
+              contentStyle={{
+                background: 'hsl(var(--background))',
+                borderColor: 'hsl(var(--border))',
+                borderRadius: 'var(--radius)',
+              }}
+              labelStyle={{ color: 'hsl(var(--foreground))' }}
+              formatter={(value: number) => [formatTooltip(value), 'Study Time']}
+            />
+            <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
+            <Area
+              type="monotone"
+              dataKey="hours"
+              name="Study Hours"
+              stroke="hsl(var(--primary))"
+              strokeWidth={3}
+              fillOpacity={1}
+              fill="url(#colorHours)"
+            />
+            {filteredData.length > 30 && (
+              <Brush
+                dataKey="date"
+                height={30}
+                stroke="hsl(var(--primary))"
+                startIndex={brushDomain ? brushDomain[0] : undefined}
+                endIndex={brushDomain ? brushDomain[1] : undefined}
+              />
+            )}
+          </AreaChart>
+        </ResponsiveContainer>
+      );
+    }
 
     return (
       <ResponsiveContainer width="100%" height="100%">
-        <ChartComponent 
-            data={formattedData} 
-            margin={{ top: 5, right: 30, left: 0, bottom: 50 }}
+        <BarChart
+          data={formattedData}
+          margin={{ top: 5, right: 30, left: 0, bottom: 50 }}
         >
-          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-          <XAxis dataKey="date" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 12 }} angle={-45} textAnchor="end" height={50} interval="preserveStartEnd"/>
-          <YAxis 
-            stroke="hsl(var(--muted-foreground))" 
-            tick={{ fontSize: 12 }} 
-            label={{ value: 'Hours', angle: -90, position: 'insideLeft', fill: 'hsl(var(--muted-foreground))' }}
+          <CartesianGrid
+            strokeDasharray="3 3"
+            stroke="hsl(var(--border))"
+          />
+          <XAxis
+            dataKey="date"
+            stroke="hsl(var(--muted-foreground))"
+            tick={{ fontSize: 12 }}
+            angle={-45}
+            textAnchor="end"
+            height={50}
+            interval="preserveStartEnd"
+          />
+          <YAxis
+            stroke="hsl(var(--muted-foreground))"
+            tick={{ fontSize: 12 }}
+            label={{
+              value: 'Hours',
+              angle: -90,
+              position: 'insideLeft',
+              fill: 'hsl(var(--muted-foreground))',
+            }}
             tickFormatter={formatYAxis}
             domain={[0, 'dataMax']}
-            />
+          />
           <Tooltip
             contentStyle={{
               background: 'hsl(var(--background))',
@@ -213,20 +312,24 @@ export default function StatsPage() {
               borderRadius: 'var(--radius)',
             }}
             labelStyle={{ color: 'hsl(var(--foreground))' }}
-             formatter={(value: number) => [formatTooltip(value), 'Study Time']}
+            formatter={(value: number) => [formatTooltip(value), 'Study Time']}
           />
-          <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }}/>
-          <DataComponent dataKey="hours" fill="hsl(var(--primary))" stroke="hsl(var(--primary))" name="Study Hours" />
+          <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
+          <Bar
+            dataKey="hours"
+            fill="hsl(var(--primary))"
+            name="Study Hours"
+          />
           {filteredData.length > 30 && (
-            <Brush 
-              dataKey="date" 
-              height={30} 
+            <Brush
+              dataKey="date"
+              height={30}
               stroke="hsl(var(--primary))"
               startIndex={brushDomain ? brushDomain[0] : undefined}
               endIndex={brushDomain ? brushDomain[1] : undefined}
             />
           )}
-        </ChartComponent>
+        </BarChart>
       </ResponsiveContainer>
     );
   };
