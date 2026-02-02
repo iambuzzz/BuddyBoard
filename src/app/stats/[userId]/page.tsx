@@ -363,15 +363,15 @@ export default function StatsPage() {
   ]
   
   return (
-    <div className="min-h-screen w-full bg-[#e3eeff] p-2 sm:p-4" style={themeStyle}>
-        <div className="w-full max-w-6xl mx-auto">
+    <div className="h-screen w-full flex flex-col bg-[#e3eeff] p-2 sm:p-4" style={themeStyle}>
+        <div className="w-full max-w-6xl mx-auto flex flex-col flex-grow">
             <div className='flex-shrink-0'>
                 <Button variant="ghost" onClick={() => router.back()} className="">
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
             </div>
-            <div className="py-2">
-                <Card className="w-full">
+            <div className="py-2 flex flex-col flex-grow">
+                <Card className="w-full flex flex-col flex-grow">
                     <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-6 pb-0">
                         <div>
                             <CardTitle className="text-2xl sm:text-3xl">
@@ -396,7 +396,7 @@ export default function StatsPage() {
                             </ToggleGroup>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-6 pt-4">
+                    <CardContent className="p-4 sm:p-6 pt-4 flex flex-col flex-grow">
                         <div className="flex justify-center mb-2">
                             <ToggleGroup 
                                 type="single" 
@@ -412,7 +412,7 @@ export default function StatsPage() {
                                 ))}
                             </ToggleGroup>
                         </div>
-                        <div className="h-[450px]">
+                        <div className="flex-grow min-h-0">
                             {renderChart()}
                         </div>
                         <div className="flex w-full items-center justify-center pt-2">
