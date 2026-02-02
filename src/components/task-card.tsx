@@ -217,7 +217,6 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
         historical_stats: updatedStats
       };
     } else { // Action: Lock-In List
-      // If list is from yesterday, don't allow lock-in, force a reset
       const isFromPreviousDay = userState.tasks.length > 0 && userState.tasks.some(t => !isSameDay(new Date(t.createdAt), new Date()));
        if(isFromPreviousDay && !userState.lockedAt) {
           updateFirestore({ tasks: [] });
@@ -395,8 +394,6 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     cardTheme === 'cyan' ? 'border-[--theme-cyan-text]' :
     'border-[--theme-emerald-text]';
 
-  const canLock = !userState.isLocked || (userState.lockedAt && isSameDay(new Date(userState.lockedAt), new Date()));
-
   return (
     <>
     <PreviousListViewer
@@ -485,7 +482,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
          <Button
             onClick={isCurrentUserCard ? (undoState.active ? handleCancelUndo : triggerUndo) : undefined}
             className={`w-full font-semibold transition py-3 text-base h-auto text-white ${actionBtnStyle} ${ringStyle}`}
-            disabled={!isCurrentUserCard || !canLock && !userState.isFinished}
+            disabled={!isCurrentUserCard}
           >
             {getActionButtonIcon()}
             {getActionButtonText()}
