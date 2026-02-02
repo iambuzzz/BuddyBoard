@@ -214,7 +214,7 @@ export default function StatsPage() {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={formattedData}
-            margin={{ top: 5, right: 20, left: -20, bottom: 50 }}
+            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
           >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
@@ -254,7 +254,7 @@ export default function StatsPage() {
               cursor={{ stroke: 'hsl(var(--primary))' }}
               content={<CustomTooltip />}
             />
-            <Legend align="center" wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
+            <Legend verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: '20px' }} />
             <Area
               type="monotone"
               dataKey="hours"
@@ -282,7 +282,7 @@ export default function StatsPage() {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={formattedData}
-          margin={{ top: 5, right: 20, left: -20, bottom: 50 }}
+          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
@@ -308,7 +308,7 @@ export default function StatsPage() {
             cursor={{ fill: 'hsl(var(--accent))' }}
             content={<CustomTooltip />}
           />
-          <Legend align="center" wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
+          <Legend verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: '20px' }} />
           <Bar
             dataKey="hours"
             fill="hsl(var(--primary))"
