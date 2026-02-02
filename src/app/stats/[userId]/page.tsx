@@ -42,11 +42,25 @@ const formatTooltip = (value: number) => {
     const hours = Math.floor(value);
     const minutes = Math.floor((value - hours) * 60);
     const parts = [];
-    if (hours > 0) parts.push(`${hours} hour${hours > 1 ? 's' : ''}`);
-    if (minutes > 0) parts.push(`${minutes} minute${minutes > 1 ? 's' : ''}`);
-    if (parts.length === 0) return '0 minutes';
+    if (hours > 0) parts.push(`${hours} hrs`);
+    if (minutes > 0) parts.push(`${minutes} min`);
+    if (parts.length === 0) return '0 min';
     return parts.join(' ');
 };
+
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      const value = payload[0].value;
+      const formattedValue = formatTooltip(value);
+      return (
+        <div className="bg-background border border-border shadow-lg rounded-lg p-2 px-3 text-sm">
+          <p className="font-bold mb-1">{label}</p>
+          <p className='font-semibold text-foreground'>{formattedValue}</p>
+        </div>
+      );
+    }
+    return null;
+  };
 
 
 export default function StatsPage() {
@@ -238,13 +252,7 @@ export default function StatsPage() {
             <Tooltip
               isAnimationActive={false}
               cursor={{ stroke: 'hsl(var(--primary))' }}
-              contentStyle={{
-                background: 'hsl(var(--background))',
-                borderColor: 'hsl(var(--border))',
-                borderRadius: 'var(--radius)',
-              }}
-              labelStyle={{ color: 'hsl(var(--foreground))' }}
-              formatter={(value: number) => [formatTooltip(value), 'Study Time']}
+              content={<CustomTooltip />}
             />
             <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
             <Area
@@ -298,13 +306,7 @@ export default function StatsPage() {
           <Tooltip
             isAnimationActive={false}
             cursor={{ fill: 'hsl(var(--accent))' }}
-            contentStyle={{
-              background: 'hsl(var(--background))',
-              borderColor: 'hsl(var(--border))',
-              borderRadius: 'var(--radius)',
-            }}
-            labelStyle={{ color: 'hsl(var(--foreground))' }}
-            formatter={(value: number) => [formatTooltip(value), 'Study Time']}
+            content={<CustomTooltip />}
           />
           <Legend wrapperStyle={{ color: 'hsl(var(--foreground))' }} />
           <Bar
