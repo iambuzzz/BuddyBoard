@@ -232,12 +232,6 @@ export default function StatsPage() {
             <YAxis
               stroke="hsl(var(--muted-foreground))"
               tick={{ fontSize: 12 }}
-              label={{
-                value: 'Hours',
-                angle: -90,
-                position: 'insideLeft',
-                fill: 'hsl(var(--muted-foreground))',
-              }}
               tickFormatter={formatYAxis}
               domain={[0, 'dataMax']}
             />
@@ -298,12 +292,6 @@ export default function StatsPage() {
           <YAxis
             stroke="hsl(var(--muted-foreground))"
             tick={{ fontSize: 12 }}
-            label={{
-              value: 'Hours',
-              angle: -90,
-              position: 'insideLeft',
-              fill: 'hsl(var(--muted-foreground))',
-            }}
             tickFormatter={formatYAxis}
             domain={[0, 'dataMax']}
           />
