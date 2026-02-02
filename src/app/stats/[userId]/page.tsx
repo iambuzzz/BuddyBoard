@@ -32,6 +32,9 @@ const formatYAxis = (value: number) => {
     if (value === 0) return '0m';
     const hours = Math.floor(value);
     const minutes = Math.round((value - hours) * 60);
+    if (hours > 0 && hours === value) {
+        return `${hours}h`;
+    }
     if (hours > 0) {
         return `${hours}h`;
     }
@@ -131,10 +134,10 @@ export default function StatsPage() {
 
   }, [userState?.historical_stats]);
 
-  const { filteredData, brushDomain } = useMemo(() => {
+  const { filteredData, brushDomain, yAxisMax } = useMemo(() => {
     const now = new Date();
     if (!allTimeStats.length) {
-      return { filteredData: [], brushDomain: undefined };
+      return { filteredData: [], brushDomain: undefined, yAxisMax: 1 };
     }
 
     let data;
@@ -161,9 +164,18 @@ export default function StatsPage() {
     if (data.length > 30) {
       domain = [data.length - 30, data.length - 1];
     }
-    return { filteredData: data, brushDomain: domain };
+    
+    const calculatedMax = data.length > 0 ? Math.max(...data.map(d => d.hours)) : 0;
+    const yAxisDomainMax = Math.ceil(Math.max(calculatedMax, 1)); 
+
+    return { filteredData: data, brushDomain: domain, yAxisMax: yAxisDomainMax };
 
   }, [allTimeStats, viewRange]);
+
+  const yAxisTicks = useMemo(() => {
+    if (yAxisMax < 1) return [0, 1];
+    return Array.from({ length: yAxisMax + 1 }, (_, i) => i);
+  }, [yAxisMax]);
 
   const themeStyle = useMemo(() => {
     const defaultStyles = {
@@ -212,7 +224,7 @@ export default function StatsPage() {
     (
         <AreaChart
             data={formattedData}
-            margin={{ top: 10, right: 10, left: -10, bottom: 5 }}
+            margin={{ top: 10, right: 20, left: -10, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
@@ -245,7 +257,8 @@ export default function StatsPage() {
               stroke="hsl(var(--muted-foreground))"
               tick={{ fontSize: 12 }}
               tickFormatter={formatYAxis}
-              domain={[0, 'dataMax']}
+              domain={[0, yAxisMax]}
+              ticks={yAxisTicks}
             />
             <Tooltip
               isAnimationActive={false}
@@ -274,7 +287,7 @@ export default function StatsPage() {
     ) : (
         <BarChart
           data={formattedData}
-          margin={{ top: 10, right: 10, left: -10, bottom: 5 }}
+          margin={{ top: 10, right: 20, left: -10, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHoursBar" x1="0" y1="0" x2="0" y2="1">
@@ -307,7 +320,8 @@ export default function StatsPage() {
             stroke="hsl(var(--muted-foreground))"
             tick={{ fontSize: 12 }}
             tickFormatter={formatYAxis}
-            domain={[0, 'dataMax']}
+            domain={[0, yAxisMax]}
+            ticks={yAxisTicks}
           />
           <Tooltip
             isAnimationActive={false}
