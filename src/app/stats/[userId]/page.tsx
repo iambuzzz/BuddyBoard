@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -193,6 +194,18 @@ export default function StatsPage() {
             return defaultStyles as React.CSSProperties;
     }
   }, [userProfile?.cardTheme]);
+  
+  const renderLegend = () => (
+    <div className="flex w-full items-center justify-center pt-4">
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <span
+          className="h-3 w-3 rounded-sm"
+          style={{ backgroundColor: 'hsl(var(--primary))' }}
+        />
+        <span>Study Hours</span>
+      </div>
+    </div>
+  );
 
 
   const renderChart = () => {
@@ -214,7 +227,7 @@ export default function StatsPage() {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart
             data={formattedData}
-            margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+            margin={{ top: 10, right: 30, left: -10, bottom: 5 }}
           >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
@@ -254,7 +267,7 @@ export default function StatsPage() {
               cursor={{ stroke: 'hsl(var(--primary))' }}
               content={<CustomTooltip />}
             />
-            <Legend verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: '20px' }} />
+            <Legend verticalAlign="bottom" content={renderLegend} />
             <Area
               type="monotone"
               dataKey="hours"
@@ -282,7 +295,7 @@ export default function StatsPage() {
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
           data={formattedData}
-          margin={{ top: 10, right: 30, left: 0, bottom: 0 }}
+          margin={{ top: 10, right: 30, left: -10, bottom: 5 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
@@ -308,7 +321,7 @@ export default function StatsPage() {
             cursor={{ fill: 'hsl(var(--accent))' }}
             content={<CustomTooltip />}
           />
-          <Legend verticalAlign="bottom" align="center" wrapperStyle={{ paddingTop: '20px' }} />
+          <Legend verticalAlign="bottom" content={renderLegend} />
           <Bar
             dataKey="hours"
             fill="hsl(var(--primary))"
