@@ -384,7 +384,7 @@ export default function StatsPage() {
         </div>
         <div className="flex-grow w-full max-w-6xl mx-auto flex items-center justify-center min-h-0 py-2">
             <Card className="w-full h-full flex flex-col">
-                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-6">
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-6 pb-0">
                     <div>
                         <CardTitle className="text-2xl sm:text-3xl">
                             {userProfile ? `${userProfile.displayName}'s Stats` : 'User Stats'}
