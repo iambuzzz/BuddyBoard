@@ -74,7 +74,7 @@ export default function StatsPage() {
   const [userState, setUserState] = useState<UserState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [chartType, setChartType] = useState<'bar' | 'line'>('line');
-  const [viewRange, setViewRange] = useState<ViewRange>('1M');
+  const [viewRange, setViewRange] = useState<ViewRange>('7D');
 
   useEffect(() => {
     if (!firestore || !userId) return;
