@@ -12,7 +12,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   Brush,
 } from 'recharts';
@@ -194,19 +193,6 @@ export default function StatsPage() {
             return defaultStyles as React.CSSProperties;
     }
   }, [userProfile?.cardTheme]);
-  
-  const renderLegend = () => (
-    <div className="flex w-full items-center justify-center pt-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span
-          className="h-3 w-3 rounded-sm"
-          style={{ backgroundColor: 'hsl(var(--primary))' }}
-        />
-        <span>Study Hours</span>
-      </div>
-    </div>
-  );
-
 
   const renderChart = () => {
     if (filteredData.length === 0) {
@@ -222,13 +208,12 @@ export default function StatsPage() {
       date: format(parseISO(d.date), 'MMM d'),
     }));
 
-    if (chartType === 'line') {
-      return (
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart
+    const chart = (chartType === 'line') ? 
+    (
+        <AreaChart
             data={formattedData}
             margin={{ top: 10, right: 30, left: -10, bottom: 5 }}
-          >
+        >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
                 <stop
@@ -267,7 +252,6 @@ export default function StatsPage() {
               cursor={{ stroke: 'hsl(var(--primary))' }}
               content={<CustomTooltip />}
             />
-            <Legend verticalAlign="bottom" content={renderLegend} />
             <Area
               type="monotone"
               dataKey="hours"
@@ -286,13 +270,8 @@ export default function StatsPage() {
                 endIndex={brushDomain ? brushDomain[1] : undefined}
               />
             )}
-          </AreaChart>
-        </ResponsiveContainer>
-      );
-    }
-
-    return (
-      <ResponsiveContainer width="100%" height="100%">
+        </AreaChart>
+    ) : (
         <BarChart
           data={formattedData}
           margin={{ top: 10, right: 30, left: -10, bottom: 5 }}
@@ -321,7 +300,6 @@ export default function StatsPage() {
             cursor={{ fill: 'hsl(var(--accent))' }}
             content={<CustomTooltip />}
           />
-          <Legend verticalAlign="bottom" content={renderLegend} />
           <Bar
             dataKey="hours"
             fill="hsl(var(--primary))"
@@ -337,9 +315,27 @@ export default function StatsPage() {
             />
           )}
         </BarChart>
-      </ResponsiveContainer>
     );
-  };
+
+    return (
+        <div className="flex h-full flex-col">
+            <div className="flex-grow">
+                <ResponsiveContainer width="100%" height="100%">
+                    {chart}
+                </ResponsiveContainer>
+            </div>
+            <div className="flex w-full items-center justify-center pt-2">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span
+                        className="h-3 w-3 rounded-sm"
+                        style={{ backgroundColor: 'hsl(var(--primary))' }}
+                    />
+                    <span>Study Hours</span>
+                </div>
+            </div>
+        </div>
+    );
+};
   
   if (isLoading) {
     return <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]"><Loader2 className="h-12 w-12 animate-spin text-slate-500" /></div>;
