@@ -20,7 +20,7 @@ import { format, subDays, startOfDay, parseISO, startOfYear, subMonths } from 'd
 import { useFirestore } from '@/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, ArrowLeft, BarChart2, LineChartIcon } from 'lucide-react';
+import { Loader2, ArrowLeft, BarChart2, LineChart as LineChartIcon } from 'lucide-react';
 import { UserProfile, UserState, DailyStat, CardTheme } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -41,20 +41,17 @@ const formatYAxis = (value: number) => {
     return `${minutes}m`;
 };
 
-const formatTooltip = (value: number) => {
-    const hours = Math.floor(value);
-    const minutes = Math.floor((value - hours) * 60);
-    const parts = [];
-    if (hours > 0) parts.push(`${hours} hrs`);
-    if (minutes > 0) parts.push(`${minutes} min`);
-    if (parts.length === 0) return '0 min';
-    return parts.join(' ');
-};
-
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const value = payload[0].value;
-      const formattedValue = formatTooltip(value);
+      const hours = Math.floor(value);
+      const minutes = Math.floor((value - hours) * 60);
+      const parts = [];
+      if (hours > 0) parts.push(`${hours} hrs`);
+      if (minutes > 0) parts.push(`${minutes} min`);
+      if (parts.length === 0) return '0 min';
+      const formattedValue = parts.join(' ');
+      
       return (
         <div className="bg-background border border-border shadow-lg rounded-lg p-2 px-3 text-sm">
           <p className="font-bold mb-1">{label}</p>
@@ -387,7 +384,7 @@ export default function StatsPage() {
         </div>
         <div className="flex-grow w-full max-w-6xl mx-auto flex items-center justify-center min-h-0 py-2">
             <Card className="w-full h-full flex flex-col">
-                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 p-4 sm:p-6">
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-6">
                     <div>
                         <CardTitle className="text-2xl sm:text-3xl">
                             {userProfile ? `${userProfile.displayName}'s Stats` : 'User Stats'}
