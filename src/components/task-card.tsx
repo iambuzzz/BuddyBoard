@@ -259,10 +259,12 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   };
   
   const startNewList = () => {
+    if (!isCurrentUserCard) return;
     updateFirestore({ tasks: [], isLocked: false, isFinished: false, lockedAt: null });
   };
 
   const restorePreviousList = () => {
+    if (!isCurrentUserCard) return;
     if (!userState.previousTasks || userState.previousTasks.length === 0) {
       toast({ title: 'No Previous List', description: 'There is no previous list to restore.', variant: 'destructive' });
       return;
@@ -436,6 +438,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
             onRestorePrevious={restorePreviousList}
             canRestore={!!userState.previousTasks && userState.previousTasks.length > 0}
             theme={effectiveTheme}
+            isCurrentUserCard={isCurrentUserCard}
           />
         )}
       </AnimatePresence>

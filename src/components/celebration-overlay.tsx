@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Button } from '@/components/ui/button';
@@ -13,6 +14,7 @@ type CelebrationOverlayProps = {
   onRestorePrevious: () => void;
   canRestore: boolean;
   theme: CardTheme;
+  isCurrentUserCard: boolean;
 };
 
 const formatTotalTime = (totalSeconds: number) => {
@@ -30,7 +32,7 @@ const formatTotalTime = (totalSeconds: number) => {
   return parts.join(', ');
 };
 
-export function CelebrationOverlay({ completed, total, totalTimeSpent, onNewList, onRestorePrevious, canRestore, theme }: CelebrationOverlayProps) {
+export function CelebrationOverlay({ completed, total, totalTimeSpent, onNewList, onRestorePrevious, canRestore, theme, isCurrentUserCard }: CelebrationOverlayProps) {
   
   const buttonClass = theme === 'periwinkle' ? 'bg-purple-500 hover:bg-purple-600 focus:ring-purple-400' 
     : theme === 'cyan' ? 'bg-cyan-500 hover:bg-cyan-600 focus:ring-cyan-400'
@@ -75,23 +77,27 @@ export function CelebrationOverlay({ completed, total, totalTimeSpent, onNewList
           </div>
         )}
         <div className="flex flex-col sm:flex-row gap-4 w-full">
-            <Button
-              onClick={onNewList}
-              className={`w-full px-6 py-2 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-transform transform hover:scale-105 ${buttonClass}`}
-            >
-              <Plus className="w-4 h-4 mr-2"/>
-              Start New List
-            </Button>
-            {canRestore && (
+          {isCurrentUserCard && (
+            <>
               <Button
-                variant="outline"
-                onClick={onRestorePrevious}
-                className={`w-full px-6 py-2 font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-transform transform hover:scale-105 ${restoreButtonClass}`}
+                onClick={onNewList}
+                className={`w-full px-6 py-2 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-transform transform hover:scale-105 ${buttonClass}`}
               >
-                <History className="w-4 h-4 mr-2"/>
-                Previous List
+                <Plus className="w-4 h-4 mr-2"/>
+                Start New List
               </Button>
-            )}
+              {canRestore && (
+                <Button
+                  variant="outline"
+                  onClick={onRestorePrevious}
+                  className={`w-full px-6 py-2 font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-transform transform hover:scale-105 ${restoreButtonClass}`}
+                >
+                  <History className="w-4 h-4 mr-2"/>
+                  Previous List
+                </Button>
+              )}
+            </>
+          )}
         </div>
       </motion.div>
     </motion.div>
