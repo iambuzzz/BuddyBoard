@@ -59,7 +59,7 @@ export default function StatsPage() {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [userState, setUserState] = useState<UserState | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
+  const [chartType, setChartType] = useState<'bar' | 'line'>('line');
   const [viewRange, setViewRange] = useState<ViewRange>('1M');
 
   useEffect(() => {
@@ -351,7 +351,7 @@ export default function StatsPage() {
   ]
   
   return (
-    <div className="h-screen w-full flex flex-col bg-[#e3eeff] p-2 sm:p-4" style={themeStyle}>
+    <div className="h-screen w-full flex flex-col bg-[#e3eeff] p-2 sm:p-4 overflow-hidden" style={themeStyle}>
         <div className="flex-shrink-0 w-full max-w-6xl mx-auto">
             <Button variant="ghost" onClick={() => router.back()} className="">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -369,7 +369,7 @@ export default function StatsPage() {
                     <div className='flex items-center gap-2'>
                         <ToggleGroup 
                             type="single" 
-                            defaultValue="bar" 
+                            defaultValue={chartType}
                             aria-label="Chart Type"
                             onValueChange={(value: 'bar' | 'line') => value && setChartType(value)}
                             className='bg-background border rounded-md'
