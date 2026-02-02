@@ -4,7 +4,7 @@
 import { useState, useEffect, useContext, useCallback } from 'react';
 import { User as FirebaseUser, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseContext } from '../provider';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot } from 'firebase/firestore';
 import type { UserProfile } from '@/lib/types';
 
 
@@ -32,55 +32,69 @@ export const useUser = (): UserHookState => {
     isLoading: true,
   });
 
-  const fetchUserProfile = useCallback(async (user: FirebaseUser | null) => {
+  useEffect(() => {
     if (!auth || !firestore) {
       setUserState({ user: null, profile: null, isLoading: false });
       return;
     }
 
-    if (user) {
-      // Set loading to true when starting to fetch a profile
-      setUserState(prevState => ({ ...prevState, user, isLoading: true }));
+    let profileUnsubscribe: (() => void) | undefined;
+
+    const authUnsubscribe = onAuthStateChanged(auth, (user) => {
+      // Clean up previous listener
+      if (profileUnsubscribe) {
+        profileUnsubscribe();
+      }
+
+      if (user) {
+        setUserState(prevState => ({ ...prevState, user, isLoading: true }));
+        const userProfileRef = doc(firestore, 'users', user.uid);
+
+        profileUnsubscribe = onSnapshot(userProfileRef, 
+          (profileSnap) => {
+            if (profileSnap.exists()) {
+              setUserState({ user, profile: profileSnap.data() as UserProfile, isLoading: false });
+            } else {
+              setUserState({ user, profile: null, isLoading: false });
+            }
+          },
+          (error) => {
+            console.error("Error listening to user profile:", error);
+            setUserState({ user, profile: null, isLoading: false });
+          }
+        );
+      } else {
+        // User logged out
+        setUserState({ user: null, profile: null, isLoading: false });
+      }
+    });
+
+    return () => {
+      authUnsubscribe();
+      if (profileUnsubscribe) {
+        profileUnsubscribe();
+      }
+    };
+  }, [auth, firestore]);
+
+  const refetch = useCallback(async () => {
+    if (auth?.currentUser && firestore) {
+      const user = auth.currentUser;
+      setUserState(prevState => ({ ...prevState, isLoading: true }));
       try {
         const userProfileRef = doc(firestore, 'users', user.uid);
         const userProfileSnap = await getDoc(userProfileRef);
-        
         if (userProfileSnap.exists()) {
-          const userProfile = userProfileSnap.data() as UserProfile;
-          setUserState({ user, profile: userProfile, isLoading: false });
+          setUserState({ user, profile: userProfileSnap.data() as UserProfile, isLoading: false });
         } else {
-          // User exists in Auth, but no profile document in Firestore yet.
-          // This is a valid state (e.g., during profile creation).
           setUserState({ user, profile: null, isLoading: false });
         }
       } catch (error) {
-        console.error("Error fetching user profile:", error);
-        setUserState({ user, profile: null, isLoading: false });
+        console.error("Error refetching user profile:", error);
+        setUserState(prevState => ({ ...prevState, isLoading: false }));
       }
-    } else {
-      setUserState({ user: null, profile: null, isLoading: false });
     }
   }, [auth, firestore]);
-
-  useEffect(() => {
-    if (!auth) {
-        setUserState(s => ({...s, isLoading: false}));
-        return;
-    };
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-        fetchUserProfile(user);
-    });
-    return () => unsubscribe();
-  }, [auth, fetchUserProfile]);
-
-  const refetch = useCallback(() => {
-    if(auth?.currentUser) {
-        fetchUserProfile(auth.currentUser);
-    } else {
-        // If there's no current user, ensure we reflect that state
-        fetchUserProfile(null);
-    }
-  }, [auth, fetchUserProfile]);
 
 
   return { ...userState, refetch };
