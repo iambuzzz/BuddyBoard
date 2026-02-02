@@ -212,7 +212,7 @@ export default function StatsPage() {
     (
         <AreaChart
             data={formattedData}
-            margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+            margin={{ top: 10, right: 10, left: -10, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
@@ -274,8 +274,22 @@ export default function StatsPage() {
     ) : (
         <BarChart
           data={formattedData}
-          margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
+          margin={{ top: 10, right: 10, left: -10, bottom: 5 }}
         >
+            <defs>
+              <linearGradient id="colorHoursBar" x1="0" y1="0" x2="0" y2="1">
+                <stop
+                  offset="5%"
+                  stopColor="hsl(var(--primary))"
+                  stopOpacity={0.8}
+                />
+                <stop
+                  offset="95%"
+                  stopColor="hsl(var(--primary))"
+                  stopOpacity={0.2}
+                />
+              </linearGradient>
+            </defs>
           <CartesianGrid
             strokeDasharray="3 3"
             stroke="hsl(var(--border))"
@@ -302,8 +316,9 @@ export default function StatsPage() {
           />
           <Bar
             dataKey="hours"
-            fill="hsl(var(--primary))"
+            fill="url(#colorHoursBar)"
             name="Study Hours"
+            radius={[4, 4, 0, 0]}
           />
           {filteredData.length > 30 && (
             <Brush
