@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
   Area,
@@ -61,40 +61,6 @@ export default function StatsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
   const [viewRange, setViewRange] = useState<ViewRange>('1M');
-
-  const chartContainerRef = useRef<HTMLDivElement>(null);
-  const [tooltipPosition, setTooltipPosition] = useState<{x: number, y: number} | null>(null);
-
-  const handleChartMouseMove = (e: any) => {
-    if (e.activeCoordinate && chartContainerRef.current) {
-        const { activeCoordinate } = e;
-        const chartRect = chartContainerRef.current.getBoundingClientRect();
-
-        const tooltipWidth = 160; 
-        const screenPadding = 16;
-
-        const anchorX = chartRect.left + activeCoordinate.x;
-
-        let tooltipX = activeCoordinate.x + 20;
-
-        if (anchorX + 20 + tooltipWidth > window.innerWidth - screenPadding) {
-            tooltipX = activeCoordinate.x - tooltipWidth - 20;
-        }
-        
-        if (chartRect.left + tooltipX < screenPadding) {
-             tooltipX = screenPadding - chartRect.left;
-        }
-
-        setTooltipPosition({ x: tooltipX, y: activeCoordinate.y - 70 });
-    } else {
-        setTooltipPosition(null);
-    }
-  };
-
-  const handleChartMouseLeave = () => {
-      setTooltipPosition(null);
-  };
-
 
   useEffect(() => {
     if (!firestore || !userId) return;
@@ -235,8 +201,6 @@ export default function StatsPage() {
           <AreaChart
             data={formattedData}
             margin={{ top: 5, right: 30, left: 0, bottom: 50 }}
-            onMouseMove={handleChartMouseMove}
-            onMouseLeave={handleChartMouseLeave}
           >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
@@ -280,8 +244,6 @@ export default function StatsPage() {
             <Tooltip
               isAnimationActive={false}
               cursor={{ stroke: 'hsl(var(--primary))' }}
-              position={tooltipPosition || undefined}
-              active={!!tooltipPosition}
               contentStyle={{
                 background: 'hsl(var(--background))',
                 borderColor: 'hsl(var(--border))',
@@ -319,8 +281,6 @@ export default function StatsPage() {
         <BarChart
           data={formattedData}
           margin={{ top: 5, right: 30, left: 0, bottom: 50 }}
-          onMouseMove={handleChartMouseMove}
-          onMouseLeave={handleChartMouseLeave}
         >
           <CartesianGrid
             strokeDasharray="3 3"
@@ -350,8 +310,6 @@ export default function StatsPage() {
           <Tooltip
             isAnimationActive={false}
             cursor={{ fill: 'hsl(var(--accent))' }}
-            position={tooltipPosition || undefined}
-            active={!!tooltipPosition}
             contentStyle={{
               background: 'hsl(var(--background))',
               borderColor: 'hsl(var(--border))',
@@ -441,7 +399,7 @@ export default function StatsPage() {
                             ))}
                         </ToggleGroup>
                     </div>
-                    <div ref={chartContainerRef} className="flex-grow min-h-0">
+                    <div className="flex-grow min-h-0">
                         {renderChart()}
                     </div>
                 </CardContent>
