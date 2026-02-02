@@ -89,19 +89,6 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     }
   }, [firestore, userId, toast]);
 
-  // Auto-finish logic when the app loads
-  useEffect(() => {
-    if (userState.isLocked && userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date())) {
-        if (isCurrentUserCard) {
-            handleActionButton(true); // Force finish the list
-            toast({
-                title: "New Day!",
-                description: "Your previous day's list has been automatically saved.",
-            });
-        }
-    }
-  }, [userState.isLocked, userState.lockedAt, isCurrentUserCard]);
-
 
   const addTask = (text: string) => {
     // Prevent adding tasks to a list from a previous day that hasn't been auto-finished yet.
@@ -174,24 +161,15 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     updateFirestore({ tasks: newTasks });
   };
   
-  const handleActionButton = (isAutoFinish = false) => {
+  const handleActionButton = () => {
     if (!isCurrentUserCard) return;
     const now = Date.now();
 
     if (!userState.isLocked && userState.tasks.length === 0) {
-      if (!isAutoFinish) toast({ title: 'List is empty', description: 'Add at least one task to lock in your list.', variant: 'destructive' });
+      toast({ title: 'List is empty', description: 'Add at least one task to lock in your list.', variant: 'destructive' });
       return;
     }
     
-    // Prevent locking if the list is from a previous day
-    if (!userState.isLocked && userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date())) {
-        if (!isAutoFinish) toast({ title: 'New Day!', description: "This list has expired. Starting a new list for you.", variant: "destructive" });
-        // Force finish and reset
-        handleActionButton(true);
-        return;
-    }
-
-
     let newUserData: Partial<UserState>;
 
     if (userState.isFinished) { // Action: Start New List
@@ -243,7 +221,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
       const isFromPreviousDay = userState.tasks.length > 0 && userState.tasks.some(t => !isSameDay(new Date(t.createdAt), new Date()));
        if(isFromPreviousDay && !userState.lockedAt) {
           updateFirestore({ tasks: [] });
-          if (!isAutoFinish) toast({ title: "New Day!", description: "Cleared yesterday's draft list."});
+          toast({ title: "New Day!", description: "Cleared yesterday's draft list."});
           return;
        }
 
