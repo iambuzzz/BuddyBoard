@@ -376,7 +376,7 @@ export default function StatsPage() {
   ]
   
   return (
-    <div className="h-screen w-full flex flex-col bg-[#e3eeff] p-2 sm:p-4 overflow-hidden" style={themeStyle}>
+    <div className="min-h-screen w-full flex flex-col bg-[#e3eeff] p-2 sm:p-4" style={themeStyle}>
         <div className="flex-shrink-0 w-full max-w-6xl mx-auto">
             <Button variant="ghost" onClick={() => router.back()} className="">
                 <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -424,7 +424,7 @@ export default function StatsPage() {
                             ))}
                         </ToggleGroup>
                     </div>
-                    <div className="flex-grow min-h-0">
+                    <div className="flex-grow min-h-0" style={{ minHeight: '450px' }}>
                         {renderChart()}
                     </div>
                 </CardContent>
