@@ -212,7 +212,7 @@ export default function StatsPage() {
     (
         <AreaChart
             data={formattedData}
-            margin={{ top: 10, right: 30, left: -10, bottom: 5 }}
+            margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
@@ -274,7 +274,7 @@ export default function StatsPage() {
     ) : (
         <BarChart
           data={formattedData}
-          margin={{ top: 10, right: 30, left: -10, bottom: 5 }}
+          margin={{ top: 10, right: 10, left: -20, bottom: 5 }}
         >
           <CartesianGrid
             strokeDasharray="3 3"
