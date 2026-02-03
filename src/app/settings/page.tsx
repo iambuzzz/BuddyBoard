@@ -44,6 +44,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Skeleton } from '@/components/ui/skeleton';
 
 const profileFormSchema = z.object({
   displayName: z
@@ -819,7 +820,25 @@ export default function SettingsPage() {
 
   const renderPairingManagement = () => {
     if (isPairingLoading) {
-        return <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin text-slate-400" /></div>;
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Skeleton className="h-6 w-6" /><Skeleton className="h-6 w-40" /></CardTitle>
+                    <Skeleton className="h-4 w-full mt-1" />
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-32" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                    <Separator />
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-40" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                </CardContent>
+            </Card>
+        );
     }
 
     if (profile?.pairedWith && pairedPartner) {
@@ -903,7 +922,23 @@ export default function SettingsPage() {
 
   const renderGroupManagement = () => {
     if (isGroupLoading) {
-        return <div className="flex justify-center items-center h-40"><Loader2 className="h-8 w-8 animate-spin text-slate-400" /></div>;
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2"><Skeleton className="h-6 w-6" /><Skeleton className="h-6 w-40" /></CardTitle>
+                    <Skeleton className="h-4 w-full mt-1" />
+                </CardHeader>
+                <CardContent className="space-y-6 pt-6">
+                    <Skeleton className="h-10 w-full" />
+                    <Separator />
+                    <div className="space-y-2">
+                        <Skeleton className="h-5 w-24 mb-4" />
+                        <Skeleton className="h-10 w-full mb-2" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                </CardContent>
+            </Card>
+        );
     }
     
     if (group) {
