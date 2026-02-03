@@ -45,6 +45,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { Skeleton } from '@/components/ui/skeleton';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const profileFormSchema = z.object({
   displayName: z
@@ -1240,12 +1241,21 @@ const ColorSwatch = ({ primary, secondary, text }: { primary: string; secondary:
                             </FormControl><FormMessage />
                             </FormItem>
                         )} />
-                        <FormField control={profileForm.control} name="currentPassword" render={({ field }) => (
-                            <FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" placeholder="Enter current password" {...field} /></FormControl><FormDescription>Required only if you want to change your password.</FormDescription><FormMessage /></FormItem>
-                        )} />
-                        <FormField control={profileForm.control} name="newPassword" render={({ field }) => (
-                            <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormItem>
-                        )} />
+                        <Accordion type="single" collapsible className="w-full">
+                          <AccordionItem value="change-password">
+                            <AccordionTrigger>Change Password</AccordionTrigger>
+                            <AccordionContent>
+                              <div className="space-y-8 pt-4">
+                                <FormField control={profileForm.control} name="currentPassword" render={({ field }) => (
+                                    <FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" placeholder="Enter current password" {...field} /></FormControl><FormDescription>Required only if you want to change your password.</FormDescription><FormMessage /></FormItem>
+                                )} />
+                                <FormField control={profileForm.control} name="newPassword" render={({ field }) => (
+                                    <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormItem>
+                                )} />
+                              </div>
+                            </AccordionContent>
+                          </AccordionItem>
+                        </Accordion>
                         <Button type="submit" disabled={isSaving} className="w-full bg-[--theme-periwinkle-primary] hover:bg-violet-500">
                             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
                         </Button>
