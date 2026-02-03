@@ -146,10 +146,10 @@ export default function StatsPage() {
 
   }, [userState?.historical_stats]);
 
-  const { filteredData, yAxisMax, averageHours } = useMemo(() => {
+  const { filteredData, yAxisMax, viewRangeAvg } = useMemo(() => {
     const now = new Date();
     if (!allTimeStats.length) {
-      return { filteredData: [], yAxisMax: 1, averageHours: 0 };
+      return { filteredData: [], yAxisMax: 1, viewRangeAvg: 0 };
     }
 
     let data;
@@ -178,21 +178,29 @@ export default function StatsPage() {
     const calculatedMax = data.length > 0 ? Math.max(...data.map(d => d.hours)) : 0;
     const yAxisDomainMax = Math.ceil(Math.max(calculatedMax, avg, 1));
 
-    return { filteredData: data, yAxisMax: yAxisDomainMax, averageHours: avg };
+    return { filteredData: data, yAxisMax: yAxisDomainMax, viewRangeAvg: avg };
 
   }, [allTimeStats, viewRange]);
 
+  const formattedData = useMemo(() => {
+    return filteredData.map((d) => ({
+      ...d,
+      label: format(parseISO(d.date), 'MMM d'), // for display
+      isoDate: d.date,                          // for logic
+    }));
+  }, [filteredData]);
+
   const sliderAvg = useMemo(() => {
     if (!sliderRange || !userState?.historical_stats) return null;
-
+  
     const start = parseISO(sliderRange.startDate);
     const end = parseISO(sliderRange.endDate);
-
+  
     const rangeData = userState.historical_stats.filter(d => {
       const date = parseISO(d.date);
       return date >= start && date <= end;
     });
-
+  
     const total = rangeData.reduce((s, d) => s + d.hours, 0);
     return rangeData.length ? total / rangeData.length : 0;
   }, [sliderRange, userState?.historical_stats]);
@@ -240,15 +248,12 @@ export default function StatsPage() {
       );
     }
 
-    const formattedData = filteredData.map((d) => ({
-      ...d,
-      date: format(parseISO(d.date), 'MMM d'),
-    }));
+    const avgToShow = sliderAvg ?? viewRangeAvg;
 
-    const avgToShow = sliderAvg ?? averageHours;
     const referenceLine = (
       <ReferenceLine
         y={avgToShow}
+        isFront
         strokeWidth={2}
         className="glowing-line"
         label={({ viewBox }) => {
@@ -277,7 +282,7 @@ export default function StatsPage() {
     (
         <AreaChart
             data={formattedData}
-            margin={{ top: 10, right: 20, left: -10, bottom: 5 }}
+            margin={{ top: 30, right: 20, left: -10, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
@@ -298,7 +303,7 @@ export default function StatsPage() {
               stroke="hsl(var(--border))"
             />
             <XAxis
-              dataKey="date"
+              dataKey="label"
               stroke="hsl(var(--muted-foreground))"
               tick={{ fontSize: 12 }}
               angle={-45}
@@ -329,14 +334,14 @@ export default function StatsPage() {
             />
             {avgToShow > 0 && referenceLine}
             <Brush
-              dataKey="date"
+              dataKey="label"
               height={30}
               stroke="hsl(var(--primary))"
               travellerWidth={15}
               onChange={(r) => {
                 if (r?.startIndex != null && r?.endIndex != null) {
-                  const start = filteredData[r.startIndex]?.date;
-                  const end = filteredData[r.endIndex]?.date;
+                  const start = formattedData[r.startIndex]?.isoDate;
+                  const end = formattedData[r.endIndex]?.isoDate;
                   if (start && end) {
                     setSliderRange({ startDate: start, endDate: end });
                   }
@@ -347,7 +352,7 @@ export default function StatsPage() {
     ) : (
         <BarChart
           data={formattedData}
-          margin={{ top: 10, right: 20, left: -10, bottom: 5 }}
+          margin={{ top: 30, right: 20, left: -10, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHoursBar" x1="0" y1="0" x2="0" y2="1">
@@ -368,7 +373,7 @@ export default function StatsPage() {
             stroke="hsl(var(--border))"
           />
           <XAxis
-            dataKey="date"
+            dataKey="label"
             stroke="hsl(var(--muted-foreground))"
             tick={{ fontSize: 12 }}
             angle={-45}
@@ -396,17 +401,17 @@ export default function StatsPage() {
           />
           {avgToShow > 0 && referenceLine}
           <Brush
-              dataKey="date"
+              dataKey="label"
               height={30}
               stroke="hsl(var(--primary))"
               travellerWidth={15}
               onChange={(r) => {
                 if (r?.startIndex != null && r?.endIndex != null) {
-                  const start = filteredData[r.startIndex]?.date;
-                  const end = filteredData[r.endIndex]?.date;
-                  if (start && end) {
-                    setSliderRange({ startDate: start, endDate: end });
-                  }
+                    const start = formattedData[r.startIndex]?.isoDate;
+                    const end = formattedData[r.endIndex]?.isoDate;
+                    if (start && end) {
+                        setSliderRange({ startDate: start, endDate: end });
+                    }
                 }
               }}
             />
