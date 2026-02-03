@@ -86,6 +86,10 @@ export default function StatsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [chartType, setChartType] = useState<'bar' | 'line'>('line');
   const [viewRange, setViewRange] = useState<ViewRange>('7D');
+  const [sliderRange, setSliderRange] = useState<{
+    startDate: string;
+    endDate: string;
+  } | null>(null);
 
   useEffect(() => {
     if (!firestore || !userId) return;
@@ -178,6 +182,21 @@ export default function StatsPage() {
 
   }, [allTimeStats, viewRange]);
 
+  const sliderAvg = useMemo(() => {
+    if (!sliderRange || !userState?.historical_stats) return null;
+
+    const start = parseISO(sliderRange.startDate);
+    const end = parseISO(sliderRange.endDate);
+
+    const rangeData = userState.historical_stats.filter(d => {
+      const date = parseISO(d.date);
+      return date >= start && date <= end;
+    });
+
+    const total = rangeData.reduce((s, d) => s + d.hours, 0);
+    return rangeData.length ? total / rangeData.length : 0;
+  }, [sliderRange, userState?.historical_stats]);
+
   const yAxisTicks = useMemo(() => {
     if (yAxisMax < 1) return [0, 1];
     return Array.from({ length: yAxisMax + 1 }, (_, i) => i);
@@ -226,13 +245,14 @@ export default function StatsPage() {
       date: format(parseISO(d.date), 'MMM d'),
     }));
 
+    const avgToShow = sliderAvg ?? averageHours;
     const referenceLine = (
       <ReferenceLine
-        y={averageHours}
+        y={avgToShow}
         strokeWidth={2}
         className="glowing-line"
         label={({ viewBox }) => {
-            if (!viewBox || averageHours <= 0) return null;
+            if (!viewBox || avgToShow <= 0) return null;
             const { y } = viewBox;
             return (
                 <text
@@ -245,7 +265,7 @@ export default function StatsPage() {
                     textAnchor="start"
                     style={{ filter: 'none' }}
                 >
-                    {formatAverageLabel(averageHours)}
+                    {formatAverageLabel(avgToShow)}
                 </text>
             );
         }}
@@ -307,8 +327,22 @@ export default function StatsPage() {
               fillOpacity={1}
               fill="url(#colorHours)"
             />
-            {averageHours > 0 && referenceLine}
-            <Brush dataKey="date" height={30} stroke="hsl(var(--primary))" travellerWidth={15}/>
+            {avgToShow > 0 && referenceLine}
+            <Brush
+              dataKey="date"
+              height={30}
+              stroke="hsl(var(--primary))"
+              travellerWidth={15}
+              onChange={(r) => {
+                if (r?.startIndex != null && r?.endIndex != null) {
+                  const start = filteredData[r.startIndex]?.date;
+                  const end = filteredData[r.endIndex]?.date;
+                  if (start && end) {
+                    setSliderRange({ startDate: start, endDate: end });
+                  }
+                }
+              }}
+            />
         </AreaChart>
     ) : (
         <BarChart
@@ -360,8 +394,22 @@ export default function StatsPage() {
             name="Study Hours"
             radius={[4, 4, 0, 0]}
           />
-          {averageHours > 0 && referenceLine}
-          <Brush dataKey="date" height={30} stroke="hsl(var(--primary))" travellerWidth={15}/>
+          {avgToShow > 0 && referenceLine}
+          <Brush
+              dataKey="date"
+              height={30}
+              stroke="hsl(var(--primary))"
+              travellerWidth={15}
+              onChange={(r) => {
+                if (r?.startIndex != null && r?.endIndex != null) {
+                  const start = filteredData[r.startIndex]?.date;
+                  const end = filteredData[r.endIndex]?.date;
+                  if (start && end) {
+                    setSliderRange({ startDate: start, endDate: end });
+                  }
+                }
+              }}
+            />
         </BarChart>
     );
 
