@@ -40,7 +40,6 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
     }
   };
   
-  // Style for ACTIVE goals, based on the user's theme
   const themeStyles = {
     periwinkle: {
         card: 'bg-gradient-to-br from-violet-100 to-fuchsia-100 border-violet-300 shadow-lg shadow-violet-500/20',
@@ -59,9 +58,8 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
     }
   };
   
-  // Specific style for ACHIEVED goals (always green)
   const achievedStyle = {
-    card: 'bg-gradient-to-br from-emerald-200 to-green-300 border-emerald-400 shadow-lg shadow-emerald-500/30',
+    card: 'bg-gradient-to-tl from-green-400/80 to-green-200 border-emarald-800 shadow-lg shadow-emerald-500/30',
     iconBg: 'bg-emerald-300',
     iconText: 'text-emerald-800',
     achievedText: 'text-emerald-900 font-bold'
