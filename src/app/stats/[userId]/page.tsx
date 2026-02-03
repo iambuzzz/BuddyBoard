@@ -239,10 +239,11 @@ export default function StatsPage() {
                     x={viewBox.x}
                     y={y}
                     dy={-6}
-                    fill="#065f46" // Darker Green
+                    fill="#047857"
                     fontSize={12}
                     fontWeight="bold"
                     textAnchor="start"
+                    style={{ filter: 'none' }}
                 >
                     {formatAverageLabel(averageHours)}
                 </text>

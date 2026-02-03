@@ -245,8 +245,8 @@
   }
 
   .glowing-line {
-    stroke: #34d399; /* Neon Green */
-    filter: drop-shadow(0 0 5px #34d399);
+    stroke: #6ee7b7; /* Lighter Neon Green */
+    filter: drop-shadow(0 0 5px #6ee7b7);
     stroke-linecap: round;
   }
 }
