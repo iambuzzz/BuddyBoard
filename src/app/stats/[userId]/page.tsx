@@ -286,7 +286,7 @@ export default function StatsPage() {
     (
         <AreaChart
             data={formattedData}
-            margin={{ top: 30, right: 10, left: 0, bottom: 5 }}
+            margin={{ top: 30, right: 10, left: -30, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
@@ -314,6 +314,7 @@ export default function StatsPage() {
               textAnchor="end"
               height={50}
               interval="preserveStartEnd"
+              padding={{ left: 0, right: 0 }}
             />
             <YAxis
               stroke="hsl(var(--muted-foreground))"
@@ -356,7 +357,7 @@ export default function StatsPage() {
     ) : (
         <BarChart
           data={formattedData}
-          margin={{ top: 30, right: 10, left: 0, bottom: 5 }}
+          margin={{ top: 30, right: 10, left: -30, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHoursBar" x1="0" y1="0" x2="0" y2="1">
@@ -384,6 +385,7 @@ export default function StatsPage() {
             textAnchor="end"
             height={50}
             interval="preserveStartEnd"
+            padding={{ left: 0, right: 0 }}
           />
           <YAxis
             stroke="hsl(var(--muted-foreground))"
