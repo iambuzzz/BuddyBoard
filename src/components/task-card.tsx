@@ -393,14 +393,14 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
           />
         )}
       </AnimatePresence>
-      <header className="flex justify-between items-center gap-2 pb-4 mb-4 border-b flex-wrap">
-        <div className="flex items-center gap-3 min-w-0 flex-shrink">
+      <header className="flex justify-between items-center gap-2 pb-4 mb-4 border-b">
+        <div className="flex items-center gap-3 min-w-0 flex-1">
           <Avatar className={`h-8 w-8 border flex-shrink-0 ${avatarBorderStyle}`}>
             <AvatarImage src={userProfile?.photoURL || ''} alt={userName} />
             <AvatarFallback>{getInitials(userName)}</AvatarFallback>
           </Avatar>
-          <div className="flex items-center gap-1 min-w-0 flex-shrink">
-            <h2 className={`text-xl sm:text-2xl font-bold overflow-hidden text-nowrap truncate ${titleColor}`}>{userName}</h2>
+          <div className="flex items-center gap-1 min-w-0 flex-1">
+            <h2 className={`text-xl sm:text-2xl font-bold truncate ${titleColor}`}>{userName}</h2>
             <div className="h-7 w-12 flex-shrink-0">
                 <StreakBadge
                     currentStreak={userState.currentStreak}
