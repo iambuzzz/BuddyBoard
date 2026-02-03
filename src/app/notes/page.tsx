@@ -38,10 +38,18 @@ export default function NotesPage() {
             const fetchedNotes: Note[] = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Note));
             setNotes(fetchedNotes);
             
+            // This logic ensures that when a note is updated (e.g., title change),
+            // the selectedNote state also gets updated, preventing stale data in the editor.
+            // It also handles the case where the currently selected note might be deleted.
             setSelectedNote(prevSelected => {
-                if (!prevSelected) return null;
-                const updatedNote = fetchedNotes.find(n => n.id === prevSelected.id);
-                return updatedNote || null;
+                if (!prevSelected) {
+                    // If nothing was selected before, and we just fetched notes,
+                    // and we are on mobile (where we show the list first), don't auto-select.
+                    // On desktop, you could potentially auto-select the first note.
+                    return null;
+                }
+                const updatedNoteInList = fetchedNotes.find(n => n.id === prevSelected.id);
+                return updatedNoteInList || null; // If deleted, it becomes null.
             });
             
             setIsLoadingNotes(false);
@@ -75,7 +83,7 @@ export default function NotesPage() {
             {/* --- Sidebar Panel --- */}
             <div
                 className={cn(
-                    'absolute top-0 left-0 z-20 h-full w-full transform bg-white transition-transform duration-300 ease-in-out md:relative md:w-80 md:flex-shrink-0 md:transform-none',
+                    'absolute top-0 left-0 z-20 h-full w-full transform bg-transparent transition-transform duration-300 ease-in-out md:relative md:w-80 md:flex-shrink-0 md:transform-none',
                     selectedNote ? '-translate-x-full' : 'translate-x-0',
                     'md:translate-x-0'
                 )}
