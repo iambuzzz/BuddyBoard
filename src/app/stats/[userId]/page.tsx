@@ -298,7 +298,6 @@ export default function StatsPage() {
               cursor={{ stroke: 'hsl(var(--primary))' }}
               content={<CustomTooltip />}
             />
-            {averageHours > 0 && referenceLine}
             <Area
               type="monotone"
               dataKey="hours"
@@ -308,6 +307,7 @@ export default function StatsPage() {
               fillOpacity={1}
               fill="url(#colorHours)"
             />
+            {averageHours > 0 && referenceLine}
             <Brush dataKey="date" height={30} stroke="hsl(var(--primary))" travellerWidth={15}/>
         </AreaChart>
     ) : (
@@ -354,13 +354,13 @@ export default function StatsPage() {
             cursor={{ fill: 'hsl(var(--accent))' }}
             content={<CustomTooltip />}
           />
-          {averageHours > 0 && referenceLine}
           <Bar
             dataKey="hours"
             fill="url(#colorHoursBar)"
             name="Study Hours"
             radius={[4, 4, 0, 0]}
           />
+          {averageHours > 0 && referenceLine}
           <Brush dataKey="date" height={30} stroke="hsl(var(--primary))" travellerWidth={15}/>
         </BarChart>
     );
