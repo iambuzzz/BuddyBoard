@@ -94,7 +94,7 @@ export default function GoalsPage() {
             );
         }
         return (
-            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {goalList.map(goal => <GoalCard key={goal.id} goal={goal} theme={cardTheme} />)}
             </div>
         );
@@ -116,8 +116,8 @@ export default function GoalsPage() {
                 onAddGoal={handleAddGoal}
                 theme={cardTheme}
             />
-            <div className="min-h-screen w-full bg-[#e3eeff] p-4">
-                <div className="max-w-7xl mx-auto">
+            <div className="min-h-screen w-full bg-[#e3eeff] p-6">
+                <div className="max-w-6xl mx-auto">
                     <div className="flex flex-col gap-4">
                         <header className="flex items-center justify-between">
                             <div className='flex items-center gap-2'>
@@ -141,7 +141,7 @@ export default function GoalsPage() {
                         </header>
 
                         <Tabs defaultValue="short-term" className="w-full">
-                            <TabsList className="grid w-full grid-cols-3 bg-slate-200/80 backdrop-blur-sm">
+                            <TabsList className="grid w-full grid-cols-3 bg-slate-300/80 backdrop-blur-sm">
                                 <TabsTrigger value="short-term">Short Term</TabsTrigger>
                                 <TabsTrigger value="long-term">Long Term</TabsTrigger>
                                 <TabsTrigger value="bucket-list">Bucket List</TabsTrigger>
@@ -150,7 +150,7 @@ export default function GoalsPage() {
                             <div className="block sm:hidden mt-4">
                                 <Button
                                     onClick={() => setDialogOpen(true)}
-                                    className={`w-full ${getButtonThemeClass(cardTheme)} font-semibold rounded-full shadow-lg transition transform hover:scale-105`}
+                                    className={`w-full ${getButtonThemeClass(cardTheme)} font-semibold rounded-lg shadow-lg transition transform hover:scale-105`}
                                 >
                                     <Plus className="w-4 h-4 mr-2" />
                                     Set a New Goal

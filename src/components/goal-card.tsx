@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -43,22 +42,22 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
   
   const themeStyles = {
     periwinkle: {
-        achieved: 'bg-gradient-to-br from-violet-50/50 to-fuchsia-50/50 border-violet-200',
-        iconBg: 'bg-violet-200/80',
+        achieved: 'bg-gradient-to-br from-violet-100 to-fuchsia-100 border-violet-300 shadow-lg shadow-violet-500/10',
+        iconBg: 'bg-violet-200',
         iconText: 'text-violet-600',
-        achievedText: 'text-violet-600 font-semibold'
+        achievedText: 'text-violet-700 font-bold'
     },
     cyan: {
-        achieved: 'bg-gradient-to-br from-cyan-50/50 to-sky-50/50 border-cyan-200',
-        iconBg: 'bg-cyan-200/80',
+        achieved: 'bg-gradient-to-br from-cyan-100 to-sky-100 border-cyan-300 shadow-lg shadow-cyan-500/10',
+        iconBg: 'bg-cyan-200',
         iconText: 'text-cyan-600',
-        achievedText: 'text-cyan-600 font-semibold'
+        achievedText: 'text-cyan-700 font-bold'
     },
     emerald: {
-        achieved: 'bg-gradient-to-br from-emerald-50/50 to-green-50/50 border-emerald-200',
-        iconBg: 'bg-emerald-200/80',
+        achieved: 'bg-gradient-to-br from-emerald-100 to-green-100 border-emerald-300 shadow-lg shadow-emerald-500/10',
+        iconBg: 'bg-emerald-200',
         iconText: 'text-emerald-600',
-        achievedText: 'text-emerald-600 font-semibold'
+        achievedText: 'text-emerald-700 font-bold'
     }
   };
   
@@ -67,7 +66,7 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
   return (
     <div
         className={cn(
-            "rounded-xl border shadow-sm h-full transition-colors duration-500 ease-out",
+            "rounded-xl border shadow-sm h-full transition-all duration-300 ease-in-out",
             isAchieved ? currentThemeStyle.achieved : 'bg-card border-border'
         )}
     >
