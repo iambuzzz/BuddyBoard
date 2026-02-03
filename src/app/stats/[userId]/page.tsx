@@ -117,6 +117,10 @@ export default function StatsPage() {
         unsubTasks();
     };
   }, [firestore, userId]);
+  
+  useEffect(() => {
+    setSliderRange(null);
+  }, [viewRange]);
 
   const allTimeStats = useMemo(() => {
     if (!userState?.historical_stats) return [];
@@ -191,19 +195,19 @@ export default function StatsPage() {
   }, [filteredData]);
 
   const sliderAvg = useMemo(() => {
-    if (!sliderRange || !userState?.historical_stats) return null;
-  
+    if (!sliderRange) return null;
+
     const start = parseISO(sliderRange.startDate);
     const end = parseISO(sliderRange.endDate);
-  
-    const rangeData = userState.historical_stats.filter(d => {
-      const date = parseISO(d.date);
-      return date >= start && date <= end;
+
+    const rangeData = filteredData.filter(d => {
+        const date = parseISO(d.date);
+        return date >= start && date <= end;
     });
-  
+
     const total = rangeData.reduce((s, d) => s + d.hours, 0);
-    return rangeData.length ? total / rangeData.length : 0;
-  }, [sliderRange, userState?.historical_stats]);
+    return rangeData.length ? total / rangeData.length : null;
+  }, [sliderRange, filteredData]);
 
   const yAxisTicks = useMemo(() => {
     if (yAxisMax < 1) return [0, 1];
