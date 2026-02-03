@@ -14,6 +14,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Brush,
+  ReferenceLine,
 } from 'recharts';
 import { format, subDays, startOfDay, parseISO, startOfYear, subMonths } from 'date-fns';
 
@@ -131,10 +132,10 @@ export default function StatsPage() {
 
   }, [userState?.historical_stats]);
 
-  const { filteredData, yAxisMax } = useMemo(() => {
+  const { filteredData, yAxisMax, averageHours } = useMemo(() => {
     const now = new Date();
     if (!allTimeStats.length) {
-      return { filteredData: [], yAxisMax: 1 };
+      return { filteredData: [], yAxisMax: 1, averageHours: 0 };
     }
 
     let data;
@@ -157,10 +158,13 @@ export default function StatsPage() {
             break;
     }
     
+    const totalHours = data.reduce((sum, stat) => sum + stat.hours, 0);
+    const avg = data.length > 0 ? totalHours / data.length : 0;
+    
     const calculatedMax = data.length > 0 ? Math.max(...data.map(d => d.hours)) : 0;
-    const yAxisDomainMax = Math.ceil(Math.max(calculatedMax, 1)); 
+    const yAxisDomainMax = Math.ceil(Math.max(calculatedMax, avg, 1));
 
-    return { filteredData: data, yAxisMax: yAxisDomainMax };
+    return { filteredData: data, yAxisMax: yAxisDomainMax, averageHours: avg };
 
   }, [allTimeStats, viewRange]);
 
@@ -211,6 +215,27 @@ export default function StatsPage() {
       ...d,
       date: format(parseISO(d.date), 'MMM d'),
     }));
+    
+    const averageLabel = {
+        value: `Avg (${formatYAxis(averageHours)})`,
+        position: 'insideTopRight',
+        fill: '#057A55',
+        fontSize: 12,
+        fontWeight: 'bold',
+        dy: 10,
+        dx: -10,
+    };
+
+    const referenceLine = (
+      <ReferenceLine
+        y={averageHours}
+        label={averageHours > 0 ? averageLabel : undefined}
+        stroke="#10B981"
+        strokeWidth={2}
+        strokeDasharray="8 4"
+      />
+    );
+
 
     const chart = (chartType === 'line') ? 
     (
@@ -257,6 +282,7 @@ export default function StatsPage() {
               cursor={{ stroke: 'hsl(var(--primary))' }}
               content={<CustomTooltip />}
             />
+            {referenceLine}
             <Area
               type="monotone"
               dataKey="hours"
@@ -312,6 +338,7 @@ export default function StatsPage() {
             cursor={{ fill: 'hsl(var(--accent))' }}
             content={<CustomTooltip />}
           />
+          {referenceLine}
           <Bar
             dataKey="hours"
             fill="url(#colorHoursBar)"
@@ -394,13 +421,17 @@ export default function StatsPage() {
                         <div className="flex-grow min-h-0">
                             {renderChart()}
                         </div>
-                        <div className="flex w-full items-center justify-center pt-2">
+                        <div className="flex w-full items-center justify-center pt-2 gap-6">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <span
                                     className="h-3 w-3 rounded-sm"
                                     style={{ backgroundColor: 'hsl(var(--primary))' }}
                                 />
                                 <span>Study Hours</span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <svg width="14" height="14" viewBox="0 0 14 2" className="h-3 w-3"><line x1="0" y1="1" x2="14" y2="1" stroke="#10B981" strokeWidth="2" strokeDasharray="4 2"></line></svg>
+                                <span>Average</span>
                             </div>
                         </div>
                     </CardContent>
@@ -410,3 +441,5 @@ export default function StatsPage() {
     </div>
   )
 }
+
+    
