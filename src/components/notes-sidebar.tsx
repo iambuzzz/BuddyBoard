@@ -68,7 +68,7 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
                             >
                                 <h3 className={cn("font-semibold truncate", selectedNoteId === note.id ? "text-primary" : "text-slate-800")}>{note.title || 'Untitled Note'}</h3>
                                 <p className="text-xs text-slate-500 mt-1">
-                                    {formatDistanceToNow((note.updatedAt as any).toDate ? (note.updatedAt as any).toDate() : new Date(note.updatedAt), { addSuffix: true })}
+                                    {note.updatedAt && formatDistanceToNow((note.updatedAt as any).toDate ? (note.updatedAt as any).toDate() : new Date(note.updatedAt), { addSuffix: true })}
                                 </p>
                             </button>
                         ))
