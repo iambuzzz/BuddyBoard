@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -117,21 +116,21 @@ export default function GoalsPage() {
                 onAddGoal={handleAddGoal}
                 theme={cardTheme}
             />
-            <div className="min-h-screen w-full bg-[#e3eeff] p-4 sm:p-6 lg:p-8 overflow-x-hidden">
+            <div className="min-h-screen w-full bg-[#e3eeff] p-4 sm:p-6 lg:p-8">
                 <div className="max-w-7xl mx-auto">
-                    <header className="flex items-center justify-between mb-8">
+                    <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
                         <div className='flex items-center gap-2'>
                              <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600">
                                 <ArrowLeft className="h-5 w-5" />
                             </Button>
-                            <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
-                                <GoalIcon className={`h-8 w-8 ${getIconThemeClass(cardTheme)}`} />
+                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 flex items-center gap-3">
+                                <GoalIcon className={`h-7 w-7 sm:h-8 sm:w-8 ${getIconThemeClass(cardTheme)}`} />
                                 My Goals
                             </h1>
                         </div>
                         <Button
                             onClick={() => setDialogOpen(true)}
-                            className={`${getButtonThemeClass(cardTheme)} font-semibold rounded-full shadow-lg transition transform hover:scale-105`}
+                            className={`w-full sm:w-auto ${getButtonThemeClass(cardTheme)} font-semibold rounded-full shadow-lg transition transform hover:scale-105`}
                         >
                             <Plus className="w-4 h-4 mr-2" />
                             Set a New Goal
