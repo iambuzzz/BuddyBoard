@@ -219,13 +219,13 @@
   }
   
   .card-glow-periwinkle {
-    animation: glow-periwinkle 8s ease-in-out infinite;
+    animation: glow-periwinkle 3s ease-in-out infinite;
   }
   .card-glow-cyan {
-    animation: glow-cyan 8s ease-in-out infinite;
+    animation: glow-cyan 3s ease-in-out infinite;
   }
   .card-glow-emerald {
-    animation: glow-emerald 8s ease-in-out infinite;
+    animation: glow-emerald 3s ease-in-out infinite;
   }
   
   .touch-pan-y {
