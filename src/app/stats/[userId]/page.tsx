@@ -448,8 +448,8 @@ export default function StatsPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-grow flex-col">
             <div className="flex flex-grow flex-col py-2">
                 <Card className="flex w-full flex-grow flex-col">
-                    <CardHeader className="pl-2 pr-4 pt-4 pb-2 sm:pl-2 sm:pr-6 sm:pt-6">
-                        <div className="flex w-full items-center gap-2">
+                    <CardHeader className="pl-2 pr-4 pt-6 pb-0 sm:pl-2 sm:pr-6 sm:pt-6">
+                        <div className="flex w-full items-center gap-1">
                             <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8 flex-shrink-0">
                                 <ArrowLeft className="h-5 w-5" />
                                 <span className="sr-only">Back</span>
@@ -462,8 +462,8 @@ export default function StatsPage() {
                             </div>
                         </div>
                     </CardHeader>
-                    <CardContent className="flex flex-grow flex-col p-4 pt-4 sm:p-6">
-                        <div className="mb-4 flex flex-col items-center gap-2">
+                    <CardContent className="flex flex-grow flex-col p-4 sm:p-6">
+                        <div className="mb-0 flex flex-col items-center gap-2">
                              <ToggleGroup 
                                 type="single" 
                                 defaultValue={chartType}
