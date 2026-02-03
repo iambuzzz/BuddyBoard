@@ -38,11 +38,11 @@ export default function NotesPage() {
             const fetchedNotes: Note[] = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Note));
             setNotes(fetchedNotes);
             
-            // If there's a selected note, find its updated version in the new list
-            if (selectedNote) {
-                const updatedSelectedNote = fetchedNotes.find(n => n.id === selectedNote.id);
-                setSelectedNote(updatedSelectedNote || null);
-            }
+            setSelectedNote(prevSelected => {
+                if (!prevSelected) return null;
+                const updatedNote = fetchedNotes.find(n => n.id === prevSelected.id);
+                return updatedNote || null;
+            });
             
             setIsLoadingNotes(false);
         }, (error) => {
@@ -51,7 +51,7 @@ export default function NotesPage() {
         });
 
         return () => unsubscribe();
-    }, [user, firestore, isUserLoading, selectedNote]);
+    }, [user, firestore, isUserLoading]);
 
     if (isUserLoading) {
         return (

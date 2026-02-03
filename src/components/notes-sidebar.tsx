@@ -61,6 +61,16 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
         }
     };
     const currentTheme = themeStyles[theme] || themeStyles.periwinkle;
+    
+    const formatTimestamp = (timestamp: any) => {
+        if (!timestamp) return null;
+        const date = (timestamp as any).toDate ? (timestamp as any).toDate() : new Date(timestamp);
+        // Check if the date is valid before formatting
+        if (isNaN(date.getTime())) {
+            return null; // or '...' or some placeholder
+        }
+        return formatDistanceToNow(date, { addSuffix: true });
+    }
 
     return (
         <aside className="w-80 border-r flex flex-col h-screen bg-white">
@@ -89,7 +99,7 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
                             >
                                 <h3 className={cn("font-semibold truncate", selectedNoteId === note.id ? currentTheme.selectedText : "text-slate-800")}>{note.title || 'Untitled Note'}</h3>
                                 <p className="text-xs text-slate-500 mt-1">
-                                    {note.updatedAt && formatDistanceToNow((note.updatedAt as any).toDate ? (note.updatedAt as any).toDate() : new Date(note.updatedAt), { addSuffix: true })}
+                                    {formatTimestamp(note.updatedAt)}
                                 </p>
                             </button>
                         ))

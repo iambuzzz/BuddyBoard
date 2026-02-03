@@ -16,14 +16,15 @@ interface NoteEditorProps {
     userId: string;
 }
 
+type SaveStatus = 'saved' | 'typing' | 'saving';
+
 export function NoteEditor({ note, userId }: NoteEditorProps) {
     const firestore = useFirestore();
     const { toast } = useToast();
     
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [isSaving, setIsSaving] = useState(false);
-    const [hasChanged, setHasChanged] = useState(false);
+    const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
 
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
 
@@ -31,7 +32,7 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
         if (note) {
             setTitle(note.title);
             setContent(note.content);
-            setHasChanged(false);
+            setSaveStatus('saved');
         } else {
             setTitle('');
             setContent('');
@@ -40,13 +41,13 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
     
     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setTitle(e.target.value);
-        setHasChanged(true);
+        setSaveStatus('typing');
         triggerDebouncedSave(e.target.value, content);
     };
 
     const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
         setContent(e.target.value);
-        setHasChanged(true);
+        setSaveStatus('typing');
         triggerDebouncedSave(title, e.target.value);
     };
 
@@ -62,7 +63,7 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
     const handleSave = async (currentTitle: string, currentContent: string) => {
         if (!note || !firestore || !userId) return;
 
-        setIsSaving(true);
+        setSaveStatus('saving');
         const noteRef = doc(firestore, `user_notes/${userId}/notes/${note.id}`);
         
         try {
@@ -71,13 +72,11 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
                 content: currentContent,
                 updatedAt: serverTimestamp(),
             });
-            setHasChanged(false);
-            // toast({ title: "Note Saved", description: "Your changes have been saved." });
+            setSaveStatus('saved');
         } catch (error) {
             console.error("Error saving note:", error);
             toast({ title: "Error", description: "Could not save your changes.", variant: 'destructive'});
-        } finally {
-            setIsSaving(false);
+            setSaveStatus('typing'); // Revert to typing to indicate unsaved changes on error
         }
     };
     
@@ -91,6 +90,23 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
         );
     }
 
+    const renderSaveStatus = () => {
+        switch(saveStatus) {
+            case 'saving':
+                return (
+                    <>
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Saving...</span>
+                    </>
+                );
+            case 'saved':
+                return <span>Saved</span>;
+            case 'typing':
+            default:
+                return null; // Show nothing while typing
+        }
+    };
+
     return (
         <div className="flex-1 flex flex-col p-4 md:p-6 bg-slate-50">
             <div className="flex items-center justify-between mb-4">
@@ -101,8 +117,7 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
                     className="text-2xl font-bold border-none shadow-none focus-visible:ring-0 p-0 h-auto"
                 />
                  <div className="flex items-center gap-2 text-sm text-slate-500">
-                    {isSaving && <Loader2 className="h-4 w-4 animate-spin" />}
-                    <span>{isSaving ? 'Saving...' : hasChanged ? 'Unsaved changes' : 'Saved'}</span>
+                    {renderSaveStatus()}
                 </div>
             </div>
             <Textarea
