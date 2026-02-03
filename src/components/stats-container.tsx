@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
@@ -29,8 +28,6 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 type ViewRange = '7D' | '1M' | '3M' | 'YTD' | 'ALL';
 
 interface StatsContainerProps {
-    initialProfile?: UserProfile;
-    initialState?: UserState;
     userId: string;
 }
 
@@ -79,13 +76,14 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   };
 
 
-export function StatsContainer({ initialProfile, initialState, userId }: StatsContainerProps) {
+export function StatsContainer({ userId }: StatsContainerProps) {
   const router = useRouter();
   const firestore = useFirestore();
 
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(initialProfile || null);
-  const [userState, setUserState] = useState<UserState | null>(initialState || null);
-  const [isLoading, setIsLoading] = useState(!initialProfile || !initialState);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [userState, setUserState] = useState<UserState | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(true);
+  const [isStateLoading, setIsStateLoading] = useState(true);
   
   const [chartType, setChartType] = useState<'bar' | 'line'>('line');
   const [viewRange, setViewRange] = useState<ViewRange>('7D');
@@ -95,33 +93,35 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
   } | null>(null);
 
   useEffect(() => {
-    if (!firestore || !userId) return;
-
-    if (!initialProfile || !initialState) {
-        setIsLoading(true);
+    if (!firestore || !userId) {
+        setIsProfileLoading(false);
+        setIsStateLoading(false);
+        return;
     }
 
     const unsubProfile = onSnapshot(doc(firestore, 'users', userId), (docSnap) => {
         setUserProfile(docSnap.exists() ? docSnap.data() as UserProfile : null);
+        setIsProfileLoading(false);
     }, (error) => {
         console.error("Error fetching user profile:", error);
         setUserProfile(null);
+        setIsProfileLoading(false);
     });
     
     const unsubTasks = onSnapshot(doc(firestore, 'task_lists', userId), (docSnap) => {
       setUserState(docSnap.exists() ? docSnap.data() as UserState : null);
-      setIsLoading(false);
+      setIsStateLoading(false);
     }, (error) => {
         console.error("Error fetching task list:", error);
         setUserState(null);
-        setIsLoading(false);
+        setIsStateLoading(false);
     });
 
     return () => {
         unsubProfile();
         unsubTasks();
     };
-  }, [firestore, userId, initialProfile, initialState]);
+  }, [firestore, userId]);
   
   useEffect(() => {
     setSliderRange(null);
@@ -247,6 +247,8 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
             return defaultStyles as React.CSSProperties;
     }
   }, [userProfile?.cardTheme]);
+  
+  const isLoading = isProfileLoading || isStateLoading;
 
   if (isLoading) {
     return (
@@ -290,16 +292,16 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
         y={avgToShow}
         isFront
         strokeWidth={2}
+        stroke="#047857"
         className="glowing-line"
         label={({ viewBox }) => {
             if (!viewBox || avgToShow <= 0) return null;
             const { y } = viewBox;
             return (
                 <text
-                    x={viewBox.x}
+                    x={viewBox.x + 4}
                     y={y}
                     dy={-6}
-                    dx={8} 
                     fill="#047857"
                     fontSize={12}
                     fontWeight="bold"
@@ -318,7 +320,7 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
     (
         <AreaChart
             data={formattedData}
-            margin={{ top: 30, right: 10, left: -30, bottom: 5 }}
+            margin={{ top: 30, right: 20, left: 0, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
@@ -389,7 +391,7 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
     ) : (
         <BarChart
           data={formattedData}
-          margin={{ top: 30, right: 10, left: -30, bottom: 5 }}
+          margin={{ top: 30, right: 20, left: 0, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHoursBar" x1="0" y1="0" x2="0" y2="1">
@@ -476,8 +478,8 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
         <div className="mx-auto flex w-full max-w-6xl flex-grow flex-col">
             <div className="flex flex-grow flex-col py-2">
                 <Card className="flex w-full flex-grow flex-col">
-                    <CardHeader className="pl-2 pr-4 pt-6 pb-0 sm:pr-6 sm:pt-6">
-                        <div className="flex w-full items-center gap-1">
+                    <CardHeader className="p-4 pt-4 pb-2 sm:p-6 sm:pb-2">
+                        <div className="flex w-full items-center gap-2">
                             <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8 flex-shrink-0">
                                 <ArrowLeft className="h-5 w-5" />
                                 <span className="sr-only">Back</span>
@@ -491,7 +493,7 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
                         </div>
                     </CardHeader>
                     <CardContent className="flex flex-grow flex-col p-4 sm:p-6">
-                        <div className="mb-0 flex flex-col items-center gap-2">
+                        <div className="mb-2 flex flex-col items-center gap-2">
                              <ToggleGroup 
                                 type="single" 
                                 defaultValue={chartType}
@@ -514,7 +516,7 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
                                 className='flex-wrap justify-center rounded-md border bg-background'
                             >
                                 {viewRangeButtons.map(item => (
-                                    <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label} className="px-2 text-xs sm:px-3 sm:text-sm">
+                                    <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label} className="h-9 px-2 text-xs sm:px-3 sm:text-sm">
                                         {item.label}
                                     </ToggleGroupItem>
                                 ))}
