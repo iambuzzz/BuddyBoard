@@ -266,6 +266,7 @@ export default function StatsPage() {
               fillOpacity={1}
               fill="url(#colorHours)"
             />
+            <Brush dataKey="date" height={30} stroke="hsl(var(--primary))" travellerWidth={15}/>
         </AreaChart>
     ) : (
         <BarChart
@@ -317,6 +318,7 @@ export default function StatsPage() {
             name="Study Hours"
             radius={[4, 4, 0, 0]}
           />
+          <Brush dataKey="date" height={30} stroke="hsl(var(--primary))" travellerWidth={15}/>
         </BarChart>
     );
 
