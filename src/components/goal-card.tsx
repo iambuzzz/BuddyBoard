@@ -43,35 +43,45 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
   const themeStyles = {
     periwinkle: {
         card: 'bg-gradient-to-br from-violet-100 to-fuchsia-100 border-violet-300 shadow-lg shadow-violet-500/20',
-        iconBg: 'bg-violet-200',
-        iconText: 'text-violet-600',
     },
     cyan: {
         card: 'bg-gradient-to-br from-cyan-100 to-sky-100 border-cyan-300 shadow-lg shadow-cyan-500/20',
-        iconBg: 'bg-cyan-200',
-        iconText: 'text-cyan-600',
     },
     emerald: {
         card: 'bg-gradient-to-br from-emerald-100 to-green-100 border-emerald-300 shadow-lg shadow-emerald-500/20',
-        iconBg: 'bg-emerald-200',
-        iconText: 'text-emerald-600',
     }
   };
   
-  const achievedStyle = {
-    card: 'bg-gradient-to-tl from-green-400/80 to-green-200 border-emarald-800 shadow-lg shadow-emerald-500/30',
-    iconBg: 'bg-emerald-300',
-    iconText: 'text-emerald-800',
-    achievedText: 'text-emerald-900 font-bold'
+  const achievedThemeStyles = {
+    periwinkle: {
+        card: 'bg-gradient-to-br from-violet-200 to-fuchsia-200 border-violet-400 card-glow-periwinkle',
+        iconBg: 'bg-violet-300',
+        iconText: 'text-violet-700',
+        achievedText: 'text-violet-900 font-bold'
+    },
+    cyan: {
+        card: 'bg-gradient-to-br from-cyan-200 to-sky-200 border-cyan-400 card-glow-cyan',
+        iconBg: 'bg-cyan-300',
+        iconText: 'text-cyan-700',
+        achievedText: 'text-cyan-900 font-bold'
+    },
+    emerald: {
+        card: 'bg-gradient-to-br from-emerald-200 to-green-200 border-emerald-400 card-glow-emerald',
+        iconBg: 'bg-emerald-300',
+        iconText: 'text-emerald-700',
+        achievedText: 'text-emerald-900 font-bold'
+    }
   };
 
   const currentThemeStyle = themeStyles[theme] || themeStyles.periwinkle;
+  const currentAchievedStyle = achievedThemeStyles[theme] || achievedThemeStyles.periwinkle;
+
 
   return (
     <div
         className={cn(
             "rounded-xl border shadow-sm h-full transition-all duration-300 ease-in-out",
-            isAchieved ? achievedStyle.card : currentThemeStyle.card
+            isAchieved ? currentAchievedStyle.card : currentThemeStyle.card
         )}
     >
         <Card className="bg-transparent border-0 shadow-none h-full flex flex-col">
@@ -85,7 +95,7 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
                                 animate={{ scale: 1, rotate: 0 }}
                                 exit={{ scale: 0, rotate: 45 }}
                                 transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                                className={cn("flex items-center justify-center h-8 w-8 rounded-full", achievedStyle.iconBg, achievedStyle.iconText)}
+                                className={cn("flex items-center justify-center h-8 w-8 rounded-full", currentAchievedStyle.iconBg, currentAchievedStyle.iconText)}
                             >
                                 <PartyPopper className="h-5 w-5" />
                             </motion.div>
@@ -98,7 +108,7 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
             <CardFooter className="flex justify-between items-end">
                 <div className="text-xs text-slate-500">
                     <p>Set: {format(new Date(goal.startDate), 'MMM d, yyyy')}</p>
-                    {isAchieved && goal.achievedDate && <p className={cn(achievedStyle.achievedText)}>Achieved: {format((goal.achievedDate as any).toDate ? (goal.achievedDate as any).toDate() : new Date(goal.achievedDate), 'MMM d, yyyy')}</p>}
+                    {isAchieved && goal.achievedDate && <p className={cn(currentAchievedStyle.achievedText)}>Achieved: {format((goal.achievedDate as any).toDate ? (goal.achievedDate as any).toDate() : new Date(goal.achievedDate), 'MMM d, yyyy')}</p>}
                 </div>
                 {!isAchieved && (
                     <Button onClick={handleAchieve} disabled={isUpdating} size="sm" className="rounded-full bg-white/50 text-slate-700 hover:bg-white/80 border border-slate-200/50 hover:border-slate-300">
