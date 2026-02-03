@@ -286,7 +286,7 @@ export default function StatsPage() {
     (
         <AreaChart
             data={formattedData}
-            margin={{ top: 30, right: 20, left: -10, bottom: 5 }}
+            margin={{ top: 30, right: 10, left: 0, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
@@ -356,7 +356,7 @@ export default function StatsPage() {
     ) : (
         <BarChart
           data={formattedData}
-          margin={{ top: 30, right: 20, left: -10, bottom: 5 }}
+          margin={{ top: 30, right: 10, left: 0, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHoursBar" x1="0" y1="0" x2="0" y2="1">
@@ -476,7 +476,7 @@ export default function StatsPage() {
                         </div>
                     </CardHeader>
                     <CardContent className="flex flex-grow flex-col p-4 pt-4 sm:p-6">
-                        <div className="mb-2 flex justify-center">
+                        <div className="mb-2 flex flex-wrap justify-center gap-2">
                             <ToggleGroup 
                                 type="single" 
                                 defaultValue={viewRange}
@@ -485,7 +485,7 @@ export default function StatsPage() {
                                 className='rounded-md border bg-background'
                             >
                                 {viewRangeButtons.map(item => (
-                                    <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label} className="px-3">
+                                    <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label} className="px-2 text-xs sm:px-3 sm:text-sm">
                                         {item.label}
                                     </ToggleGroupItem>
                                 ))}
