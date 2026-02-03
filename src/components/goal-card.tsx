@@ -40,34 +40,40 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
     }
   };
   
+  // Style for ACTIVE goals, based on the user's theme
   const themeStyles = {
     periwinkle: {
-        achieved: 'bg-gradient-to-br from-violet-100 to-fuchsia-100 border-violet-300 shadow-lg shadow-violet-500/10',
+        card: 'bg-gradient-to-br from-violet-50 to-fuchsia-50 border-violet-200 shadow-lg shadow-violet-500/10',
         iconBg: 'bg-violet-200',
         iconText: 'text-violet-600',
-        achievedText: 'text-violet-700 font-bold'
     },
     cyan: {
-        achieved: 'bg-gradient-to-br from-cyan-100 to-sky-100 border-cyan-300 shadow-lg shadow-cyan-500/10',
+        card: 'bg-gradient-to-br from-cyan-50 to-sky-50 border-cyan-200 shadow-lg shadow-cyan-500/10',
         iconBg: 'bg-cyan-200',
         iconText: 'text-cyan-600',
-        achievedText: 'text-cyan-700 font-bold'
     },
     emerald: {
-        achieved: 'bg-gradient-to-br from-emerald-100 to-green-100 border-emerald-300 shadow-lg shadow-emerald-500/10',
+        card: 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200 shadow-lg shadow-emerald-500/10',
         iconBg: 'bg-emerald-200',
         iconText: 'text-emerald-600',
-        achievedText: 'text-emerald-700 font-bold'
     }
   };
   
+  // Specific style for ACHIEVED goals (always green)
+  const achievedStyle = {
+    card: 'bg-gradient-to-br from-emerald-100 to-green-200 border-emerald-300 shadow-lg shadow-emerald-500/20',
+    iconBg: 'bg-emerald-200',
+    iconText: 'text-emerald-700',
+    achievedText: 'text-emerald-800 font-bold'
+  };
+
   const currentThemeStyle = themeStyles[theme] || themeStyles.periwinkle;
 
   return (
     <div
         className={cn(
             "rounded-xl border shadow-sm h-full transition-all duration-300 ease-in-out",
-            isAchieved ? currentThemeStyle.achieved : 'bg-card border-border'
+            isAchieved ? achievedStyle.card : currentThemeStyle.card
         )}
     >
         <Card className="bg-transparent border-0 shadow-none h-full flex flex-col">
@@ -81,7 +87,7 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
                                 animate={{ scale: 1, rotate: 0 }}
                                 exit={{ scale: 0, rotate: 45 }}
                                 transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                                className={cn("flex items-center justify-center h-8 w-8 rounded-full", currentThemeStyle.iconBg, currentThemeStyle.iconText)}
+                                className={cn("flex items-center justify-center h-8 w-8 rounded-full", achievedStyle.iconBg, achievedStyle.iconText)}
                             >
                                 <PartyPopper className="h-5 w-5" />
                             </motion.div>
@@ -94,10 +100,10 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
             <CardFooter className="flex justify-between items-end">
                 <div className="text-xs text-slate-500">
                     <p>Set: {format(new Date(goal.startDate), 'MMM d, yyyy')}</p>
-                    {isAchieved && goal.achievedDate && <p className={cn(currentThemeStyle.achievedText)}>Achieved: {format((goal.achievedDate as any).toDate ? (goal.achievedDate as any).toDate() : new Date(goal.achievedDate), 'MMM d, yyyy')}</p>}
+                    {isAchieved && goal.achievedDate && <p className={cn(achievedStyle.achievedText)}>Achieved: {format((goal.achievedDate as any).toDate ? (goal.achievedDate as any).toDate() : new Date(goal.achievedDate), 'MMM d, yyyy')}</p>}
                 </div>
                 {!isAchieved && (
-                    <Button onClick={handleAchieve} disabled={isUpdating} size="sm" className="rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 hover:border-slate-300">
+                    <Button onClick={handleAchieve} disabled={isUpdating} size="sm" className="rounded-full bg-white/50 text-slate-700 hover:bg-white/80 border border-slate-200/50 hover:border-slate-300">
                         <Check className="h-4 w-4 mr-1" />
                         Mark as Achieved
                     </Button>
