@@ -91,12 +91,6 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
 
 
   const addTask = (text: string) => {
-    // Prevent adding tasks to a list from a previous day that hasn't been auto-finished yet.
-    if (userState.isLocked && userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date())) {
-        toast({ title: "Day has ended", description: "Please start a new list for today.", variant: 'destructive'});
-        return;
-    }
-
     const newTask: Task = {
       id: crypto.randomUUID(),
       text,
@@ -217,13 +211,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
         historical_stats: updatedStats
       };
     } else { // Action: Lock-In List
-      const isFromPreviousDay = userState.tasks.length > 0 && userState.tasks.some(t => !isSameDay(new Date(t.createdAt), new Date()));
-       if(isFromPreviousDay && !userState.lockedAt) {
-          updateFirestore({ tasks: [] });
-          toast({ title: "New Day!", description: "Cleared yesterday's draft list."});
-          return;
-       }
-
+      
       let currentStreak = userState.currentStreak;
       if (userState.lastLockedAt) {
         const timeSinceLastLock = now - userState.lastLockedAt;
@@ -298,21 +286,9 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     if (!text) return;
 
     if (userState.isLocked && !userState.isFinished) {
-      // Allow adding tasks if locked but not finished and it's the same day
-      if (userState.lockedAt && isSameDay(new Date(userState.lockedAt), new Date())) {
-        setTaskToAdd(text);
-        setShowLockWarning(true);
-      } else {
-        toast({ title: "Day has ended", description: "You cannot add tasks to a finished or expired list.", variant: 'destructive'});
-      }
-    } else if (userState.isFinished) {
-        // Can add to a new list which will appear, but it can't be locked until next day
-        if (userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date())) {
-             addTask(text);
-        } else {
-            toast({ title: "List already finished", description: "You can start a new list after 12:00 AM.", variant: 'destructive'});
-        }
-    } else { // Not locked
+      setTaskToAdd(text);
+      setShowLockWarning(true);
+    } else { 
       addTask(text);
     }
 
@@ -449,12 +425,12 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
           name="task-input"
           placeholder={isCurrentUserCard ? "Add a task..." : `This is ${userName}'s list`}
           className={`bg-white/80 border-slate-300 transition focus:border-transparent ${ringStyle}`}
-          disabled={userState.isFinished || !isCurrentUserCard || (userState.isLocked && userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date()))}
+          disabled={userState.isFinished || !isCurrentUserCard}
         />
         <Button
           type="submit"
           className={`text-white font-bold p-3 rounded-lg shadow-md transition transform hover:scale-105 ${addBtnStyle}`}
-          disabled={userState.isFinished || !isCurrentUserCard || (userState.isLocked && userState.lockedAt && !isSameDay(new Date(userState.lockedAt), new Date()))}
+          disabled={userState.isFinished || !isCurrentUserCard}
           aria-label="Add task"
         >
           <Plus />
@@ -482,7 +458,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
          <Button
             onClick={isCurrentUserCard ? (undoState.active ? handleCancelUndo : triggerUndo) : undefined}
             className={`w-full font-semibold transition py-3 text-base h-auto text-white ${actionBtnStyle} ${ringStyle}`}
-            disabled={!isCurrentUserCard}
+            disabled={!isCurrentUserCard || (userState.isLocked && !isSameDay(new Date(userState.lockedAt || 0), new Date()))}
           >
             {getActionButtonIcon()}
             {getActionButtonText()}
