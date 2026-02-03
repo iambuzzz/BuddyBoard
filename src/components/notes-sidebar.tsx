@@ -92,7 +92,7 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
                 </Button>
             </div>
             <ScrollArea className="flex-1">
-                <div className="p-2 space-y-1">
+                <div className="p-2">
                     {isLoading ? (
                         [...Array(5)].map((_, i) => <div key={i} className="h-16 bg-slate-100/50 rounded-md animate-pulse" />)
                     ) : (
@@ -101,7 +101,7 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
                                 key={note.id}
                                 onClick={() => onSelectNote(note)}
                                 className={cn(
-                                    "w-full text-left p-3 rounded-md transition-colors",
+                                    "w-full text-left p-3 border-b border-slate-300/70 transition-colors",
                                     selectedNoteId === note.id ? currentTheme.selectedBg : 'hover:bg-slate-100/50'
                                 )}
                             >
