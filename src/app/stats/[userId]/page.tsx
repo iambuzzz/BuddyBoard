@@ -42,6 +42,16 @@ const formatYAxis = (value: number) => {
     return `${minutes}m`;
 };
 
+const formatAverageLabel = (value: number) => {
+    if (value === 0) return 'Avg 0m';
+    const hours = Math.floor(value);
+    const minutes = Math.round((value - hours) * 60);
+    const parts = [];
+    if (hours > 0) parts.push(`${hours}hrs`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    return `Avg ${parts.join(' ')}`;
+};
+
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       const value = payload[0].value;
@@ -215,24 +225,30 @@ export default function StatsPage() {
       ...d,
       date: format(parseISO(d.date), 'MMM d'),
     }));
-    
-    const averageLabel = {
-        value: `Avg (${formatYAxis(averageHours)})`,
-        position: 'insideTopRight',
-        fill: '#057A55',
-        fontSize: 12,
-        fontWeight: 'bold',
-        dy: 10,
-        dx: -10,
-    };
 
     const referenceLine = (
       <ReferenceLine
         y={averageHours}
-        label={averageHours > 0 ? averageLabel : undefined}
-        stroke="#10B981"
+        stroke="hsl(var(--primary))"
         strokeWidth={2}
-        strokeDasharray="8 4"
+        className="glowing-line"
+        label={({ viewBox }) => {
+            if (!viewBox || averageHours <= 0) return null;
+            const { y, x } = viewBox;
+            return (
+                <text
+                    x={x - 8}
+                    y={y}
+                    dy={-4}
+                    textAnchor="end"
+                    fill="hsl(var(--primary))"
+                    fontSize={12}
+                    fontWeight="bold"
+                >
+                    {formatAverageLabel(averageHours)}
+                </text>
+            );
+        }}
       />
     );
 
@@ -282,7 +298,7 @@ export default function StatsPage() {
               cursor={{ stroke: 'hsl(var(--primary))' }}
               content={<CustomTooltip />}
             />
-            {referenceLine}
+            {averageHours > 0 && referenceLine}
             <Area
               type="monotone"
               dataKey="hours"
@@ -338,7 +354,7 @@ export default function StatsPage() {
             cursor={{ fill: 'hsl(var(--accent))' }}
             content={<CustomTooltip />}
           />
-          {referenceLine}
+          {averageHours > 0 && referenceLine}
           <Bar
             dataKey="hours"
             fill="url(#colorHoursBar)"
@@ -369,16 +385,16 @@ export default function StatsPage() {
   ]
   
   return (
-    <div className="h-screen w-full flex flex-col bg-[#e3eeff] p-2 sm:p-4" style={themeStyle}>
-        <div className="w-full max-w-6xl mx-auto flex flex-col flex-grow">
+    <div className="flex h-screen w-full flex-col bg-[#e3eeff] p-2 sm:p-4" style={themeStyle}>
+        <div className="mx-auto flex w-full max-w-6xl flex-grow flex-col">
             <div className='flex-shrink-0'>
                 <Button variant="ghost" onClick={() => router.back()} className="">
                     <ArrowLeft className="mr-2 h-4 w-4" /> Back
                 </Button>
             </div>
-            <div className="py-2 flex flex-col flex-grow">
-                <Card className="w-full flex flex-col flex-grow">
-                    <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 px-4 pt-4 sm:px-6 sm:pt-6 pb-0">
+            <div className="flex flex-grow flex-col py-2">
+                <Card className="flex w-full flex-grow flex-col">
+                    <CardHeader className="flex flex-col items-start justify-between gap-2 px-4 pt-4 pb-0 sm:flex-row sm:items-center sm:px-6 sm:pt-6">
                         <div>
                             <CardTitle className="text-2xl sm:text-3xl">
                                 {userProfile ? `${userProfile.displayName}'s Stats` : 'User Stats'}
@@ -391,7 +407,7 @@ export default function StatsPage() {
                                 defaultValue={chartType}
                                 aria-label="Chart Type"
                                 onValueChange={(value: 'bar' | 'line') => value && setChartType(value)}
-                                className='bg-background border rounded-md'
+                                className='rounded-md border bg-background'
                             >
                                 <ToggleGroupItem value="bar" aria-label="Bar chart">
                                     <BarChart2 className="h-5 w-5" />
@@ -402,14 +418,14 @@ export default function StatsPage() {
                             </ToggleGroup>
                         </div>
                     </CardHeader>
-                    <CardContent className="p-4 sm:p-6 pt-4 flex flex-col flex-grow">
-                        <div className="flex justify-center mb-2">
+                    <CardContent className="flex flex-grow flex-col p-4 pt-4 sm:p-6">
+                        <div className="mb-2 flex justify-center">
                             <ToggleGroup 
                                 type="single" 
                                 defaultValue={viewRange}
                                 aria-label="View Range"
                                 onValueChange={(value: ViewRange) => value && setViewRange(value)}
-                                className='bg-background border rounded-md'
+                                className='rounded-md border bg-background'
                             >
                                 {viewRangeButtons.map(item => (
                                     <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label} className="px-3">
@@ -418,20 +434,16 @@ export default function StatsPage() {
                                 ))}
                             </ToggleGroup>
                         </div>
-                        <div className="flex-grow min-h-0">
+                        <div className="min-h-0 flex-grow">
                             {renderChart()}
                         </div>
-                        <div className="flex w-full items-center justify-center pt-2 gap-6">
+                        <div className="flex w-full items-center justify-center gap-6 pt-2">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <span
                                     className="h-3 w-3 rounded-sm"
                                     style={{ backgroundColor: 'hsl(var(--primary))' }}
                                 />
                                 <span>Study Hours</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <svg width="14" height="14" viewBox="0 0 14 2" className="h-3 w-3"><line x1="0" y1="1" x2="14" y2="1" stroke="#10B981" strokeWidth="2" strokeDasharray="4 2"></line></svg>
-                                <span>Average</span>
                             </div>
                         </div>
                     </CardContent>
@@ -441,5 +453,3 @@ export default function StatsPage() {
     </div>
   )
 }
-
-    
