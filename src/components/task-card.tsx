@@ -395,7 +395,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
       </AnimatePresence>
       <header className="flex justify-between items-center gap-2 pb-4 mb-4 border-b">
         <div className="flex items-center gap-3 min-w-0 flex-1">
-          <Avatar className={`h-8 w-8 border flex-shrink-0 ${avatarBorderStyle}`}>
+          <Avatar className={`h-9 w-9 border flex-shrink-0 ${avatarBorderStyle}`}>
             <AvatarImage src={userProfile?.photoURL || ''} alt={userName} />
             <AvatarFallback>{getInitials(userName)}</AvatarFallback>
           </Avatar>

@@ -128,19 +128,26 @@ export function StatsContainer({ userId }: StatsContainerProps) {
   }, [viewRange]);
 
   const allTimeStats = useMemo(() => {
-    if (!userState?.historical_stats) return [];
+    if (!userState?.historical_stats || userState.historical_stats.length === 0) {
+      return [];
+    }
     
     const sorted = [...userState.historical_stats].sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
 
-    if (sorted.length === 0) return [];
+    const todayStr = format(new Date(), 'yyyy-MM-dd');
+    const hasStatForToday = sorted.some(s => s.date === todayStr);
+
+    const lastDateToFill = hasStatForToday ? startOfDay(new Date()) : startOfDay(subDays(new Date(), 1));
 
     const filledStats: DailyStat[] = [];
     let currentDate = parseISO(sorted[0].date);
-    const lastDate = new Date();
     
-    let statIndex = 0;
+    if (currentDate > lastDateToFill) {
+        return sorted;
+    }
 
-    while(currentDate <= lastDate) {
+    let statIndex = 0;
+    while(currentDate <= lastDateToFill) {
         const dateKey = format(currentDate, 'yyyy-MM-dd');
         if(statIndex < sorted.length && sorted[statIndex].date === dateKey) {
             filledStats.push(sorted[statIndex]);
@@ -149,6 +156,10 @@ export function StatsContainer({ userId }: StatsContainerProps) {
             filledStats.push({ date: dateKey, hours: 0 });
         }
         currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    if (statIndex < sorted.length) {
+        filledStats.push(...sorted.slice(statIndex));
     }
 
     return filledStats;
@@ -391,7 +402,7 @@ export function StatsContainer({ userId }: StatsContainerProps) {
     ) : (
         <BarChart
           data={formattedData}
-          margin={{ top: 30, right: 20, left: 0, bottom: 5 }}
+          margin={{ top: 30, right: 20, left: -20, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHoursBar" x1="0" y1="0" x2="0" y2="1">
