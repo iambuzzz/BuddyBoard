@@ -320,7 +320,7 @@ export function StatsContainer({ userId }: StatsContainerProps) {
     (
         <AreaChart
             data={formattedData}
-            margin={{ top: 30, right: 20, left: 0, bottom: 5 }}
+            margin={{ top: 30, right: 20, left: -20, bottom: 5 }}
         >
             <defs>
               <linearGradient id="colorHours" x1="0" y1="0" x2="0" y2="1">
@@ -348,7 +348,7 @@ export function StatsContainer({ userId }: StatsContainerProps) {
               textAnchor="end"
               height={50}
               interval="preserveStartEnd"
-              padding={{ left: 10, right: 10 }}
+              padding={{ left: 0, right: 0 }}
             />
             <YAxis
               stroke="hsl(var(--muted-foreground))"
@@ -478,8 +478,8 @@ export function StatsContainer({ userId }: StatsContainerProps) {
         <div className="mx-auto flex w-full max-w-6xl flex-grow flex-col">
             <div className="flex flex-grow flex-col py-2">
                 <Card className="flex w-full flex-grow flex-col">
-                    <CardHeader className="p-4 pt-4 pb-2 sm:p-6 sm:pb-2">
-                        <div className="flex w-full items-center gap-2">
+                    <CardHeader className="p-4 pt-6 pb-0 pl-2 sm:p-6 sm:pl-4 sm:pb-0">
+                        <div className="flex w-full items-center gap-1">
                             <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8 flex-shrink-0">
                                 <ArrowLeft className="h-5 w-5" />
                                 <span className="sr-only">Back</span>
@@ -493,7 +493,7 @@ export function StatsContainer({ userId }: StatsContainerProps) {
                         </div>
                     </CardHeader>
                     <CardContent className="flex flex-grow flex-col p-4 sm:p-6">
-                        <div className="mb-2 flex flex-col items-center gap-2">
+                        <div className="mb-0 flex flex-col items-center gap-2">
                              <ToggleGroup 
                                 type="single" 
                                 defaultValue={chartType}
