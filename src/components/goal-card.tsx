@@ -100,21 +100,21 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
         iconBg: 'bg-violet-300',
         iconText: 'text-violet-700',
         achievedText: 'text-violet-900 font-bold',
-        glowClass: 'card-glow-periwinkle',
+        
     },
     cyan: {
         card: 'bg-gradient-to-br from-cyan-200 to-sky-200 border-cyan-400',
         iconBg: 'bg-cyan-300',
         iconText: 'text-cyan-700',
         achievedText: 'text-cyan-900 font-bold',
-        glowClass: 'card-glow-cyan',
+        
     },
     emerald: {
         card: 'bg-gradient-to-br from-emerald-200 to-green-200 border-emerald-400',
         iconBg: 'bg-emerald-300',
         iconText: 'text-emerald-700',
         achievedText: 'text-emerald-900 font-bold',
-        glowClass: 'card-glow-emerald',
+        
     }
   };
 
@@ -144,7 +144,7 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
       <div
           className={cn(
               "rounded-xl border shadow-sm h-full transition-all duration-300 ease-in-out",
-              isAchieved ? `${currentAchievedStyle.card} ${currentAchievedStyle.glowClass}` : currentThemeStyle.card
+              isAchieved ? `${currentAchievedStyle.card}` : currentThemeStyle.card
           )}
       >
           <Card className="bg-transparent border-0 shadow-none h-full flex flex-col">
