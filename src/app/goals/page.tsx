@@ -146,6 +146,17 @@ export default function GoalsPage() {
                                 <TabsTrigger value="long-term">Long Term</TabsTrigger>
                                 <TabsTrigger value="bucket-list">Bucket List</TabsTrigger>
                             </TabsList>
+                            
+                            <div className="block sm:hidden mt-4">
+                                <Button
+                                    onClick={() => setDialogOpen(true)}
+                                    className={`w-full ${getButtonThemeClass(cardTheme)} font-semibold rounded-full shadow-lg transition transform hover:scale-105`}
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Set a New Goal
+                                </Button>
+                            </div>
+
                             <TabsContent value="short-term">
                                 {renderGoalList(shortTermGoals, 'short-term')}
                             </TabsContent>
@@ -156,16 +167,6 @@ export default function GoalsPage() {
                                 {renderGoalList(bucketListGoals, 'bucket-list')}
                             </TabsContent>
                         </Tabs>
-
-                        <div className="block sm:hidden">
-                            <Button
-                                onClick={() => setDialogOpen(true)}
-                                className={`w-full ${getButtonThemeClass(cardTheme)} font-semibold rounded-full shadow-lg transition transform hover:scale-105`}
-                            >
-                                <Plus className="w-4 h-4 mr-2" />
-                                Set a New Goal
-                            </Button>
-                        </div>
                     </div>
                 </div>
             </div>
