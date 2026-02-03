@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Plus, Lock, Check, AlertTriangle, RotateCcw, History } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
-import { isSameDay, startOfToday } from 'date-fns';
+import { isSameDay, startOfToday, format } from 'date-fns';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -183,19 +183,19 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
         return acc + taskTime;
       }, 0);
 
-      const today = new Date(userState.lockedAt || now).toISOString().split('T')[0];
+      const listDate = format(new Date(userState.lockedAt || now), 'yyyy-MM-dd');
       const newStat: DailyStat = {
-        date: today,
+        date: listDate,
         hours: totalTimeSpentSeconds / 3600
       };
 
       const existingStats = userState.historical_stats || [];
-      const todayStatIndex = existingStats.findIndex(s => s.date === today);
+      const dateStatIndex = existingStats.findIndex(s => s.date === listDate);
 
       let updatedStats;
-      if (todayStatIndex > -1) {
+      if (dateStatIndex > -1) {
         updatedStats = [...existingStats];
-        updatedStats[todayStatIndex] = newStat;
+        updatedStats[dateStatIndex] = newStat;
       } else {
         updatedStats = [...existingStats, newStat];
       }
