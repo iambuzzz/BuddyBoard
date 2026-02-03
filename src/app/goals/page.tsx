@@ -116,43 +116,57 @@ export default function GoalsPage() {
                 onAddGoal={handleAddGoal}
                 theme={cardTheme}
             />
-            <div className="min-h-screen w-full bg-[#e3eeff] p-4 sm:p-6 lg:p-8">
+            <div className="min-h-screen w-full bg-[#e3eeff] p-4">
                 <div className="max-w-7xl mx-auto">
-                    <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
-                        <div className='flex items-center gap-2'>
-                             <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600">
-                                <ArrowLeft className="h-5 w-5" />
-                            </Button>
-                            <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 flex items-center gap-3">
-                                <GoalIcon className={`h-7 w-7 sm:h-8 sm:w-8 ${getIconThemeClass(cardTheme)}`} />
-                                My Goals
-                            </h1>
-                        </div>
-                        <Button
-                            onClick={() => setDialogOpen(true)}
-                            className={`w-full sm:w-auto ${getButtonThemeClass(cardTheme)} font-semibold rounded-full shadow-lg transition transform hover:scale-105`}
-                        >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Set a New Goal
-                        </Button>
-                    </header>
+                    <div className="flex flex-col gap-4">
+                        <header className="flex items-center justify-between">
+                            <div className='flex items-center gap-2'>
+                                <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600">
+                                    <ArrowLeft className="h-5 w-5" />
+                                </Button>
+                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 flex items-center gap-3">
+                                    <GoalIcon className={`h-7 w-7 sm:h-8 sm:w-8 ${getIconThemeClass(cardTheme)}`} />
+                                    My Goals
+                                </h1>
+                            </div>
+                            <div className="hidden sm:block">
+                                <Button
+                                    onClick={() => setDialogOpen(true)}
+                                    className={`sm:w-auto ${getButtonThemeClass(cardTheme)} font-semibold rounded-full shadow-lg transition transform hover:scale-105`}
+                                >
+                                    <Plus className="w-4 h-4 mr-2" />
+                                    Set a New Goal
+                                </Button>
+                            </div>
+                        </header>
 
-                    <Tabs defaultValue="short-term" className="w-full">
-                        <TabsList className="grid w-full grid-cols-3 bg-slate-200/80 backdrop-blur-sm">
-                            <TabsTrigger value="short-term">Short Term</TabsTrigger>
-                            <TabsTrigger value="long-term">Long Term</TabsTrigger>
-                            <TabsTrigger value="bucket-list">Bucket List</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="short-term">
-                            {renderGoalList(shortTermGoals, 'short-term')}
-                        </TabsContent>
-                        <TabsContent value="long-term">
-                            {renderGoalList(longTermGoals, 'long-term')}
-                        </TabsContent>
-                        <TabsContent value="bucket-list">
-                            {renderGoalList(bucketListGoals, 'bucket-list')}
-                        </TabsContent>
-                    </Tabs>
+                        <Tabs defaultValue="short-term" className="w-full">
+                            <TabsList className="grid w-full grid-cols-3 bg-slate-200/80 backdrop-blur-sm">
+                                <TabsTrigger value="short-term">Short Term</TabsTrigger>
+                                <TabsTrigger value="long-term">Long Term</TabsTrigger>
+                                <TabsTrigger value="bucket-list">Bucket List</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value="short-term">
+                                {renderGoalList(shortTermGoals, 'short-term')}
+                            </TabsContent>
+                            <TabsContent value="long-term">
+                                {renderGoalList(longTermGoals, 'long-term')}
+                            </TabsContent>
+                            <TabsContent value="bucket-list">
+                                {renderGoalList(bucketListGoals, 'bucket-list')}
+                            </TabsContent>
+                        </Tabs>
+
+                        <div className="block sm:hidden">
+                            <Button
+                                onClick={() => setDialogOpen(true)}
+                                className={`w-full ${getButtonThemeClass(cardTheme)} font-semibold rounded-full shadow-lg transition transform hover:scale-105`}
+                            >
+                                <Plus className="w-4 h-4 mr-2" />
+                                Set a New Goal
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </>
