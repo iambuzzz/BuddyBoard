@@ -446,22 +446,25 @@ export default function StatsPage() {
   return (
     <div className="flex h-screen w-full flex-col bg-[#e3eeff] p-2 sm:p-4" style={themeStyle}>
         <div className="mx-auto flex w-full max-w-6xl flex-grow flex-col">
-            <div className='flex-shrink-0'>
-                <Button variant="ghost" onClick={() => router.back()} className="">
-                    <ArrowLeft className="mr-2 h-4 w-4" /> Back
-                </Button>
-            </div>
             <div className="flex flex-grow flex-col py-2">
                 <Card className="flex w-full flex-grow flex-col">
-                    <CardHeader className="flex flex-col items-start justify-between gap-2 px-4 pt-4 pb-0 sm:flex-row sm:items-center sm:px-6 sm:pt-6">
-                        <div>
-                            <CardTitle className="text-2xl sm:text-3xl">
-                                {userProfile ? `${userProfile.displayName}'s Stats` : 'User Stats'}
-                            </CardTitle>
-                            <CardDescription>Study time analysis.</CardDescription>
+                    <CardHeader className="px-4 pt-4 pb-2 sm:px-6 sm:pt-6">
+                        <div className="flex w-full items-center gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8 flex-shrink-0">
+                                <ArrowLeft className="h-5 w-5" />
+                                <span className="sr-only">Back</span>
+                            </Button>
+                            <div className='flex-grow'>
+                                <CardTitle className="text-2xl sm:text-3xl">
+                                    {userProfile ? `${userProfile.displayName}'s Stats` : 'User Stats'}
+                                </CardTitle>
+                                <CardDescription>Study time analysis.</CardDescription>
+                            </div>
                         </div>
-                        <div className='flex items-center gap-2'>
-                            <ToggleGroup 
+                    </CardHeader>
+                    <CardContent className="flex flex-grow flex-col p-4 pt-4 sm:p-6">
+                        <div className="mb-4 flex flex-col items-center gap-2">
+                             <ToggleGroup 
                                 type="single" 
                                 defaultValue={chartType}
                                 aria-label="Chart Type"
@@ -475,16 +478,12 @@ export default function StatsPage() {
                                     <LineChartIcon className="h-5 w-5" />
                                 </ToggleGroupItem>
                             </ToggleGroup>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="flex flex-grow flex-col p-4 pt-4 sm:p-6">
-                        <div className="mb-2 flex flex-wrap justify-center gap-2">
                             <ToggleGroup 
                                 type="single" 
                                 defaultValue={viewRange}
                                 aria-label="View Range"
                                 onValueChange={(value: ViewRange) => value && setViewRange(value)}
-                                className='rounded-md border bg-background'
+                                className='flex-wrap rounded-md border bg-background'
                             >
                                 {viewRangeButtons.map(item => (
                                     <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label} className="px-2 text-xs sm:px-3 sm:text-sm">
