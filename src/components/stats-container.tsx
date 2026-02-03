@@ -128,42 +128,40 @@ export function StatsContainer({ userId }: StatsContainerProps) {
   }, [viewRange]);
 
   const allTimeStats = useMemo(() => {
-    if (!userState?.historical_stats || userState.historical_stats.length === 0) {
-      return [];
-    }
-    
-    const sorted = [...userState.historical_stats].sort((a,b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+    const historicalStats = userState?.historical_stats || [];
+    if (historicalStats.length === 0) return [];
 
+    const sortedStats = [...historicalStats].sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
+    const statsMap = new Map(sortedStats.map(stat => [stat.date, stat.hours]));
+
+    const firstDate = parseISO(sortedStats[0].date);
+    const yesterday = startOfDay(subDays(new Date(), 1));
     const todayStr = format(new Date(), 'yyyy-MM-dd');
-    const hasStatForToday = sorted.some(s => s.date === todayStr);
-
-    const lastDateToFill = hasStatForToday ? startOfDay(new Date()) : startOfDay(subDays(new Date(), 1));
 
     const filledStats: DailyStat[] = [];
-    let currentDate = parseISO(sorted[0].date);
-    
-    if (currentDate > lastDateToFill) {
-        return sorted;
+
+    // Only process past dates if the user's history starts before today.
+    if (firstDate <= yesterday) {
+      let currentDate = new Date(firstDate);
+      while (currentDate <= yesterday) {
+        const dateKey = format(currentDate, 'yyyy-MM-dd');
+        filledStats.push({
+          date: dateKey,
+          hours: statsMap.get(dateKey) || 0,
+        });
+        currentDate.setDate(currentDate.getDate() + 1);
+      }
     }
 
-    let statIndex = 0;
-    while(currentDate <= lastDateToFill) {
-        const dateKey = format(currentDate, 'yyyy-MM-dd');
-        if(statIndex < sorted.length && sorted[statIndex].date === dateKey) {
-            filledStats.push(sorted[statIndex]);
-            statIndex++;
-        } else {
-            filledStats.push({ date: dateKey, hours: 0 });
-        }
-        currentDate.setDate(currentDate.getDate() + 1);
-    }
-    
-    if (statIndex < sorted.length) {
-        filledStats.push(...sorted.slice(statIndex));
+    // Always add today's stat if it exists in the map (i.e., list was finished today).
+    if (statsMap.has(todayStr)) {
+      filledStats.push({
+        date: todayStr,
+        hours: statsMap.get(todayStr)!,
+      });
     }
 
     return filledStats;
-
   }, [userState?.historical_stats]);
 
   const { filteredData, yAxisMax, viewRangeAvg } = useMemo(() => {
@@ -359,7 +357,7 @@ export function StatsContainer({ userId }: StatsContainerProps) {
               textAnchor="end"
               height={50}
               interval="preserveStartEnd"
-              padding={{ left: 0, right: 0 }}
+              padding={{ left: 10, right: 10 }}
             />
             <YAxis
               stroke="hsl(var(--muted-foreground))"
