@@ -299,11 +299,12 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
                     x={viewBox.x}
                     y={y}
                     dy={-6}
+                    dx={8} 
                     fill="#047857"
                     fontSize={12}
                     fontWeight="bold"
                     textAnchor="start"
-                    style={{ filter: 'none' }}
+                    style={{ filter: 'none'}}
                 >
                     {formatAverageLabel(avgToShow)}
                 </text>
