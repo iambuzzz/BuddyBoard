@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState } from 'react';
@@ -6,10 +5,11 @@ import { doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FilePlus, Loader2, Notebook } from 'lucide-react';
+import { FilePlus, Loader2, Notebook, ArrowLeft } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Note, CardTheme } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
+import { useRouter } from 'next/navigation';
 
 interface NotesSidebarProps {
     notes: Note[];
@@ -22,6 +22,7 @@ interface NotesSidebarProps {
 
 export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, userId, theme }: NotesSidebarProps) {
     const firestore = useFirestore();
+    const router = useRouter();
     const [isCreating, setIsCreating] = useState(false);
 
     const handleNewNote = async () => {
@@ -74,8 +75,11 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
 
     return (
         <aside className="w-80 border-r flex flex-col h-screen bg-white">
-            <div className="p-4 border-b">
+            <div className="p-4 border-b flex items-center justify-between">
                 <h2 className="text-xl font-bold flex items-center gap-2"><Notebook className="h-6 w-6"/> Notes</h2>
+                <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600">
+                    <ArrowLeft className="h-5 w-5" />
+                </Button>
             </div>
             <div className="p-2">
                 <Button onClick={handleNewNote} disabled={isCreating} className={`w-full ${currentTheme.newButton}`}>

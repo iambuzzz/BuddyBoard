@@ -98,22 +98,13 @@ export default function NotesPage() {
                     'md:translate-x-0'
                 )}
             >
-                <div className="flex-shrink-0 border-b p-2 flex items-center">
+                <div className="flex-shrink-0 border-b p-2 flex items-center md:hidden">
                     {/* Mobile back button */}
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setSelectedNote(null)}
-                        className="h-9 w-9 text-slate-600 md:hidden"
-                    >
-                        <ArrowLeft className="h-5 w-5" />
-                    </Button>
-                    {/* Desktop back button */}
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => router.back()}
-                        className="h-9 w-9 text-slate-600 hidden md:flex"
+                        className="h-9 w-9 text-slate-600"
                     >
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
