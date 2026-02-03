@@ -131,10 +131,10 @@ export default function StatsPage() {
 
   }, [userState?.historical_stats]);
 
-  const { filteredData, brushDomain, yAxisMax } = useMemo(() => {
+  const { filteredData, yAxisMax } = useMemo(() => {
     const now = new Date();
     if (!allTimeStats.length) {
-      return { filteredData: [], brushDomain: undefined, yAxisMax: 1 };
+      return { filteredData: [], yAxisMax: 1 };
     }
 
     let data;
@@ -157,15 +157,10 @@ export default function StatsPage() {
             break;
     }
     
-    let domain: [number, number] | undefined = undefined;
-    if (data.length > 30) {
-      domain = [data.length - 30, data.length - 1];
-    }
-    
     const calculatedMax = data.length > 0 ? Math.max(...data.map(d => d.hours)) : 0;
     const yAxisDomainMax = Math.ceil(Math.max(calculatedMax, 1)); 
 
-    return { filteredData: data, brushDomain: domain, yAxisMax: yAxisDomainMax };
+    return { filteredData: data, yAxisMax: yAxisDomainMax };
 
   }, [allTimeStats, viewRange]);
 
@@ -271,15 +266,6 @@ export default function StatsPage() {
               fillOpacity={1}
               fill="url(#colorHours)"
             />
-            {filteredData.length > 30 && (
-              <Brush
-                dataKey="date"
-                height={30}
-                stroke="hsl(var(--primary))"
-                startIndex={brushDomain ? brushDomain[0] : undefined}
-                endIndex={brushDomain ? brushDomain[1] : undefined}
-              />
-            )}
         </AreaChart>
     ) : (
         <BarChart
@@ -331,15 +317,6 @@ export default function StatsPage() {
             name="Study Hours"
             radius={[4, 4, 0, 0]}
           />
-          {filteredData.length > 30 && (
-            <Brush
-              dataKey="date"
-              height={30}
-              stroke="hsl(var(--primary))"
-              startIndex={brushDomain ? brushDomain[0] : undefined}
-              endIndex={brushDomain ? brushDomain[1] : undefined}
-            />
-          )}
         </BarChart>
     );
 
