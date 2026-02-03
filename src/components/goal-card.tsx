@@ -83,7 +83,7 @@ export function GoalCard({ goal }: GoalCardProps) {
             <CardFooter className="flex justify-between items-end">
                 <div className="text-xs text-slate-500">
                     <p>Set: {format(new Date(goal.startDate), 'MMM d, yyyy')}</p>
-                    {isAchieved && goal.achievedDate && <p className="text-primary font-medium">Achieved: {format(new Date(goal.achievedDate), 'MMM d, yyyy')}</p>}
+                    {isAchieved && goal.achievedDate && <p className="text-primary font-medium">Achieved: {format((goal.achievedDate as any).toDate ? (goal.achievedDate as any).toDate() : new Date(goal.achievedDate), 'MMM d, yyyy')}</p>}
                 </div>
                 {!isAchieved && (
                     <Button onClick={handleAchieve} disabled={isUpdating} size="sm" className="rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 hover:border-slate-300">
