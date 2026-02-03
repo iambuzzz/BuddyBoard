@@ -117,7 +117,7 @@ export default function GoalsPage() {
                 onAddGoal={handleAddGoal}
                 theme={cardTheme}
             />
-            <div className="min-h-screen w-full bg-[#e3eeff] p-4 sm:p-6 lg:p-8">
+            <div className="min-h-screen w-full bg-[#e3eeff] p-4 sm:p-6 lg:p-8 overflow-x-hidden">
                 <div className="max-w-7xl mx-auto">
                     <header className="flex items-center justify-between mb-8">
                         <div className='flex items-center gap-2'>
