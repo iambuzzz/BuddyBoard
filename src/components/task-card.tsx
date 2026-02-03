@@ -458,7 +458,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
          <Button
             onClick={isCurrentUserCard ? (undoState.active ? handleCancelUndo : triggerUndo) : undefined}
             className={`w-full font-semibold transition py-3 text-base h-auto text-white ${actionBtnStyle} ${ringStyle}`}
-            disabled={!isCurrentUserCard || (userState.isLocked && !isSameDay(new Date(userState.lockedAt || 0), new Date()))}
+            disabled={!isCurrentUserCard}
           >
             {getActionButtonIcon()}
             {getActionButtonText()}
@@ -490,3 +490,5 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     </>
   );
 }
+
+    
