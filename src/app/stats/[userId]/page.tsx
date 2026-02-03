@@ -229,21 +229,20 @@ export default function StatsPage() {
     const referenceLine = (
       <ReferenceLine
         y={averageHours}
-        stroke="hsl(var(--primary))"
         strokeWidth={2}
         className="glowing-line"
         label={({ viewBox }) => {
             if (!viewBox || averageHours <= 0) return null;
-            const { y, x } = viewBox;
+            const { y } = viewBox;
             return (
                 <text
-                    x={x - 8}
+                    x={viewBox.x}
                     y={y}
-                    dy={-4}
-                    textAnchor="end"
-                    fill="hsl(var(--primary))"
+                    dy={-6}
+                    fill="#065f46" // Darker Green
                     fontSize={12}
                     fontWeight="bold"
+                    textAnchor="start"
                 >
                     {formatAverageLabel(averageHours)}
                 </text>
