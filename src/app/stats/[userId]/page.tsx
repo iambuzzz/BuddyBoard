@@ -448,7 +448,7 @@ export default function StatsPage() {
         <div className="mx-auto flex w-full max-w-6xl flex-grow flex-col">
             <div className="flex flex-grow flex-col py-2">
                 <Card className="flex w-full flex-grow flex-col">
-                    <CardHeader className="px-4 pt-4 pb-2 sm:px-6 sm:pt-6">
+                    <CardHeader className="pl-2 pr-4 pt-4 pb-2 sm:pl-2 sm:pr-6 sm:pt-6">
                         <div className="flex w-full items-center gap-2">
                             <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-8 w-8 flex-shrink-0">
                                 <ArrowLeft className="h-5 w-5" />
