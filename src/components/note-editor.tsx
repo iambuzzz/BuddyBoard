@@ -82,7 +82,7 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
     
     if (!note) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 text-slate-500 p-8 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center bg-transparent text-slate-500 p-8 text-center">
                 <NotebookPen className="h-16 w-16 mb-4" strokeWidth={1} />
                 <h2 className="text-xl font-semibold">Select a note</h2>
                 <p>Choose a note from the sidebar to view or edit it, or create a new one.</p>
@@ -108,13 +108,13 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
     };
 
     return (
-        <div className="flex-1 flex flex-col p-4 md:p-6 bg-slate-50">
+        <div className="flex-1 flex flex-col p-4 md:p-6 bg-transparent">
             <div className="flex items-center justify-between mb-4">
                 <Input
                     value={title}
                     onChange={handleTitleChange}
                     placeholder="Untitled Note"
-                    className="text-2xl font-bold border-none shadow-none focus-visible:ring-0 p-0 h-auto"
+                    className="text-2xl font-bold border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent"
                 />
                  <div className="flex items-center gap-2 text-sm text-slate-500">
                     {renderSaveStatus()}

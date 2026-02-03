@@ -55,7 +55,7 @@ export default function NotesPage() {
 
     if (isUserLoading) {
         return (
-            <div className="h-screen w-full flex items-center justify-center bg-slate-50">
+            <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]">
                 <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
             </div>
         );
@@ -63,7 +63,7 @@ export default function NotesPage() {
     
     if (!user) {
          return (
-            <div className="h-screen w-full flex flex-col items-center justify-center bg-slate-50 p-4">
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-[#e3eeff] p-4">
                 <p className="text-slate-600 mb-4">Please log in to see your notes.</p>
                 <Button onClick={() => router.push('/login')}>Login</Button>
             </div>
@@ -71,7 +71,7 @@ export default function NotesPage() {
     }
 
     return (
-        <div className="h-screen w-full flex bg-white relative overflow-hidden">
+        <div className="h-screen w-full flex bg-[#e3eeff] relative overflow-hidden">
             {/* --- Sidebar Panel --- */}
             <div
                 className={cn(
@@ -93,12 +93,12 @@ export default function NotesPage() {
             {/* --- Editor Panel --- */}
             <main
                 className={cn(
-                    'absolute top-0 left-0 z-10 flex h-full w-full transform flex-col bg-slate-50 transition-transform duration-300 ease-in-out md:relative md:flex-1 md:transform-none',
+                    'absolute top-0 left-0 z-10 flex h-full w-full transform flex-col bg-transparent transition-transform duration-300 ease-in-out md:relative md:flex-1 md:transform-none',
                     selectedNote ? 'translate-x-0' : 'translate-x-full',
                     'md:translate-x-0'
                 )}
             >
-                <div className="flex-shrink-0 border-b p-2 flex items-center md:hidden">
+                <div className="flex-shrink-0 border-b border-slate-300/70 p-2 flex items-center md:hidden">
                     {/* Mobile back button */}
                     <Button
                         variant="ghost"
