@@ -43,17 +43,17 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
   // Style for ACTIVE goals, based on the user's theme
   const themeStyles = {
     periwinkle: {
-        card: 'bg-gradient-to-br from-violet-50 to-fuchsia-50 border-violet-200 shadow-lg shadow-violet-500/10',
+        card: 'bg-gradient-to-br from-violet-100 to-fuchsia-100 border-violet-300 shadow-lg shadow-violet-500/20',
         iconBg: 'bg-violet-200',
         iconText: 'text-violet-600',
     },
     cyan: {
-        card: 'bg-gradient-to-br from-cyan-50 to-sky-50 border-cyan-200 shadow-lg shadow-cyan-500/10',
+        card: 'bg-gradient-to-br from-cyan-100 to-sky-100 border-cyan-300 shadow-lg shadow-cyan-500/20',
         iconBg: 'bg-cyan-200',
         iconText: 'text-cyan-600',
     },
     emerald: {
-        card: 'bg-gradient-to-br from-emerald-50 to-green-50 border-emerald-200 shadow-lg shadow-emerald-500/10',
+        card: 'bg-gradient-to-br from-emerald-100 to-green-100 border-emerald-300 shadow-lg shadow-emerald-500/20',
         iconBg: 'bg-emerald-200',
         iconText: 'text-emerald-600',
     }
@@ -61,10 +61,10 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
   
   // Specific style for ACHIEVED goals (always green)
   const achievedStyle = {
-    card: 'bg-gradient-to-br from-emerald-100 to-green-200 border-emerald-300 shadow-lg shadow-emerald-500/20',
-    iconBg: 'bg-emerald-200',
-    iconText: 'text-emerald-700',
-    achievedText: 'text-emerald-800 font-bold'
+    card: 'bg-gradient-to-br from-emerald-200 to-green-300 border-emerald-400 shadow-lg shadow-emerald-500/30',
+    iconBg: 'bg-emerald-300',
+    iconText: 'text-emerald-800',
+    achievedText: 'text-emerald-900 font-bold'
   };
 
   const currentThemeStyle = themeStyles[theme] || themeStyles.periwinkle;
