@@ -15,20 +15,30 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { Goal } from '@/lib/types';
+import type { Goal, CardTheme } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 
 interface AddGoalDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
   onAddGoal: (newGoal: Omit<Goal, 'id' | 'createdAt' | 'startDate' | 'status'>) => Promise<void>;
+  theme: CardTheme;
 }
 
-export function AddGoalDialog({ isOpen, onOpenChange, onAddGoal }: AddGoalDialogProps) {
+export function AddGoalDialog({ isOpen, onOpenChange, onAddGoal, theme }: AddGoalDialogProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [type, setType] = useState<Goal['type']>('short-term');
   const [isSaving, setIsSaving] = useState(false);
+
+  const getButtonThemeClass = (theme: CardTheme) => {
+    switch(theme) {
+        case 'periwinkle': return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
+        case 'cyan': return 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white';
+        case 'emerald': return 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white';
+        default: return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
+    }
+  };
 
   const handleSubmit = async () => {
     if (!title.trim() || !type) return;
@@ -86,7 +96,7 @@ export function AddGoalDialog({ isOpen, onOpenChange, onAddGoal }: AddGoalDialog
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!title.trim() || isSaving} className="bg-primary hover:bg-primary/90">
+          <Button onClick={handleSubmit} disabled={!title.trim() || isSaving} className={getButtonThemeClass(theme)}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Add Goal
           </Button>

@@ -5,18 +5,19 @@ import { useState } from 'react';
 import { doc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { useFirestore, useUser } from '@/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Target, PartyPopper } from 'lucide-react';
+import { Check, PartyPopper } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import type { Goal } from '@/lib/types';
+import type { Goal, CardTheme } from '@/lib/types';
 import { format } from 'date-fns';
 
 interface GoalCardProps {
   goal: Goal;
+  theme: CardTheme;
 }
 
-export function GoalCard({ goal }: GoalCardProps) {
+export function GoalCard({ goal, theme }: GoalCardProps) {
   const { user } = useUser();
   const firestore = useFirestore();
   const [isAchieved, setIsAchieved] = useState(goal.status === 'achieved');
@@ -39,25 +40,36 @@ export function GoalCard({ goal }: GoalCardProps) {
       setIsUpdating(false);
     }
   };
-
-  const cardVariants = {
-    initial: {
-        background: 'linear-gradient(135deg, hsl(var(--card)), hsl(var(--card)))',
-        borderColor: 'hsl(var(--border))'
+  
+  const themeStyles = {
+    periwinkle: {
+        achieved: 'bg-gradient-to-br from-violet-50/50 to-fuchsia-50/50 border-violet-200',
+        iconBg: 'bg-violet-200/80',
+        iconText: 'text-violet-600',
+        achievedText: 'text-violet-600 font-semibold'
     },
-    achieved: {
-        background: 'linear-gradient(135deg, hsl(var(--primary) / 0.1), hsl(var(--accent) / 0.1))',
-        borderColor: 'hsl(var(--primary) / 0.5)'
+    cyan: {
+        achieved: 'bg-gradient-to-br from-cyan-50/50 to-sky-50/50 border-cyan-200',
+        iconBg: 'bg-cyan-200/80',
+        iconText: 'text-cyan-600',
+        achievedText: 'text-cyan-600 font-semibold'
     },
+    emerald: {
+        achieved: 'bg-gradient-to-br from-emerald-50/50 to-green-50/50 border-emerald-200',
+        iconBg: 'bg-emerald-200/80',
+        iconText: 'text-emerald-600',
+        achievedText: 'text-emerald-600 font-semibold'
+    }
   };
+  
+  const currentThemeStyle = themeStyles[theme] || themeStyles.periwinkle;
 
   return (
-    <motion.div
-        initial="initial"
-        animate={isAchieved ? 'achieved' : 'initial'}
-        variants={cardVariants}
-        transition={{ duration: 0.8, ease: 'easeOut' }}
-        className="rounded-xl border shadow-sm h-full"
+    <div
+        className={cn(
+            "rounded-xl border shadow-sm h-full transition-colors duration-500 ease-out",
+            isAchieved ? currentThemeStyle.achieved : 'bg-card border-border'
+        )}
     >
         <Card className="bg-transparent border-0 shadow-none h-full flex flex-col">
             <CardHeader>
@@ -70,7 +82,7 @@ export function GoalCard({ goal }: GoalCardProps) {
                                 animate={{ scale: 1, rotate: 0 }}
                                 exit={{ scale: 0, rotate: 45 }}
                                 transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-                                className="flex items-center justify-center h-8 w-8 rounded-full bg-primary/20 text-primary"
+                                className={cn("flex items-center justify-center h-8 w-8 rounded-full", currentThemeStyle.iconBg, currentThemeStyle.iconText)}
                             >
                                 <PartyPopper className="h-5 w-5" />
                             </motion.div>
@@ -83,7 +95,7 @@ export function GoalCard({ goal }: GoalCardProps) {
             <CardFooter className="flex justify-between items-end">
                 <div className="text-xs text-slate-500">
                     <p>Set: {format(new Date(goal.startDate), 'MMM d, yyyy')}</p>
-                    {isAchieved && goal.achievedDate && <p className="text-primary font-medium">Achieved: {format((goal.achievedDate as any).toDate ? (goal.achievedDate as any).toDate() : new Date(goal.achievedDate), 'MMM d, yyyy')}</p>}
+                    {isAchieved && goal.achievedDate && <p className={cn(currentThemeStyle.achievedText)}>Achieved: {format((goal.achievedDate as any).toDate ? (goal.achievedDate as any).toDate() : new Date(goal.achievedDate), 'MMM d, yyyy')}</p>}
                 </div>
                 {!isAchieved && (
                     <Button onClick={handleAchieve} disabled={isUpdating} size="sm" className="rounded-full bg-slate-100 text-slate-700 hover:bg-slate-200 border border-slate-200 hover:border-slate-300">
@@ -93,6 +105,6 @@ export function GoalCard({ goal }: GoalCardProps) {
                 )}
             </CardFooter>
         </Card>
-    </motion.div>
+    </div>
   );
 }

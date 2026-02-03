@@ -9,16 +9,18 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AddGoalDialog } from '@/components/add-goal-dialog';
 import { GoalCard } from '@/components/goal-card';
-import type { Goal } from '@/lib/types';
+import type { Goal, CardTheme } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
 export default function GoalsPage() {
-    const { user, isLoading: isUserLoading } = useUser();
+    const { user, profile, isLoading: isUserLoading } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
     const [goals, setGoals] = useState<Goal[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isDialogOpen, setDialogOpen] = useState(false);
+
+    const cardTheme = profile?.cardTheme || 'periwinkle';
 
     useEffect(() => {
         if (isUserLoading) return;
@@ -59,6 +61,25 @@ export default function GoalsPage() {
     const longTermGoals = goals.filter(g => g.type === 'long-term');
     const bucketListGoals = goals.filter(g => g.type === 'bucket-list');
 
+    const getButtonThemeClass = (theme: CardTheme) => {
+        switch(theme) {
+            case 'periwinkle': return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
+            case 'cyan': return 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white';
+            case 'emerald': return 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white';
+            default: return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
+        }
+    };
+
+    const getIconThemeClass = (theme: CardTheme) => {
+        switch(theme) {
+            case 'periwinkle': return 'text-[--theme-periwinkle-text]';
+            case 'cyan': return 'text-[--theme-cyan-text]';
+            case 'emerald': return 'text-[--theme-emerald-text]';
+            default: return 'text-[--theme-periwinkle-text]';
+        }
+    }
+
+
     const renderGoalList = (goalList: Goal[], type: Goal['type']) => {
         if (isLoading) {
             return <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -75,10 +96,18 @@ export default function GoalsPage() {
         }
         return (
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {goalList.map(goal => <GoalCard key={goal.id} goal={goal} />)}
+                {goalList.map(goal => <GoalCard key={goal.id} goal={goal} theme={cardTheme} />)}
             </div>
         );
     };
+    
+    if (isUserLoading) {
+        return (
+            <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]">
+                <Loader2 className="h-12 w-12 animate-spin text-slate-500" />
+            </div>
+        );
+    }
 
     return (
         <>
@@ -86,6 +115,7 @@ export default function GoalsPage() {
                 isOpen={isDialogOpen}
                 onOpenChange={setDialogOpen}
                 onAddGoal={handleAddGoal}
+                theme={cardTheme}
             />
             <div className="min-h-screen w-full bg-[#e3eeff] p-4 sm:p-6 lg:p-8">
                 <div className="max-w-7xl mx-auto">
@@ -95,13 +125,13 @@ export default function GoalsPage() {
                                 <ArrowLeft className="h-5 w-5" />
                             </Button>
                             <h1 className="text-3xl font-bold text-slate-800 flex items-center gap-3">
-                                <GoalIcon className="h-8 w-8 text-primary" />
+                                <GoalIcon className={`h-8 w-8 ${getIconThemeClass(cardTheme)}`} />
                                 My Goals
                             </h1>
                         </div>
                         <Button
                             onClick={() => setDialogOpen(true)}
-                            className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold rounded-full shadow-lg transition transform hover:scale-105"
+                            className={`${getButtonThemeClass(cardTheme)} font-semibold rounded-full shadow-lg transition transform hover:scale-105`}
                         >
                             <Plus className="w-4 h-4 mr-2" />
                             Set a New Goal

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -7,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { FilePlus, Loader2, Notebook } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import type { Note } from '@/lib/types';
+import type { Note, CardTheme } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
 
 interface NotesSidebarProps {
@@ -16,9 +17,10 @@ interface NotesSidebarProps {
     onSelectNote: (note: Note) => void;
     isLoading: boolean;
     userId: string;
+    theme: CardTheme;
 }
 
-export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, userId }: NotesSidebarProps) {
+export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, userId, theme }: NotesSidebarProps) {
     const firestore = useFirestore();
     const [isCreating, setIsCreating] = useState(false);
 
@@ -41,13 +43,32 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
         }
     };
 
+    const themeStyles = {
+        periwinkle: {
+            newButton: 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white',
+            selectedBg: 'bg-violet-100',
+            selectedText: 'text-violet-700',
+        },
+        cyan: {
+            newButton: 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white',
+            selectedBg: 'bg-cyan-100',
+            selectedText: 'text-cyan-700',
+        },
+        emerald: {
+            newButton: 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white',
+            selectedBg: 'bg-emerald-100',
+            selectedText: 'text-emerald-700',
+        }
+    };
+    const currentTheme = themeStyles[theme] || themeStyles.periwinkle;
+
     return (
         <aside className="w-80 border-r flex flex-col h-screen bg-white">
             <div className="p-4 border-b">
                 <h2 className="text-xl font-bold flex items-center gap-2"><Notebook className="h-6 w-6"/> Notes</h2>
             </div>
             <div className="p-2">
-                <Button onClick={handleNewNote} disabled={isCreating} className="w-full">
+                <Button onClick={handleNewNote} disabled={isCreating} className={`w-full ${currentTheme.newButton}`}>
                     {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FilePlus className="mr-2 h-4 w-4" />}
                     New Note
                 </Button>
@@ -63,10 +84,10 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
                                 onClick={() => onSelectNote(note)}
                                 className={cn(
                                     "w-full text-left p-3 rounded-md transition-colors",
-                                    selectedNoteId === note.id ? 'bg-primary/10 text-primary-foreground' : 'hover:bg-slate-100'
+                                    selectedNoteId === note.id ? currentTheme.selectedBg : 'hover:bg-slate-100'
                                 )}
                             >
-                                <h3 className={cn("font-semibold truncate", selectedNoteId === note.id ? "text-primary" : "text-slate-800")}>{note.title || 'Untitled Note'}</h3>
+                                <h3 className={cn("font-semibold truncate", selectedNoteId === note.id ? currentTheme.selectedText : "text-slate-800")}>{note.title || 'Untitled Note'}</h3>
                                 <p className="text-xs text-slate-500 mt-1">
                                     {note.updatedAt && formatDistanceToNow((note.updatedAt as any).toDate ? (note.updatedAt as any).toDate() : new Date(note.updatedAt), { addSuffix: true })}
                                 </p>

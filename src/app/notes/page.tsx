@@ -12,13 +12,15 @@ import type { Note } from '@/lib/types';
 import { useRouter } from 'next/navigation';
 
 export default function NotesPage() {
-    const { user, isLoading: isUserLoading } = useUser();
+    const { user, profile, isLoading: isUserLoading } = useUser();
     const firestore = useFirestore();
     const router = useRouter();
 
     const [notes, setNotes] = useState<Note[]>([]);
     const [selectedNote, setSelectedNote] = useState<Note | null>(null);
     const [isLoadingNotes, setIsLoadingNotes] = useState(true);
+
+    const cardTheme = profile?.cardTheme || 'periwinkle';
 
     useEffect(() => {
         if (!user || !firestore) {
@@ -49,7 +51,7 @@ export default function NotesPage() {
         });
 
         return () => unsubscribe();
-    }, [user, firestore, isUserLoading]);
+    }, [user, firestore, isUserLoading, selectedNote]);
 
     if (isUserLoading) {
         return (
@@ -76,6 +78,7 @@ export default function NotesPage() {
                 onSelectNote={setSelectedNote}
                 isLoading={isLoadingNotes}
                 userId={user.uid}
+                theme={cardTheme}
             />
             <main className="flex-1 flex flex-col h-screen">
                 <div className="flex-shrink-0 border-b p-2 flex items-center">
