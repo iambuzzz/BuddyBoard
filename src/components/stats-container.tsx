@@ -21,7 +21,7 @@ import { format, subDays, startOfDay, parseISO, startOfYear, subMonths } from 'd
 import { useFirestore } from '@/firebase';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, BarChart2, LineChart as LineChartIcon } from 'lucide-react';
+import { ArrowLeft, BarChart2, LineChart as LineChartIcon, Loader2 } from 'lucide-react';
 import { UserProfile, UserState, DailyStat } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
@@ -29,8 +29,8 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 type ViewRange = '7D' | '1M' | '3M' | 'YTD' | 'ALL';
 
 interface StatsContainerProps {
-    initialProfile: UserProfile;
-    initialState: UserState;
+    initialProfile?: UserProfile;
+    initialState?: UserState;
     userId: string;
 }
 
@@ -83,8 +83,9 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
   const router = useRouter();
   const firestore = useFirestore();
 
-  const [userProfile, setUserProfile] = useState<UserProfile>(initialProfile);
-  const [userState, setUserState] = useState<UserState>(initialState);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(initialProfile || null);
+  const [userState, setUserState] = useState<UserState | null>(initialState || null);
+  const [isLoading, setIsLoading] = useState(!initialProfile || !initialState);
   
   const [chartType, setChartType] = useState<'bar' | 'line'>('line');
   const [viewRange, setViewRange] = useState<ViewRange>('7D');
@@ -96,27 +97,31 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
   useEffect(() => {
     if (!firestore || !userId) return;
 
-    const userDocRef = doc(firestore, 'users', userId);
-    const unsubProfile = onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            setUserProfile(docSnap.data() as UserProfile);
-        }
+    if (!initialProfile || !initialState) {
+        setIsLoading(true);
+    }
+
+    const unsubProfile = onSnapshot(doc(firestore, 'users', userId), (docSnap) => {
+        setUserProfile(docSnap.exists() ? docSnap.data() as UserProfile : null);
+    }, (error) => {
+        console.error("Error fetching user profile:", error);
+        setUserProfile(null);
     });
     
-    const taskListRef = doc(firestore, 'task_lists', userId);
-    const unsubTasks = onSnapshot(taskListRef, (docSnap) => {
-      if (docSnap.exists()) {
-        setUserState(docSnap.data() as UserState);
-      }
+    const unsubTasks = onSnapshot(doc(firestore, 'task_lists', userId), (docSnap) => {
+      setUserState(docSnap.exists() ? docSnap.data() as UserState : null);
+      setIsLoading(false);
     }, (error) => {
         console.error("Error fetching task list:", error);
+        setUserState(null);
+        setIsLoading(false);
     });
 
     return () => {
         unsubProfile();
         unsubTasks();
     };
-  }, [firestore, userId]);
+  }, [firestore, userId, initialProfile, initialState]);
   
   useEffect(() => {
     setSliderRange(null);
@@ -242,6 +247,32 @@ export function StatsContainer({ initialProfile, initialState, userId }: StatsCo
             return defaultStyles as React.CSSProperties;
     }
   }, [userProfile?.cardTheme]);
+
+  if (isLoading) {
+    return (
+        <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]">
+            <Loader2 className="h-12 w-12 animate-spin text-slate-500" />
+        </div>
+    );
+  }
+
+  if (!userProfile || !userState) {
+    return (
+        <div className="h-screen w-full flex flex-col items-center justify-center bg-[#e3eeff] p-4">
+            <Card className="w-full max-w-md text-center">
+                <CardHeader>
+                    <CardTitle>User Not Found</CardTitle>
+                    <CardDescription>The requested user does not exist or has no data.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={() => router.back()} className="w-full">
+                        <ArrowLeft className="mr-2 h-4 w-4" /> Go Back
+                    </Button>
+                </CardContent>
+            </Card>
+        </div>
+    );
+  }
 
   const renderChart = () => {
     if (filteredData.length === 0) {

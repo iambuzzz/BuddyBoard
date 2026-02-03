@@ -1,40 +1,22 @@
+'use client';
 
-import { adminFirestore } from '@/firebase/admin';
-import type { UserProfile, UserState } from '@/lib/types';
 import { StatsContainer } from '@/components/stats-container';
-import { notFound } from 'next/navigation';
+import { useParams } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
-// Revalidate this page every 60 seconds to keep it fresh
-export const revalidate = 60;
+export default function StatsPage() {
+    const params = useParams();
+    const userId = params.userId as string;
 
-async function getStatsData(userId: string): Promise<{ userProfile: UserProfile | null; userState: UserState | null }> {
-    try {
-        // Fetch user profile and task list in parallel for speed
-        const userDocPromise = adminFirestore().collection('users').doc(userId).get();
-        const taskListDocPromise = adminFirestore().collection('task_lists').doc(userId).get();
-
-        const [userDoc, taskListDoc] = await Promise.all([userDocPromise, taskListDocPromise]);
-        
-        const userProfile = userDoc.exists ? userDoc.data() as UserProfile : null;
-        const userState = taskListDoc.exists ? taskListDoc.data() as UserState : null;
-
-        return { userProfile, userState };
-    } catch (error) {
-        console.error("Error fetching stats data on server:", error);
-        return { userProfile: null, userState: null };
-    }
-}
-
-
-export default async function StatsPage({ params }: { params: { userId: string } }) {
-    const { userId } = params;
-    const { userProfile, userState } = await getStatsData(userId);
-
-    // If user or their data doesn't exist, show a 404 page
-    if (!userProfile || !userState) {
-        notFound();
+    if (!userId) {
+        return (
+             <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]">
+                <Loader2 className="h-12 w-12 animate-spin text-slate-500" />
+            </div>
+        );
     }
     
-    // Render the client component with the pre-fetched initial data
-    return <StatsContainer initialProfile={userProfile} initialState={userState} userId={userId} />;
+    // We no longer pre-fetch data, so we only pass the userId.
+    // The StatsContainer component will handle its own data fetching.
+    return <StatsContainer userId={userId} />;
 }
