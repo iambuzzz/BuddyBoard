@@ -1,4 +1,5 @@
 
+
 // Represents a single task item for any user.
 export interface Task {
   id: string;
@@ -87,6 +88,29 @@ export interface GroupInvitation {
     senderName: string;
     receiverEmail: string;
     status: 'pending' | 'accepted' | 'declined';
+    createdAt: number;
+}
+
+// Represents a single note file.
+// Schema for documents in `/user_notes/{userId}/notes/{noteId}`
+export interface Note {
+    id: string;
+    title: string;
+    content: string;
+    createdAt: number;
+    updatedAt: number;
+}
+
+// Represents a user-defined goal.
+// Schema for documents in `/user_goals/{userId}/goals/{goalId}`
+export interface Goal {
+    id: string;
+    title: string;
+    description?: string;
+    type: 'short-term' | 'long-term' | 'bucket-list';
+    status: 'active' | 'achieved';
+    startDate: number;
+    achievedDate?: number | null;
     createdAt: number;
 }
 

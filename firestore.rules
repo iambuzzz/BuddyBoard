@@ -74,6 +74,16 @@ service cloud.firestore {
       allow delete: if isSignedIn() && (role(get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data) == 'admin' || role(get(/databases/$(database)/documents/groups/$(resource.data.groupId)).data) == 'co-admin');
     }
 
+    // --- New Feature Rules ---
+
+    match /user_notes/{userId}/notes/{noteId} {
+      allow read, write: if isSignedIn() && isOwner(userId);
+    }
+    
+    match /user_goals/{userId}/goals/{goalId} {
+      allow read, write: if isSignedIn() && isOwner(userId);
+    }
+
 
     // --- Legacy Rules ---
     match /riyalTodoState/app {

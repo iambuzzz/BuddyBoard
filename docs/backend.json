@@ -121,6 +121,35 @@
         "createdAt": { "type": "number", "description": "Timestamp" }
       },
       "required": ["id", "groupId", "groupName", "senderId", "senderName", "receiverEmail", "status", "createdAt"]
+    },
+    "Note": {
+      "title": "Note",
+      "description": "A single note file for a user.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "createdAt": { "type": "number", "description": "Timestamp" },
+        "updatedAt": { "type": "number", "description": "Timestamp" }
+      },
+      "required": ["id", "title", "createdAt", "updatedAt"]
+    },
+    "Goal": {
+        "title": "Goal",
+        "description": "A user-defined goal.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "description": { "type": "string" },
+            "type": { "type": "string", "enum": ["short-term", "long-term", "bucket-list"] },
+            "status": { "type": "string", "enum": ["active", "achieved"] },
+            "startDate": { "type": "number", "description": "Timestamp" },
+            "achievedDate": { "type": "number", "description": "Timestamp or null" },
+            "createdAt": { "type": "number", "description": "Timestamp" }
+        },
+        "required": ["id", "title", "type", "status", "startDate", "createdAt"]
     }
   },
   "auth": {
@@ -146,6 +175,14 @@
     "/group_invitations/{invitationId}": {
         "schema": { "$ref": "#/entities/GroupInvitation" },
         "description": "Stores group invitations sent via email."
+    },
+    "/user_notes/{userId}/notes/{noteId}": {
+        "schema": { "$ref": "#/entities/Note" },
+        "description": "Stores private notes for each user."
+    },
+    "/user_goals/{userId}/goals/{goalId}": {
+        "schema": { "$ref": "#/entities/Goal" },
+        "description": "Stores private goals for each user."
     },
     "/riyalTodoState/app": {
       "schema": { "$ref": "#/entities/AppState" },

@@ -5,26 +5,53 @@
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Loader2, LogOut, Settings, RefreshCw, ArrowUp, Users, AreaChart } from 'lucide-react';
+import { Loader2, LogOut, Settings, RefreshCw, ArrowUp, Users, AreaChart, MoreVertical, Notebook, Goal as GoalIcon } from 'lucide-react';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
 import { useAuth, useFirestore } from '@/firebase';
 import type { UserState, UserProfile, Group, CardTheme } from '@/lib/types';
 import Link from 'next/link';
-import { collection, doc, onSnapshot, query, where, writeBatch, getDocs } from 'firebase/firestore';
+import { collection, doc, onSnapshot, query, where, writeBatch, getDocs, FirestoreError } from 'firebase/firestore';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { GroupMembersSheet } from '@/components/group-members-sheet';
-
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { FirestorePermissionError } from '@/firebase/errors';
+import { errorEmitter } from '@/firebase/error-emitter';
 
 const LoadingScreen = () => (
   <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]">
     <Loader2 className="h-12 w-12 animate-spin text-slate-500" />
   </div>
 );
+
+const PremiumOptions = () => (
+    <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="More Options">
+                <MoreVertical className="h-5 w-5" />
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+                <Link href="/notes" className='cursor-pointer'>
+                    <Notebook className="mr-2 h-4 w-4" />
+                    <span>Notes</span>
+                </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+                 <Link href="/goals" className='cursor-pointer'>
+                    <GoalIcon className="mr-2 h-4 w-4" />
+                    <span>Goals</span>
+                </Link>
+            </DropdownMenuItem>
+        </DropdownMenuContent>
+    </DropdownMenu>
+);
+
 
 const CreateProfile = () => {
     const { user, refetch } = useUser();
@@ -65,6 +92,7 @@ const CreateProfile = () => {
             maxStreak: 0,
             lockedAt: null,
             lastLockedAt: null,
+            historical_stats: [],
         };
         batch.set(taskListRef, newTaskList);
 
@@ -152,9 +180,20 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
                 setUserState(docSnap.data() as UserState);
             }
             setIsLoading(false);
+        },
+        (error: FirestoreError) => {
+            if (error.code === 'permission-denied' && !auth?.currentUser) {
+                console.log("Ignoring permission error after logout.");
+                return;
+            }
+            const permissionError = new FirestorePermissionError({
+                path: taskListRef.path,
+                operation: 'get',
+            });
+            errorEmitter.emit('permission-error', permissionError);
         });
         return () => unsubscribe();
-    }, [firestore, userId]);
+    }, [firestore, userId, auth]);
 
 
     if (isLoading || !userState) {
@@ -185,7 +224,7 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
                     <AreaChart className="h-4 w-4" />
                     <span>Stats</span>
                 </Button>
-                 <div className="w-40 flex justify-end">
+                 <div className="w-40 flex justify-end items-center">
                     {isFirstCardInGroup ? (
                         <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
                             <LogOut className="h-5 w-5" />
@@ -195,6 +234,7 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
                             <ArrowUp className="h-5 w-5" />
                         </Button>
                     )}
+                    <PremiumOptions />
                  </div>
             </div>
             <div className="flex-grow h-full">
@@ -274,6 +314,7 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
                             <ArrowUp className="h-5 w-5" />
                         </Button>
                     )}
+                    <PremiumOptions />
                 </div>
             </div>
             <div className="app-flip-shell flex-grow">
@@ -292,6 +333,7 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
 
 const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partnerId: string }) => {
     const firestore = useFirestore();
+    const auth = useAuth();
     const [currentUserData, setCurrentUserData] = useState<{profile: UserProfile, state: UserState} | null>(null);
     const [partnerData, setPartnerData] = useState<{profile: UserProfile, state: UserState} | null>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -305,7 +347,7 @@ const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partn
             let unsubState: () => void;
 
             const profileRef = doc(firestore, 'users', userId);
-unsubProfile = onSnapshot(profileRef, (profileSnap) => {
+            unsubProfile = onSnapshot(profileRef, (profileSnap) => {
                 if (profileSnap.exists()) {
                     const profile = profileSnap.data() as UserProfile;
                     const stateRef = doc(firestore, 'task_lists', userId);
@@ -314,8 +356,14 @@ unsubProfile = onSnapshot(profileRef, (profileSnap) => {
                             const state = stateSnap.data() as UserState;
                             setData({ profile, state });
                         }
+                    }, (error: FirestoreError) => {
+                        if (error.code === 'permission-denied' && !auth?.currentUser) return;
+                         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: stateRef.path, operation: 'get' }));
                     });
                 }
+            }, (error: FirestoreError) => {
+                if (error.code === 'permission-denied' && !auth?.currentUser) return;
+                errorEmitter.emit('permission-error', new FirestorePermissionError({ path: profileRef.path, operation: 'get' }));
             });
 
             return () => {
@@ -331,7 +379,7 @@ unsubProfile = onSnapshot(profileRef, (profileSnap) => {
             unsubCurrentUser();
             unsubPartner();
         };
-    }, [firestore, currentUserId, partnerId]);
+    }, [firestore, currentUserId, partnerId, auth]);
 
     useEffect(() => {
         if (currentUserData && partnerData) {
@@ -492,6 +540,9 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                         ...prev,
                         [member.uid]: taskSnap.exists() ? taskSnap.data() as UserState : null
                     }));
+                }, (error: FirestoreError) => {
+                    if (error.code === 'permission-denied' && !auth?.currentUser) return;
+                    errorEmitter.emit('permission-error', new FirestorePermissionError({ path: taskListRef.path, operation: 'get' }));
                 });
             });
 
@@ -502,10 +553,13 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             return () => {
                 unsubscribers.forEach(unsub => unsub());
             };
+        }, (error: FirestoreError) => {
+            if (error.code === 'permission-denied' && !auth?.currentUser) return;
+            errorEmitter.emit('permission-error', new FirestorePermissionError({ path: groupRef.path, operation: 'get' }));
         });
     
         return () => unsubGroup();
-    }, [firestore, groupId, currentUserId]);
+    }, [firestore, groupId, currentUserId, auth]);
 
 
     if (isLoading) {
@@ -557,7 +611,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                     <AreaChart className="h-4 w-4" />
                     <span>Stats</span>
                 </Button>
-               <div className="w-40 flex justify-end">
+               <div className="w-40 flex justify-end items-center">
                    {isFirstCard ? (
                        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
                            <LogOut className="h-5 w-5" />
@@ -567,6 +621,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                            <ArrowUp className="h-5 w-5" />
                        </Button>
                    )}
+                   <PremiumOptions />
                 </div>
            </div>
         )
@@ -723,6 +778,7 @@ const PairedTaskWrapper = ({ user1, user2, showBack, setShowBack, isFirstCardInG
                            <ArrowUp className="h-5 w-5" />
                        </Button>
                    )}
+                   <PremiumOptions />
                 </div>
            </div>
 
@@ -791,5 +847,3 @@ export default function Home() {
     </main>
   );
 }
-
-    
