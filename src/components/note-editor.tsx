@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -27,12 +26,14 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
 
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
-
+    
+    const noteIdRef = useRef<string | null>(null);
     useEffect(() => {
         if (note) {
             setTitle(note.title);
             setContent(note.content);
             setSaveStatus('saved');
+            noteIdRef.current = note.id;
         } else {
             setTitle('');
             setContent('');
@@ -61,10 +62,11 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
     };
 
     const handleSave = async (currentTitle: string, currentContent: string) => {
-        if (!note || !firestore || !userId) return;
+        const currentNoteId = noteIdRef.current;
+        if (!currentNoteId || !firestore || !userId) return;
 
         setSaveStatus('saving');
-        const noteRef = doc(firestore, `user_notes/${userId}/notes/${note.id}`);
+        const noteRef = doc(firestore, `user_notes/${userId}/notes/${currentNoteId}`);
         
         try {
             await updateDoc(noteRef, {
@@ -75,8 +77,11 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
             setSaveStatus('saved');
         } catch (error) {
             console.error("Error saving note:", error);
-            toast({ title: "Error", description: "Could not save your changes.", variant: 'destructive'});
-            setSaveStatus('typing'); // Revert to typing to indicate unsaved changes on error
+            // This might fail if the doc was deleted while typing, which is fine.
+            if ((error as any).code !== 'not-found') {
+                toast({ title: "Error", description: "Could not save your changes.", variant: 'destructive'});
+            }
+            setSaveStatus('typing');
         }
     };
     

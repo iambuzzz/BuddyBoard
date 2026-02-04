@@ -1,20 +1,31 @@
 'use client';
 
 import { useState } from 'react';
-import { doc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { doc, addDoc, collection, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FilePlus, Loader2, Notebook, ArrowLeft } from 'lucide-react';
+import { FilePlus, Loader2, Notebook, ArrowLeft, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { Note, CardTheme } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+
 
 interface NotesSidebarProps {
     notes: Note[];
     selectedNoteId: string | null;
-    onSelectNote: (note: Note) => void;
+    onSelectNote: (note: Note | null) => void;
     isLoading: boolean;
     userId: string;
     theme: CardTheme;
@@ -24,6 +35,7 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
     const firestore = useFirestore();
     const router = useRouter();
     const [isCreating, setIsCreating] = useState(false);
+    const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
 
     const handleNewNote = async () => {
         if (!firestore || !userId) return;
@@ -36,14 +48,34 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
                 updatedAt: serverTimestamp(),
             };
             const docRef = await addDoc(collection(firestore, `user_notes/${userId}/notes`), newNote);
-            // After creating, we pass a client-side representation to the onSelectNote handler.
-            // The serverTimestamp will be resolved by Firestore, but for immediate UI feedback,
-            // we use Date.now(). The onSnapshot listener will soon pick up the actual server time.
             onSelectNote({ ...newNote, id: docRef.id, createdAt: Date.now(), updatedAt: Date.now() });
         } catch (error) {
             console.error("Error creating new note:", error);
         } finally {
             setIsCreating(false);
+        }
+    };
+
+    const handleDeleteConfirm = (note: Note) => {
+        setNoteToDelete(note);
+    };
+
+    const handleDeleteNote = async () => {
+        if (!firestore || !userId || !noteToDelete) return;
+
+        const noteIdToDelete = noteToDelete.id;
+        if (selectedNoteId === noteIdToDelete) {
+            onSelectNote(null);
+        }
+
+        const noteRef = doc(firestore, `user_notes/${userId}/notes`, noteIdToDelete);
+        
+        try {
+            await deleteDoc(noteRef);
+        } catch (error) {
+            console.error("Error deleting note:", error);
+        } finally {
+            setNoteToDelete(null);
         }
     };
 
@@ -78,42 +110,74 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
     }
 
     return (
-        <aside className="w-full md:w-80 md:border-r border-slate-300/70 flex flex-col h-screen bg-transparent">
-            <div className="p-4 border-b border-slate-300/70 flex items-center justify-between">
-                <h2 className="text-xl font-bold flex items-center gap-2"><Notebook className="h-6 w-6"/> Notes</h2>
-                <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600">
-                    <ArrowLeft className="h-5 w-5" />
-                </Button>
-            </div>
-            <div className="p-2">
-                <Button onClick={handleNewNote} disabled={isCreating} className={`w-full ${currentTheme.newButton}`}>
-                    {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FilePlus className="mr-2 h-4 w-4" />}
-                    New Note
-                </Button>
-            </div>
-            <ScrollArea className="flex-1">
-                <div className="p-2">
-                    {isLoading ? (
-                        [...Array(5)].map((_, i) => <div key={i} className="h-16 bg-slate-100/50 rounded-md animate-pulse" />)
-                    ) : (
-                        notes.map(note => (
-                            <button
-                                key={note.id}
-                                onClick={() => onSelectNote(note)}
-                                className={cn(
-                                    "w-full text-left p-3 border-b border-slate-300/70 transition-colors",
-                                    selectedNoteId === note.id ? currentTheme.selectedBg : 'hover:bg-slate-100/50'
-                                )}
-                            >
-                                <h3 className={cn("font-semibold truncate", selectedNoteId === note.id ? currentTheme.selectedText : "text-slate-800")}>{note.title || 'Untitled Note'}</h3>
-                                <p className="text-xs text-slate-500 mt-1">
-                                    {formatTimestamp(note.updatedAt)}
-                                </p>
-                            </button>
-                        ))
-                    )}
+        <>
+            <AlertDialog open={!!noteToDelete} onOpenChange={() => setNoteToDelete(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will permanently delete the note "{noteToDelete?.title}". This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDeleteNote} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            Delete
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <aside className="w-full md:w-80 md:border-r border-slate-300/70 flex flex-col h-screen bg-transparent">
+                <div className="p-4 border-b border-slate-300/70 flex items-center justify-between">
+                    <h2 className="text-xl font-bold flex items-center gap-2"><Notebook className="h-6 w-6"/> Notes</h2>
+                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600">
+                        <ArrowLeft className="h-5 w-5" />
+                    </Button>
                 </div>
-            </ScrollArea>
-        </aside>
+                <div className="p-2">
+                    <Button onClick={handleNewNote} disabled={isCreating} className={`w-full ${currentTheme.newButton}`}>
+                        {isCreating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FilePlus className="mr-2 h-4 w-4" />}
+                        New Note
+                    </Button>
+                </div>
+                <ScrollArea className="flex-1">
+                    <div className="p-2 space-y-1">
+                        {isLoading ? (
+                            [...Array(5)].map((_, i) => <div key={i} className="h-16 bg-slate-100/50 rounded-md animate-pulse" />)
+                        ) : (
+                            notes.map(note => (
+                                <div key={note.id} className="group relative rounded-md">
+                                    <button
+                                        onClick={() => onSelectNote(note)}
+                                        className={cn(
+                                            "w-full text-left p-3 pr-10 border-b border-slate-200/80 transition-colors rounded-md",
+                                            selectedNoteId === note.id ? currentTheme.selectedBg : 'hover:bg-slate-100/50'
+                                        )}
+                                    >
+                                        <h3 className={cn("font-semibold truncate", selectedNoteId === note.id ? currentTheme.selectedText : "text-slate-800")}>{note.title || 'Untitled Note'}</h3>
+                                        <p className="text-xs text-slate-500 mt-1">
+                                            {formatTimestamp(note.updatedAt)}
+                                        </p>
+                                    </button>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteConfirm(note);
+                                        }}
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-slate-400 hover:text-destructive opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        aria-label="Delete note"
+                                    >
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </ScrollArea>
+            </aside>
+        </>
     );
 }
