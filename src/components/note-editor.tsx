@@ -114,7 +114,7 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
 
     return (
         <div className="flex-1 flex flex-col p-4 md:p-6 bg-transparent">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-baseline justify-between mb-4">
                 <Input
                     value={title}
                     onChange={handleTitleChange}
@@ -129,7 +129,7 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
                 value={content}
                 onChange={handleContentChange}
                 placeholder="Start writing your note here..."
-                className="flex-1 resize-none border-none shadow-none focus-visible:ring-0 text-base leading-7 bg-transparent"
+                className="flex-1 resize-none border-none shadow-none focus-visible:ring-0 text-base leading-7 bg-transparent p-0"
             />
         </div>
     );
