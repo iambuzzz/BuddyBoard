@@ -859,7 +859,7 @@ export default function SettingsPage() {
                 <CardContent className="space-y-4">
                     <div className="flex items-center gap-4">
                         <Avatar className="h-12 w-12">
-                            <AvatarImage src={pairedPartner.photoURL || ''} />
+                            <AvatarImage src={pairedPartner.photoURL || undefined} />
                             <AvatarFallback>{getInitials(pairedPartner.displayName)}</AvatarFallback>
                         </Avatar>
                         <p>You are currently paired with <span className="font-bold">{pairedPartner.displayName}</span>.</p>
@@ -988,7 +988,7 @@ export default function SettingsPage() {
                     <div key={member.uid} className="flex items-center justify-between text-sm">
                       <div className="flex items-center gap-2">
                         <Avatar className="h-6 w-6">
-                            <AvatarImage src={member.photoURL || ''} alt={member.displayName} />
+                            <AvatarImage src={member.photoURL || undefined} alt={member.displayName} />
                             <AvatarFallback className="text-xs">{getInitials(member.displayName)}</AvatarFallback>
                         </Avatar>
                         <span className="font-medium">{member.displayName}</span>
@@ -1201,7 +1201,7 @@ const ColorSwatch = ({ primary, secondary, text }: { primary: string; secondary:
                     <CardContent>
                     <div className="flex flex-col items-center space-y-4 mb-8">
                         <Avatar className="h-24 w-24 border">
-                            <AvatarImage src={profile?.photoURL || ''} />
+                            <AvatarImage src={profile?.photoURL || undefined} />
                             <AvatarFallback className="text-3xl">{profile ? getInitials(profile.displayName) : ''}</AvatarFallback>
                         </Avatar>
                         
