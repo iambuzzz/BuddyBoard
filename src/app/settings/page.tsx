@@ -24,7 +24,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useUser } from '@/firebase';
 import { useEffect, useState, useMemo, useCallback } from 'react';
 import { doc, updateDoc, setDoc, getDoc, writeBatch, collection, query, where, getDocs, onSnapshot, addDoc, deleteDoc, runTransaction } from 'firebase/firestore';
-import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, signOut } from 'firebase/auth';
 import { useFirestore, useAuth } from '@/firebase';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
@@ -813,6 +813,14 @@ export default function SettingsPage() {
     finally { setIsSaving(false); }
   }
 
+    const handleLogout = async () => {
+        if (auth) {
+            await signOut(auth);
+            router.push('/login');
+        }
+    };
+
+
   // --- Render Functions ---
   
   if (isUserLoading) {
@@ -1168,9 +1176,14 @@ const ColorSwatch = ({ primary, secondary, text }: { primary: string; secondary:
   return (
      <div className="min-h-screen w-full flex flex-col items-center bg-[#e3eeff] p-4 pb-12">
        <div className="w-full max-w-md">
-        <Button variant="ghost" onClick={() => router.push('/')} className="mb-4">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
-        </Button>
+        <div className="flex w-full items-center justify-between mb-4">
+            <Button variant="ghost" onClick={() => router.push('/')}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
+            </Button>
+             <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
+                <LogOutIcon className="h-5 w-5" />
+            </Button>
+        </div>
 
         <Tabs defaultValue="profile" className="w-full">
             <TabsList className="grid w-full grid-cols-3">

@@ -5,7 +5,7 @@
 import { useUser } from '@/firebase/auth/use-user';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { Loader2, LogOut, Settings, RefreshCw, ArrowUp, Users, AreaChart, MoreVertical, Notebook, Goal as GoalIcon } from 'lucide-react';
+import { Loader2, Settings, RefreshCw, ArrowUp, Users, AreaChart, MoreVertical, Notebook, Goal as GoalIcon } from 'lucide-react';
 import { TaskCard } from '@/components/task-card';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
@@ -149,13 +149,6 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
     const auth = useAuth();
     const router = useRouter();
 
-    const handleLogout = async () => {
-        if (auth) {
-            await signOut(auth);
-            router.push('/login');
-        }
-    };
-    
     const handleGoToTop = () => {
         const listEl = document.querySelector('.snap-y');
         if (listEl) {
@@ -225,11 +218,7 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
                     <span>Stats</span>
                 </Button>
                  <div className="w-40 flex justify-end items-center">
-                    {isFirstCardInGroup ? (
-                        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
-                            <LogOut className="h-5 w-5" />
-                        </Button>
-                    ) : (
+                    {!isFirstCardInGroup && (
                          <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
                             <ArrowUp className="h-5 w-5" />
                         </Button>
@@ -258,13 +247,6 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
     const auth = useAuth();
     const router = useRouter();
 
-
-    const handleLogout = async () => {
-        if (auth) {
-            await signOut(auth);
-            router.push('/login');
-        }
-    };
     
     const handleGoToTop = () => {
         const listEl = document.querySelector('.snap-y');
@@ -305,11 +287,7 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
                     <Button variant="ghost" size="icon" onClick={() => setShowBack(p => !p)} className="text-slate-600 hover:bg-slate-100" aria-label="Switch User">
                         <RefreshCw className="h-5 w-5" />
                     </Button>
-                    {isFirstCardInGroup ? (
-                        <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
-                            <LogOut className="h-5 w-5" />
-                        </Button>
-                     ) : (
+                    {!isFirstCardInGroup && (
                          <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
                             <ArrowUp className="h-5 w-5" />
                         </Button>
@@ -420,13 +398,6 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
 
     const auth = useAuth();
     const router = useRouter();
-
-    const handleLogout = async () => {
-        if (auth) {
-            await signOut(auth);
-            router.push('/login');
-        }
-    };
     
     const handleGoToTop = () => {
         const listEl = document.querySelector('.snap-y');
@@ -612,11 +583,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                     <span>Stats</span>
                 </Button>
                <div className="w-40 flex justify-end items-center">
-                   {isFirstCard ? (
-                       <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
-                           <LogOut className="h-5 w-5" />
-                       </Button>
-                    ) : (
+                   {!isFirstCard && (
                         <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
                            <ArrowUp className="h-5 w-5" />
                        </Button>
@@ -731,7 +698,6 @@ const PairedTaskWrapper = ({ user1, user2, showBack, setShowBack, isFirstCardInG
     const auth = useAuth();
     const router = useRouter();
 
-    const handleLogout = async () => { if (auth) { await signOut(auth); router.push('/login'); } };
     const handleGoToTop = () => { const listEl = document.querySelector('.snap-y'); if (listEl) { listEl.scrollTo({ top: 0, behavior: 'smooth' }); } };
     
     const visibleUser = showBack ? user2 : user1;
@@ -769,11 +735,7 @@ const PairedTaskWrapper = ({ user1, user2, showBack, setShowBack, isFirstCardInG
                    <Button variant="ghost" size="icon" onClick={() => setShowBack(!showBack)} className="text-slate-600 hover:bg-slate-100" aria-label="Switch User">
                         <RefreshCw className="h-5 w-5" />
                     </Button>
-                   {isFirstCardInGroup ? (
-                       <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
-                           <LogOut className="h-5 w-5" />
-                       </Button>
-                    ) : (
+                   {!isFirstCardInGroup && (
                         <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
                            <ArrowUp className="h-5 w-5" />
                        </Button>
