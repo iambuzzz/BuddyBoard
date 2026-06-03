@@ -23,15 +23,15 @@ type TaskListProps = {
 export function TaskList({ tasks, isLocked, onToggle, onUpdate, onDelete, onToggleTimer, theme, onRestore, canRestore, isCurrentUserCard }: TaskListProps) {
   if (tasks.length === 0) {
     return (
-      <div className="text-center text-slate-400 pt-8 flex flex-col items-center justify-center gap-4">
+      <div className="text-center text-slate-400 dark:text-slate-500 pt-8 flex flex-col items-center justify-center gap-4">
         <span>Add a task to begin!</span>
         {canRestore && !isLocked && isCurrentUserCard && (
-           <Button
+          <Button
             variant="outline"
-            className="text-slate-500 border-slate-300 hover:bg-slate-50 hover:text-slate-600"
+            className="text-slate-500 dark:text-slate-400 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-300"
             onClick={onRestore}
           >
-            <History className="w-4 h-4 mr-2"/>
+            <History className="w-4 h-4 mr-2" />
             Restore Previous List
           </Button>
         )}

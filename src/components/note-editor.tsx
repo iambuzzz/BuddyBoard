@@ -20,13 +20,13 @@ type SaveStatus = 'saved' | 'typing' | 'saving';
 export function NoteEditor({ note, userId }: NoteEditorProps) {
     const firestore = useFirestore();
     const { toast } = useToast();
-    
+
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
 
     const debounceTimeout = useRef<NodeJS.Timeout | null>(null);
-    
+
     const noteIdRef = useRef<string | null>(null);
     useEffect(() => {
         if (note) {
@@ -39,7 +39,7 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
             setContent('');
         }
     }, [note]);
-    
+
     const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setTitle(e.target.value);
         setSaveStatus('typing');
@@ -67,7 +67,7 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
 
         setSaveStatus('saving');
         const noteRef = doc(firestore, `user_notes/${userId}/notes/${currentNoteId}`);
-        
+
         try {
             await updateDoc(noteRef, {
                 title: currentTitle,
@@ -79,15 +79,15 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
             console.error("Error saving note:", error);
             // This might fail if the doc was deleted while typing, which is fine.
             if ((error as any).code !== 'not-found') {
-                toast({ title: "Error", description: "Could not save your changes.", variant: 'destructive'});
+                toast({ title: "Error", description: "Could not save your changes.", variant: 'destructive' });
             }
             setSaveStatus('typing');
         }
     };
-    
+
     if (!note) {
         return (
-            <div className="flex-1 flex flex-col items-center justify-center bg-transparent text-slate-500 p-8 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center bg-transparent text-slate-500 dark:text-white/40 p-8 text-center">
                 <NotebookPen className="h-16 w-16 mb-4" strokeWidth={1} />
                 <h2 className="text-xl font-semibold">Select a note</h2>
                 <p>Choose a note from the sidebar to view or edit it, or create a new one.</p>
@@ -96,7 +96,7 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
     }
 
     const renderSaveStatus = () => {
-        switch(saveStatus) {
+        switch (saveStatus) {
             case 'saving':
                 return (
                     <>
@@ -119,9 +119,10 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
                     value={title}
                     onChange={handleTitleChange}
                     placeholder="Untitled Note"
-                    className="text-2xl font-bold border-none shadow-none focus-visible:ring-0 p-0 h-auto bg-transparent"
+                    data-transparent
+                    className="text-2xl font-bold !border-none shadow-none focus-visible:ring-0 p-0 h-auto !bg-transparent dark:text-white dark:placeholder:text-white/30"
                 />
-                 <div className="flex items-center gap-2 text-sm text-slate-500">
+                <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-white/40">
                     {renderSaveStatus()}
                 </div>
             </div>
@@ -129,7 +130,8 @@ export function NoteEditor({ note, userId }: NoteEditorProps) {
                 value={content}
                 onChange={handleContentChange}
                 placeholder="Start writing your note here..."
-                className="flex-1 resize-none border-none shadow-none focus-visible:ring-0 text-base leading-7 bg-transparent p-0"
+                data-transparent
+                className="flex-1 resize-none !border-none shadow-none focus-visible:ring-0 text-base leading-7 !bg-transparent dark:text-white/90 dark:placeholder:text-white/30 p-0"
             />
         </div>
     );

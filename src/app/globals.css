@@ -10,22 +10,25 @@
     --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
     --popover-foreground: 240 10% 3.9%;
-    --primary: 302 59% 75%; /* Light Periwinkle */
+    --primary: 302 59% 75%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 60% 98%; /* Very Light Periwinkle */
+    --secondary: 240 60% 98%;
     --secondary-foreground: 240 10% 3.9%;
     --muted: 240 20% 94%;
     --muted-foreground: 240 5% 45.1%;
-    --accent: 256 75% 93%; /* Soft Lavender */
+    --accent: 256 75% 93%;
     --accent-foreground: 256 30% 30%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
-    /* --ring: 302 90% 100%; */
     --radius: 0.75rem;
 
-    /* Custom App Theme Variables */
+    /* App Background */
+    --app-bg: #e3eeff;
+    --app-bg-secondary: #f0f4ff;
+
+    /* Custom App Theme Variables — Light */
     --theme-periwinkle-primary: #a78bfa;
     --theme-periwinkle-secondary: #f5f3ff;
     --theme-periwinkle-text: #6d28d9;
@@ -39,26 +42,42 @@
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 302 59% 80%;
+    --background: 230 25% 8%;
+    --foreground: 220 20% 92%;
+    --card: 230 25% 11%;
+    --card-foreground: 220 20% 92%;
+    --popover: 230 25% 11%;
+    --popover-foreground: 220 20% 92%;
+    --primary: 265 90% 72%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 256 50% 20%;
-    --accent-foreground: 256 75% 90%;
-    --destructive: 0 62.8% 30.6%;
+    --secondary: 230 18% 16%;
+    --secondary-foreground: 220 20% 92%;
+    --muted: 230 18% 16%;
+    --muted-foreground: 220 10% 55%;
+    --accent: 265 50% 25%;
+    --accent-foreground: 265 80% 85%;
+    --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 302 59% 80%;
+    --border: 230 18% 18%;
+    --input: 230 18% 18%;
+    --ring: 265 90% 72%;
     --radius: 0.75rem;
+
+    /* App Background — Dark: Rich gradient navy */
+    --app-bg: #0a0e1a;
+    --app-bg-secondary: #111827;
+
+    /* Custom App Theme Variables — Dark: Vivid Glass (Sweet Spot) */
+    --theme-periwinkle-primary: #a78bfa;
+    --theme-periwinkle-secondary: rgba(167, 139, 250, 0.15);
+    --theme-periwinkle-text: #ddd6fe;
+    --theme-cyan-primary: #22d3ee;
+    --theme-cyan-secondary: rgba(34, 211, 238, 0.15);
+    --theme-cyan-text: #cffafe;
+    --theme-emerald-primary: #34d399;
+    --theme-emerald-secondary: rgba(52, 211, 153, 0.15);
+    --theme-emerald-text: #d1fae5;
+    --lock-color: #34d399;
   }
 }
 
@@ -72,47 +91,217 @@
   body {
     @apply bg-background;
     min-height: 100vh;
-    background-color: #e3eeff;
+    background-color: var(--app-bg);
     overflow-y: auto;
   }
+
+  /* Dark mode body — animated gradient background */
+  .dark body {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0f1629 25%, #12102e 50%, #0d1a2d 75%, #0a0e1a 100%);
+    background-size: 400% 400%;
+    animation: darkBgShift 30s ease infinite;
+  }
+
   .snap-center {
     scroll-snap-align: center;
   }
 }
 
-@keyframes glow-periwinkle {
-  0%, 100% { 
-    box-shadow: 0 0 10px 0px rgba(167, 139, 250, 0.4);
-    border-color: rgba(167, 139, 250, 0.6);
-  }
-  50% { 
-    box-shadow: 0 0 10px 4px rgba(167, 139, 250, 0.6);
-    border-color: rgba(167, 139, 250, 1);
-  }
+@keyframes darkBgShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
 }
 
-@keyframes glow-cyan {
-  0%, 100% { 
-    box-shadow: 0 0 10px 0px rgba(34, 211, 238, 0.4);
-    border-color: rgba(34, 211, 238, 0.6);
-  }
-  50% { 
-    box-shadow: 0 0 10px 4px rgba(34, 211, 238, 0.6);
-    border-color: rgba(34, 211, 238, 1);
-  }
+/* ─── Dark mode Card glass effect ─── */
+.dark .bg-card,
+.dark [class*="bg-card"] {
+  background: rgba(15, 20, 35, 0.75) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 }
 
-@keyframes glow-emerald {
-  0%, 100% { 
-    box-shadow: 0 0 10px 0px rgba(52, 211, 153, 0.4);
-    border-color: rgba(52, 211, 153, 0.6);
-  }
-  50% { 
-    box-shadow: 0 0 10px 4px rgba(52, 211, 153, 0.6);
-    border-color: rgba(52, 211, 153, 1);
-  }
+/* ─── Dark mode Input refinements ─── */
+.dark input,
+.dark textarea {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+/* Exception: inputs/textareas marked as transparent (e.g. note editor) */
+.dark input[data-transparent],
+.dark textarea[data-transparent] {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: rgba(255, 255, 255, 0.35) !important;
+}
+.dark input:focus,
+.dark textarea:focus {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(167, 139, 250, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.15) !important;
+}
+.dark input[data-transparent]:focus,
+.dark textarea[data-transparent]:focus {
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }
 
+/* ─── Dark mode Tabs ─── */
+.dark [role="tablist"] {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.dark [role="tab"][data-state="active"] {
+  background: rgba(167, 139, 250, 0.15) !important;
+  color: #c4b5fd !important;
+  box-shadow: 0 0 12px rgba(167, 139, 250, 0.1);
+}
+.dark [role="tab"] {
+  color: rgba(255, 255, 255, 0.5);
+}
+.dark [role="tab"]:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ─── Dark mode Button refinements — High-end Glassmorphism ─── */
+.dark button[class*="bg-[--theme-periwinkle"] {
+  background: rgba(167, 139, 250, 0.2) !important;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(167, 139, 250, 0.4);
+  box-shadow: 0 0 15px rgba(167, 139, 250, 0.15), inset 0 0 10px rgba(167, 139, 250, 0.05);
+  color: #ddd6fe !important;
+  text-shadow: 0 0 10px rgba(167, 139, 250, 0.5);
+}
+.dark button[class*="bg-[--theme-periwinkle"]:hover {
+  background: rgba(167, 139, 250, 0.35) !important;
+  border-color: rgba(167, 139, 250, 0.6);
+  box-shadow: 0 0 25px rgba(167, 139, 250, 0.35), inset 0 0 15px rgba(167, 139, 250, 0.1);
+}
+.dark button[class*="bg-[--theme-cyan"] {
+  background: rgba(34, 211, 238, 0.2) !important;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  box-shadow: 0 0 15px rgba(34, 211, 238, 0.15), inset 0 0 10px rgba(34, 211, 238, 0.05);
+  color: #cffafe !important;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
+}
+.dark button[class*="bg-[--theme-cyan"]:hover {
+  background: rgba(34, 211, 238, 0.35) !important;
+  border-color: rgba(34, 211, 238, 0.6);
+  box-shadow: 0 0 25px rgba(34, 211, 238, 0.35), inset 0 0 15px rgba(34, 211, 238, 0.1);
+}
+.dark button[class*="bg-[--theme-emerald"] {
+  background: rgba(52, 211, 153, 0.2) !important;
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(52, 211, 153, 0.4);
+  box-shadow: 0 0 15px rgba(52, 211, 153, 0.15), inset 0 0 10px rgba(52, 211, 153, 0.05);
+  color: #d1fae5 !important;
+  text-shadow: 0 0 10px rgba(52, 211, 153, 0.5);
+}
+.dark button[class*="bg-[--theme-emerald"]:hover {
+  background: rgba(52, 211, 153, 0.35) !important;
+  border-color: rgba(52, 211, 153, 0.6);
+  box-shadow: 0 0 25px rgba(52, 211, 153, 0.35), inset 0 0 15px rgba(52, 211, 153, 0.1);
+}
+
+/* ─── Dark mode Toggle Group / Filters FIX ─── */
+.dark [role="group"] button[data-state="on"] {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.25) !important;
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+} 
+.dark [role="group"] button:not([data-state="on"]) {
+  color: rgba(255, 255, 255, 0.6);
+} 
+.dark [role="group"] button:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ─── Dark mode Dialog / Popover / Sheet ─── */
+.dark [role="dialog"],
+.dark [data-radix-popper-content-wrapper] > div {
+  background: rgba(15, 20, 35, 0.95) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ─── Dark mode Radio / Radio Group Items ─── */
+.dark [role="radio"] {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+.dark [role="radio"][data-state="checked"] {
+  border-color: #a78bfa;
+  color: #a78bfa;
+}
+
+/* ─── Dark mode ScrollArea ─── */
+.dark [data-radix-scroll-area-viewport] + div [data-orientation="vertical"] > div {
+  background: rgba(167, 139, 250, 0.3) !important;
+}
+
+/* ─── Dark mode Select / Dropdown ─── */
+.dark [role="listbox"],
+.dark [role="menu"] {
+  background: rgba(15, 20, 35, 0.95) !important;
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+.dark [role="option"]:hover,
+.dark [role="menuitem"]:hover {
+  background: rgba(167, 139, 250, 0.1) !important;
+}
+
+/* ─── Dark mode Separator / Dividers ─── */
+.dark [role="separator"],
+.dark hr,
+.dark .border-b {
+  border-color: rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ─── Dark mode Switch ─── */
+.dark button[role="switch"][data-state="checked"] {
+  background: linear-gradient(135deg, #a78bfa, #818cf8) !important;
+  box-shadow: 0 0 15px rgba(167, 139, 250, 0.5);
+}
+.dark button[role="switch"][data-state="unchecked"] {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* ─── Dark mode Toast ─── */
+.dark [data-sonner-toaster],
+.dark [data-radix-toast-viewport] {
+  --background: rgba(15, 20, 35, 0.95);
+}
+
+/* ─── Glow Keyframes ─── */
+/* ─── Glow Keyframes (Optimized for Opacity/Border) ─── */
+@keyframes glow-border-periwinkle {
+  0%, 100% { border-color: rgba(167, 139, 250, 0.5); }
+  50% { border-color: rgba(167, 139, 250, 0.9); }
+}
+
+@keyframes glow-border-cyan {
+  0%, 100% { border-color: rgba(34, 211, 238, 0.5); }
+  50% { border-color: rgba(34, 211, 238, 0.9); }
+}
+
+@keyframes glow-border-emerald {
+  0%, 100% { border-color: rgba(52, 211, 153, 0.5); }
+  50% { border-color: rgba(52, 211, 153, 0.9); }
+}
+
+@keyframes glow-opacity {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
 
 @layer components {
   /* 3D Flip Card */
@@ -136,24 +325,44 @@
   }
 
 
-  /* Task Item */
+  /* ─── Task Item ─── */
   .task-item {
     @apply border-b;
   }
   .task-item:last-child {
-      @apply border-b-0;
+    @apply border-b-0;
   }
+
+  /* Light mode completed */
   .task-item.completed {
     @apply bg-emerald-50 text-emerald-800;
   }
   .task-item.completed .task-text {
     @apply line-through text-emerald-700 opacity-70;
   }
+
+  /* Dark mode completed — visible green glow */
+  .dark .task-item.completed {
+    background: rgba(52, 211, 153, 0.12);
+    border-color: rgba(52, 211, 153, 0.3);
+    color: #6ee7b7;
+    box-shadow: 0 0 15px rgba(52, 211, 153, 0.05);
+  }
+  .dark .task-item.completed .task-text {
+    color: #6ee7b7;
+    opacity: 0.9;
+  }
+
+  /* Dark mode task item hover — subtle glass lift */
+  .dark .task-item:not(.completed):hover {
+    background: rgba(255, 255, 255, 0.04);
+  }
+
   .task-item .task-text {
     word-break: break-word;
   }
 
-  /* Scrollbar */
+  /* ─── Scrollbar ─── */
   .task-list-container::-webkit-scrollbar {
     width: 8px;
   }
@@ -177,7 +386,7 @@
     border: 2px solid hsl(var(--muted));
   }
 
-  /* Score Badge */
+  /* ─── Score Badge ─── */
   .score-badge-container {
     perspective: 1000px;
     height: 3rem;
@@ -198,7 +407,7 @@
     transform: rotateY(180deg);
   }
 
-  /* Streak Badge */
+  /* ─── Streak Badge ─── */
   .streak-badge-container {
     perspective: 1000px;
   }
@@ -218,14 +427,95 @@
     transform: rotateY(180deg);
   }
   
+  /* ─── Card Glow Animations ─── */
+  /* ─── Card Glow Animations (Pseudo-element Optimization) ─── */
   .card-glow-periwinkle {
-    animation: glow-periwinkle 3s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+    border-color: rgba(167, 139, 250, 0.5);
+    animation: glow-border-periwinkle 3s ease-in-out infinite;
   }
+  .card-glow-periwinkle::before {
+    content: "";
+    position: absolute;
+    inset: 0px;
+    z-index: -1;
+    border-radius: inherit;
+    box-shadow: 0 0 40px 5px rgba(167, 139, 250, 0.4);
+    animation: glow-opacity 3s ease-in-out infinite;
+  }
+  .card-glow-periwinkle::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    box-shadow: inset 0 0 20px rgba(167, 139, 250, 0.15);
+    pointer-events: none;
+    animation: glow-opacity 3s ease-in-out infinite;
+  }
+
   .card-glow-cyan {
-    animation: glow-cyan 3s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+    border-color: rgba(34, 211, 238, 0.5);
+    animation: glow-border-cyan 3s ease-in-out infinite;
   }
+  .card-glow-cyan::before {
+    content: "";
+    position: absolute;
+    inset: 0px;
+    z-index: -1;
+    border-radius: inherit;
+    box-shadow: 0 0 40px 5px rgba(34, 211, 238, 0.4);
+    animation: glow-opacity 3s ease-in-out infinite;
+  }
+  .card-glow-cyan::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    box-shadow: inset 0 0 20px rgba(34, 211, 238, 0.15);
+    pointer-events: none;
+    animation: glow-opacity 3s ease-in-out infinite;
+  }
+
   .card-glow-emerald {
-    animation: glow-emerald 3s ease-in-out infinite;
+    position: relative;
+    z-index: 1;
+    border-color: rgba(52, 211, 153, 0.5);
+    animation: glow-border-emerald 3s ease-in-out infinite;
+  }
+  .card-glow-emerald::before {
+    content: "";
+    position: absolute;
+    inset: 0px;
+    z-index: -1;
+    border-radius: inherit;
+    box-shadow: 0 0 40px 5px rgba(52, 211, 153, 0.4);
+    animation: glow-opacity 3s ease-in-out infinite;
+  }
+  .card-glow-emerald::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    box-shadow: inset 0 0 20px rgba(52, 211, 153, 0.15);
+    pointer-events: none;
+    animation: glow-opacity 3s ease-in-out infinite;
+  }
+
+  /* ─── Dark mode: ambient card glow ─── */
+  .dark .theme-periwinkle:not(.card-glow-periwinkle) {
+    box-shadow: 0 0 40px rgba(167, 139, 250, 0.12), 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .dark .theme-cyan:not(.card-glow-cyan) {
+    box-shadow: 0 0 40px rgba(34, 211, 238, 0.12), 0 8px 32px rgba(0,0,0,0.4);
+  }
+  .dark .theme-emerald:not(.card-glow-emerald) {
+    box-shadow: 0 0 40px rgba(52, 211, 153, 0.12), 0 8px 32px rgba(0,0,0,0.4);
   }
   
   .touch-pan-y {
@@ -248,7 +538,152 @@
     filter: drop-shadow(0 0 5px #6ee7b7);
   }
   .glowing-line > line {
-    stroke: #6ee7b7; /* Lighter Neon Green */
+    stroke: #6ee7b7;
     stroke-linecap: round;
   }
+}
+
+/* ─── Dark mode: Recharts chart container ─── */
+.dark .recharts-wrapper,
+.dark .recharts-surface {
+  background: transparent !important;
+}
+.dark .recharts-cartesian-grid-bg {
+  fill: transparent !important;
+}
+/* Brush (slider) component — kill white rect backgrounds */
+.dark .recharts-brush .recharts-brush-slide {
+  fill: rgba(167, 139, 250, 0.08) !important;
+  stroke: none !important;
+}
+.dark .recharts-brush rect:not([class]) {
+  fill: rgba(15, 20, 35, 0.95) !important;
+  stroke: rgba(255, 255, 255, 0.1) !important;
+}
+.dark .recharts-brush-texts text {
+  fill: rgba(255, 255, 255, 0.5) !important;
+}
+.dark .recharts-brush-traveller rect {
+  fill: rgba(167, 139, 250, 0.3) !important;
+  stroke: rgba(167, 139, 250, 0.6) !important;
+}
+.dark .recharts-brush-traveller line {
+  stroke: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* ─── Dark mode: Avatar fallback ─── */
+.dark .rounded-full[class*="AvatarFallback"],
+.dark [data-radix-avatar-fallback] {
+  background: rgba(167, 139, 250, 0.15) !important;
+  color: #c4b5fd !important;
+}
+
+/* ─── Dark mode: Score badge enhancement ─── */
+.dark .theme-periwinkle .score-face,
+.dark .theme-periwinkle [class*="rounded-full"][class*="border"] {
+  box-shadow: 0 0 8px rgba(139, 122, 204, 0.1);
+}
+.dark .theme-cyan .score-face,
+.dark .theme-cyan [class*="rounded-full"][class*="border"] {
+  box-shadow: 0 0 8px rgba(90, 184, 199, 0.1);
+}
+.dark .theme-emerald .score-face,
+.dark .theme-emerald [class*="rounded-full"][class*="border"] {
+  box-shadow: 0 0 8px rgba(77, 168, 130, 0.1);
+}
+
+/* ─── Dark mode: Card border softening ─── */
+.dark .border-\[--theme-periwinkle-primary\] {
+  border-color: rgba(139, 122, 204, 0.25) !important;
+}
+.dark .border-\[--theme-cyan-primary\] {
+  border-color: rgba(90, 184, 199, 0.25) !important;
+}
+.dark .border-\[--theme-emerald-primary\] {
+  border-color: rgba(77, 168, 130, 0.25) !important;
+}
+
+/* ─── Dark mode: COMPREHENSIVE text color fix ─── */
+/* Nuclear: ensure ALL text in dark mode is light — no exceptions */
+.dark,
+.dark body {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Headings */
+.dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+/* Paragraphs & spans */
+.dark p, .dark span, .dark div {
+  color: inherit;
+}
+
+/* Labels & form text */
+.dark label,
+.dark .text-sm.font-medium {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+/* Muted text — visible but subtle */
+.dark .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Select / Combobox trigger — the "Short Term" text etc */
+.dark [role="combobox"],
+.dark [data-radix-select-trigger],
+.dark button[role="combobox"] span {
+  color: rgba(255, 255, 255, 0.85) !important;
+}
+
+/* Select dropdown chevron */
+.dark [role="combobox"] svg {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Dialog / sheet content text */
+.dark [role="dialog"] h2,
+.dark [role="dialog"] h3,
+.dark [role="dialog"] p,
+.dark [role="dialog"] label,
+.dark [role="dialog"] span {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Dialog description text */
+.dark [role="dialog"] [class*="DialogDescription"],
+.dark [role="dialog"] .text-muted-foreground {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Buttons — cancel, outline, ghost variants */
+.dark button {
+  color: inherit;
+}
+.dark button[data-variant="outline"],
+.dark [role="dialog"] button[class*="outline"] {
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ─── Dark mode: Celebration overlay glass ─── */
+.dark .celebration-glass {
+  background: rgba(15, 20, 35, 0.85);
+  backdrop-filter: blur(16px);
+}
+
+/* ─── Chrome Autofill Fix for Dark Mode ─── */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 30px hsl(230, 25%, 10%) inset !important;
+  -webkit-text-fill-color: white !important;
+  color: white !important;
+  caret-color: white !important;
+  font-family: inherit !important;
+  font-size: inherit !important;
+  transition: background-color 5000s ease-in-out 0s;
 }

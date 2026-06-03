@@ -1,11 +1,11 @@
 {
-  "name": "RiyalTodo",
-  "short_name": "RiyalTodo",
+  "name": "BuddyBoard",
+  "short_name": "BuddyBoard",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#e3eeff",
   "theme_color": "#e3eeff",
-  "description": "Daily Dash for Riya & Naitik",
+  "description": "Collaborative accountability and productivity platform",
   "icons": [
     {
       "src": "/icon.svg",

@@ -2,10 +2,11 @@ import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'TaskFlipper',
-  description: 'Daily Dash for Riya, Ambuj & Naitik',
+  title: 'BuddyBoard',
+  description: 'Collaborative accountability and productivity platform',
   manifest: '/manifest.json',
 };
 
@@ -32,10 +33,12 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icon.svg" />
       </head>
       <body className="font-body antialiased">
-        <FirebaseClientProvider>
-          {children}
-          <Toaster />
-        </FirebaseClientProvider>
+        <ThemeProvider>
+          <FirebaseClientProvider>
+            {children}
+            <Toaster />
+          </FirebaseClientProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

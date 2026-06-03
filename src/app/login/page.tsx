@@ -4,7 +4,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { doc, setDoc } from 'firebase/firestore'; 
+import { doc, setDoc } from 'firebase/firestore';
 import { useAuth, useFirestore } from '@/firebase';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,7 +64,7 @@ export default function LoginPage() {
       });
       return;
     }
-    
+
     if (isSignUp && (!displayName || !email || !password)) {
       toast({
         title: 'Error',
@@ -80,7 +80,7 @@ export default function LoginPage() {
         // --- New User Signup ---
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
-        
+
         // Update auth profile
         await updateProfile(user, { displayName });
 
@@ -102,7 +102,7 @@ export default function LoginPage() {
       if (error.code === 'auth/invalid-credential') {
         description = 'Invalid email or password. Please try again.';
       }
-      
+
       toast({
         title: 'Authentication Error',
         description: description,
@@ -114,7 +114,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff] p-4 relative">
+    <div className="h-screen w-full flex items-center justify-center bg-[var(--app-bg)] p-4 relative">
       <div className="w-[420px]">
         <Tabs defaultValue="login" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -151,7 +151,7 @@ export default function LoginPage() {
                 <CardDescription>Start your productivity journey with a new account.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                 <div className="space-y-2">
+                <div className="space-y-2">
                   <Label htmlFor="signup-name">Your Name</Label>
                   <Input id="signup-name" type="text" placeholder="John Doe" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
                 </div>

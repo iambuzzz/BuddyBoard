@@ -11,14 +11,14 @@ import type { Note, CardTheme } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
 
@@ -69,7 +69,7 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
         }
 
         const noteRef = doc(firestore, `user_notes/${userId}/notes`, noteIdToDelete);
-        
+
         try {
             await deleteDoc(noteRef);
         } catch (error) {
@@ -82,22 +82,22 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
     const themeStyles = {
         periwinkle: {
             newButton: 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white',
-            selectedBg: 'bg-violet-100/80',
-            selectedText: 'text-violet-700',
+            selectedBg: 'bg-violet-100/80 dark:bg-violet-500/15',
+            selectedText: 'text-violet-700 dark:text-violet-300',
         },
         cyan: {
             newButton: 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white',
-            selectedBg: 'bg-cyan-100/80',
-            selectedText: 'text-cyan-700',
+            selectedBg: 'bg-cyan-100/80 dark:bg-cyan-500/15',
+            selectedText: 'text-cyan-700 dark:text-cyan-300',
         },
         emerald: {
             newButton: 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white',
-            selectedBg: 'bg-emerald-100/80',
-            selectedText: 'text-emerald-700',
+            selectedBg: 'bg-emerald-100/80 dark:bg-emerald-500/15',
+            selectedText: 'text-emerald-700 dark:text-emerald-300',
         }
     };
     const currentTheme = themeStyles[theme] || themeStyles.periwinkle;
-    
+
     const formatTimestamp = (timestamp: any) => {
         if (!timestamp) return null;
         // Check if it's a Firestore Timestamp and convert, otherwise create a new Date
@@ -128,10 +128,10 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
                 </AlertDialogContent>
             </AlertDialog>
 
-            <aside className="w-full md:w-80 md:border-r border-slate-300/70 flex flex-col h-screen bg-transparent">
-                <div className="p-4 border-b border-slate-300/70 flex items-center justify-between">
-                    <h2 className="text-xl font-bold flex items-center gap-2"><Notebook className="h-6 w-6"/> Notes</h2>
-                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600">
+            <aside className="w-full md:w-80 md:border-r border-slate-300/70 dark:border-white/[0.06] flex flex-col h-screen bg-transparent">
+                <div className="p-4 border-b border-slate-300/70 dark:border-white/[0.06] flex items-center justify-between">
+                    <h2 className="text-xl font-bold flex items-center gap-2 dark:text-white"><Notebook className="h-6 w-6" /> Notes</h2>
+                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600 dark:text-slate-400">
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                 </div>
@@ -144,19 +144,19 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
                 <ScrollArea className="flex-1">
                     <div className="p-2 space-y-1">
                         {isLoading ? (
-                            [...Array(5)].map((_, i) => <div key={i} className="h-16 bg-slate-100/50 rounded-md animate-pulse" />)
+                            [...Array(5)].map((_, i) => <div key={i} className="h-16 bg-slate-100/50 dark:bg-white/[0.04] rounded-md animate-pulse" />)
                         ) : (
                             notes.map(note => (
                                 <div key={note.id} className="group relative rounded-md">
                                     <button
                                         onClick={() => onSelectNote(note)}
                                         className={cn(
-                                            "w-full text-left p-3 pr-10 border-b border-slate-200/80 transition-colors rounded-md",
-                                            selectedNoteId === note.id ? currentTheme.selectedBg : 'hover:bg-slate-100/50'
+                                            "w-full text-left p-3 pr-10 border-b border-slate-200/80 dark:border-white/[0.04] transition-colors rounded-md",
+                                            selectedNoteId === note.id ? currentTheme.selectedBg : 'hover:bg-slate-100/50 dark:hover:bg-white/[0.04]'
                                         )}
                                     >
-                                        <h3 className={cn("font-semibold truncate", selectedNoteId === note.id ? currentTheme.selectedText : "text-slate-800")}>{note.title || 'Untitled Note'}</h3>
-                                        <p className="text-xs text-slate-500 mt-1">
+                                        <h3 className={cn("font-semibold truncate", selectedNoteId === note.id ? currentTheme.selectedText : "text-slate-800 dark:text-white/90")}>{note.title || 'Untitled Note'}</h3>
+                                        <p className="text-xs text-slate-500 dark:text-white/40 mt-1">
                                             {formatTimestamp(note.updatedAt)}
                                         </p>
                                     </button>
@@ -167,7 +167,7 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
                                             e.stopPropagation();
                                             handleDeleteConfirm(note);
                                         }}
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-slate-400 hover:text-destructive opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-slate-400 dark:text-slate-500 hover:text-destructive opacity-0 group-hover:opacity-100 focus:opacity-100"
                                         aria-label="Delete note"
                                     >
                                         <Trash2 className="h-4 w-4" />

@@ -23,14 +23,14 @@ export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProp
   const handleToggle = () => setIsFlipped(!isFlipped);
 
   const themeClasses = {
-    periwinkle: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
-    cyan: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
-    emerald: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
-    default: { currentText: 'text-orange-500', maxText: 'text-orange-500' },
+    periwinkle: { currentText: 'text-orange-500 dark:text-orange-400 dark:drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]', maxText: 'text-orange-500 dark:text-orange-400 dark:drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' },
+    cyan: { currentText: 'text-orange-500 dark:text-orange-400 dark:drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]', maxText: 'text-orange-500 dark:text-orange-400 dark:drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' },
+    emerald: { currentText: 'text-orange-500 dark:text-orange-400 dark:drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]', maxText: 'text-orange-500 dark:text-orange-400 dark:drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' },
+    default: { currentText: 'text-orange-500 dark:text-orange-400 dark:drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]', maxText: 'text-orange-500 dark:text-orange-400 dark:drop-shadow-[0_0_8px_rgba(251,146,60,0.6)]' },
   };
-  
+
   const currentTheme = themeClasses[theme] || themeClasses.default;
-  
+
   return (
     <TooltipProvider>
       <Tooltip>
@@ -42,7 +42,7 @@ export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProp
                 <div
                   className={cn(
                     'flex items-center gap-1 p-1 rounded-full transition-all duration-300',
-                    currentStreak > 0 ? `${currentTheme.currentText}` : 'text-slate-400',
+                    currentStreak > 0 ? `${currentTheme.currentText}` : 'text-slate-400 dark:text-slate-500',
                   )}
                 >
                   <Flame
@@ -57,7 +57,7 @@ export function StreakBadge({ currentStreak, maxStreak, theme }: StreakBadgeProp
                 <div
                   className={cn(
                     'flex items-center gap-1 p-1 rounded-full transition-all duration-300',
-                    maxStreak > 0 ? currentTheme.maxText : 'text-slate-400',
+                    maxStreak > 0 ? currentTheme.maxText : 'text-slate-400 dark:text-slate-500',
                   )}
                 >
                   <Star className="h-5 w-5" fill={maxStreak > 0 ? "currentColor" : "none"} />

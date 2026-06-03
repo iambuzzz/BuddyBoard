@@ -53,12 +53,12 @@ const getThemeClass = (theme: CardTheme | undefined) => {
 };
 
 const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map((n) => n[0])
-      .slice(0, 2)
-      .join('')
-      .toUpperCase();
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase();
 };
 
 export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
@@ -74,10 +74,10 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
 
   const userName = userProfile?.displayName || 'My';
   const isCurrentUserCard = authUser?.uid === userId;
-  
+
   const cardTheme = userProfile?.cardTheme ?? 'periwinkle';
   const themeClass = getThemeClass(cardTheme);
-  
+
   const updateFirestore = useCallback(async (updatePayload: Partial<UserState>) => {
     if (!firestore || !userId) return;
     const docRef = doc(firestore, 'task_lists', userId);
@@ -103,31 +103,31 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     const newTasks = [...userState.tasks, newTask].sort((a, b) => a.createdAt - b.createdAt);
     updateFirestore({ tasks: newTasks });
   };
-  
+
   const updateTask = (taskId: string, newText: string) => {
     const newTasks = userState.tasks.map(t => t.id === taskId ? { ...t, text: newText } : t);
     updateFirestore({ tasks: newTasks });
   };
-  
+
   const deleteTask = (taskId: string) => {
     const newTasks = userState.tasks.filter(t => t.id !== taskId);
     updateFirestore({ tasks: newTasks });
   };
-  
+
   const toggleTimer = (taskId: string) => {
-      const now = Date.now();
-      const newTasks = userState.tasks.map(task => {
-        if (task.id === taskId) {
-          if (task.timerState === 'running') {
-            const elapsed = (now - (task.timerStartedAt || now)) / 1000;
-            return { ...task, timerState: 'paused' as 'paused', timeSpent: task.timeSpent + elapsed, timerStartedAt: null };
-          } else {
-            return { ...task, timerState: 'running' as 'running', timerStartedAt: now };
-          }
+    const now = Date.now();
+    const newTasks = userState.tasks.map(task => {
+      if (task.id === taskId) {
+        if (task.timerState === 'running') {
+          const elapsed = (now - (task.timerStartedAt || now)) / 1000;
+          return { ...task, timerState: 'paused' as 'paused', timeSpent: task.timeSpent + elapsed, timerStartedAt: null };
+        } else {
+          return { ...task, timerState: 'running' as 'running', timerStartedAt: now };
         }
-        return task;
-      });
-      updateFirestore({ tasks: newTasks });
+      }
+      return task;
+    });
+    updateFirestore({ tasks: newTasks });
   };
 
   const toggleTask = (taskId: string) => {
@@ -138,14 +138,14 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
         const isCompleting = !t.isCompleted;
         let finalTimeSpent = t.timeSpent;
         let timerState: 'stopped' | 'running' | 'paused' = t.timerState;
-        
+
         if (t.timerState === 'running') {
-            const elapsed = (now - (t.timerStartedAt || now)) / 1000;
-            finalTimeSpent += elapsed;
+          const elapsed = (now - (t.timerStartedAt || now)) / 1000;
+          finalTimeSpent += elapsed;
         }
 
         if (isCompleting) {
-            timerState = 'stopped';
+          timerState = 'stopped';
         }
 
         return { ...t, isCompleted: isCompleting, timeSpent: finalTimeSpent, timerState, completedAt: isCompleting ? now : null, timerStartedAt: isCompleting ? null : t.timerStartedAt };
@@ -154,7 +154,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     });
     updateFirestore({ tasks: newTasks });
   };
-  
+
   const handleActionButton = () => {
     if (!isCurrentUserCard) return;
     const now = Date.now();
@@ -163,7 +163,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
       toast({ title: 'List is empty', description: 'Add at least one task to lock in your list.', variant: 'destructive' });
       return;
     }
-    
+
     let newUserData: Partial<UserState>;
 
     if (userState.isFinished) { // Action: Start New List
@@ -177,8 +177,8 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
 
       const totalTimeSpentSeconds = userState.tasks.reduce((acc, task) => {
         let taskTime = task.timeSpent;
-        if(task.timerState === 'running' && task.timerStartedAt) {
-            taskTime += (Date.now() - task.timerStartedAt) / 1000;
+        if (task.timerState === 'running' && task.timerStartedAt) {
+          taskTime += (Date.now() - task.timerStartedAt) / 1000;
         }
         return acc + taskTime;
       }, 0);
@@ -211,7 +211,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
         historical_stats: updatedStats
       };
     } else { // Action: Lock-In List
-      
+
       let currentStreak = userState.currentStreak;
       if (userState.lastLockedAt) {
         const timeSinceLastLock = now - userState.lastLockedAt;
@@ -222,7 +222,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     }
     updateFirestore(newUserData);
   };
-  
+
   const startNewList = () => {
     if (!isCurrentUserCard) return;
     updateFirestore({ tasks: [], isLocked: false, isFinished: false, lockedAt: null });
@@ -288,20 +288,20 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     if (userState.isLocked && !userState.isFinished) {
       setTaskToAdd(text);
       setShowLockWarning(true);
-    } else { 
+    } else {
       addTask(text);
     }
 
     (e.currentTarget.elements.namedItem('task-input') as HTMLInputElement).value = '';
   };
-  
+
   const getActionButtonText = () => {
     if (undoState.active) return `Undo (${undoState.countdown})`;
     if (userState.isFinished) return 'Start New List';
     if (userState.isLocked) return 'Finish List';
     return 'Lock-In Tasks';
   };
-  
+
   const getActionButtonIcon = () => {
     if (undoState.active) return <RotateCcw className="w-4 h-4 mr-2 animate-spin" />;
     if (userState.isFinished) return <Plus className="w-4 h-4 mr-2" />;
@@ -311,8 +311,8 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
 
   const cardBorderStyle =
     cardTheme === 'periwinkle' ? 'border-2 border-[--theme-periwinkle-primary]' :
-    cardTheme === 'cyan' ? 'border-2 border-[--theme-cyan-primary]' :
-    'border-2 border-[--theme-emerald-primary]';
+      cardTheme === 'cyan' ? 'border-2 border-[--theme-cyan-primary]' :
+        'border-2 border-[--theme-emerald-primary]';
 
   let glowClass = '';
   if (userState.isLocked && !userState.isFinished) {
@@ -327,135 +327,134 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
 
   const addBtnStyle =
     cardTheme === 'periwinkle' ? 'bg-[--theme-periwinkle-primary] hover:bg-purple-500' :
-    cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-500' :
-    'bg-[--theme-emerald-primary] hover:bg-emerald-500';
+      cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-500' :
+        'bg-[--theme-emerald-primary] hover:bg-emerald-500';
 
   const getActionBtnStyle = () => {
     const baseStyle =
       cardTheme === 'periwinkle' ? 'bg-[--theme-periwinkle-primary] hover:bg-purple-500' :
-      cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-500' :
-      'bg-[--theme-emerald-primary] hover:bg-emerald-500';
+        cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-500' :
+          'bg-[--theme-emerald-primary] hover:bg-emerald-500';
 
     if (undoState.active) {
-        const undoStyle =
-            cardTheme === 'periwinkle' ? 'bg-purple-400 hover:bg-purple-500' :
-            cardTheme === 'cyan' ? 'bg-cyan-400 hover:bg-cyan-500' :
-            'bg-emerald-400 hover:bg-emerald-500';
-        return undoStyle;
+      // Use the same base style but maybe with a pulse effect for loading state
+      // The transparency is handled by globals.css when using the theme variable classes
+      return `${baseStyle} animate-pulse`;
     }
     return baseStyle;
   };
-  
+
   const actionBtnStyle = getActionBtnStyle();
 
   const ringStyle =
     cardTheme === 'periwinkle' ? 'focus-visible:ring-[--theme-periwinkle-primary]' :
-    cardTheme === 'cyan' ? 'focus-visible:ring-[--theme-cyan-primary]' :
-    'focus-visible:ring-[--theme-emerald-primary]';
-  
+      cardTheme === 'cyan' ? 'focus-visible:ring-[--theme-cyan-primary]' :
+        'focus-visible:ring-[--theme-emerald-primary]';
+
   const titleColor =
     cardTheme === 'periwinkle' ? 'text-[--theme-periwinkle-text]' :
-    cardTheme === 'cyan' ? 'text-[--theme-cyan-text]' :
-    'text-[--theme-emerald-text]';
+      cardTheme === 'cyan' ? 'text-[--theme-cyan-text]' :
+        'text-[--theme-emerald-text]';
 
-  const confirmButtonStyle = 
+  const confirmButtonStyle =
     cardTheme === 'periwinkle' ? 'bg-purple-600 hover:bg-purple-700' :
-    cardTheme === 'cyan' ? 'bg-cyan-600 hover:bg-cyan-700' :
-    'bg-emerald-600 hover:bg-emerald-700';
-    
+      cardTheme === 'cyan' ? 'bg-cyan-600 hover:bg-cyan-700' :
+        'bg-emerald-600 hover:bg-emerald-700';
+
   const effectiveTheme = cardTheme;
 
   const avatarBorderStyle =
     cardTheme === 'periwinkle' ? 'border-[--theme-periwinkle-text]' :
-    cardTheme === 'cyan' ? 'border-[--theme-cyan-text]' :
-    'border-[--theme-emerald-text]';
+      cardTheme === 'cyan' ? 'border-[--theme-cyan-text]' :
+        'border-[--theme-emerald-text]';
 
   return (
     <>
-    <PreviousListViewer
+      <PreviousListViewer
         isOpen={showPreviousList}
         onOpenChange={setShowPreviousList}
         previousTasks={userState.previousTasks || []}
         userName={userName}
-    />
-    <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card pt-4 px-6 pb-6 rounded-2xl ${themeClass} ${cardBorderStyle} ${glowClass}`}>
-      <AnimatePresence>
-        {userState.isFinished && (
-          <CelebrationOverlay
-            completed={userState.tasks.filter(t => t.isCompleted).length}
-            total={userState.tasks.length}
-            totalTimeSpent={userState.tasks.reduce((acc, task) => acc + (task.timeSpent || 0), 0)}
-            onNewList={startNewList}
-            onRestorePrevious={restorePreviousList}
-            canRestore={!!userState.previousTasks && userState.previousTasks.length > 0}
-            theme={effectiveTheme}
-            isCurrentUserCard={isCurrentUserCard}
-          />
-        )}
-      </AnimatePresence>
-      <header className="flex justify-between items-center gap-2 pb-4 mb-4 border-b">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <Avatar className={`h-9 w-9 border flex-shrink-0 ${avatarBorderStyle}`}>
-            <AvatarImage src={userProfile?.photoURL || undefined} alt={userName} />
-            <AvatarFallback>{getInitials(userName)}</AvatarFallback>
-          </Avatar>
-          <div className="flex items-center gap-1 min-w-0 flex-1">
-            <h2 className={`text-xl sm:text-2xl font-bold truncate ${titleColor}`}>{userName}</h2>
-            <div className="h-7 w-12 flex-shrink-0">
+      />
+      <Card className={`relative flex flex-col w-full h-full shadow-2xl bg-card pt-4 px-6 pb-6 rounded-2xl ${themeClass} ${cardBorderStyle} ${glowClass}`}>
+        <AnimatePresence>
+          {userState.isFinished && (
+            <CelebrationOverlay
+              completed={userState.tasks.filter(t => t.isCompleted).length}
+              total={userState.tasks.length}
+              totalTimeSpent={userState.tasks.reduce((acc, task) => acc + (task.timeSpent || 0), 0)}
+              onNewList={startNewList}
+              onRestorePrevious={restorePreviousList}
+              canRestore={!!userState.previousTasks && userState.previousTasks.length > 0}
+              theme={effectiveTheme}
+              isCurrentUserCard={isCurrentUserCard}
+            />
+          )}
+        </AnimatePresence>
+        <header className="flex justify-between items-center gap-2 pb-4 mb-4 border-b">
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <Avatar className={`h-9 w-9 border flex-shrink-0 ${avatarBorderStyle}`}>
+              <AvatarImage src={userProfile?.photoURL || undefined} alt={userName} />
+              <AvatarFallback>{getInitials(userName)}</AvatarFallback>
+            </Avatar>
+            <div className="flex items-center gap-1 min-w-0 flex-1">
+              <h2 className={`text-xl sm:text-2xl font-bold truncate ${titleColor}`}>{userName}</h2>
+              <div className="h-7 w-12 flex-shrink-0">
                 <StreakBadge
-                    currentStreak={userState.currentStreak}
-                    maxStreak={userState.maxStreak}
-                    theme={effectiveTheme}
+                  currentStreak={userState.currentStreak}
+                  maxStreak={userState.maxStreak}
+                  theme={effectiveTheme}
                 />
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex-shrink-0">
-          <ScoreBadge
-            dailyCompleted={userState.tasks.filter(t => t.isCompleted).length}
-            dailyTotal={userState.tasks.length}
-            theme={effectiveTheme}
-          />
-        </div>
-      </header>
+          <div className="flex-shrink-0">
+            <ScoreBadge
+              dailyCompleted={userState.tasks.filter(t => t.isCompleted).length}
+              dailyTotal={userState.tasks.length}
+              theme={effectiveTheme}
+            />
+          </div>
+        </header>
 
-      <form onSubmit={handleSubmit} className="flex gap-2 mb-4 flex-shrink-0">
-        <Input
-          type="text"
-          name="task-input"
-          placeholder={isCurrentUserCard ? "Add a task..." : `This is ${userName}'s list`}
-          className={`bg-white/80 border-slate-300 transition focus:border-transparent ${ringStyle}`}
-          disabled={userState.isFinished || !isCurrentUserCard}
-        />
-        <Button
-          type="submit"
-          className={`text-white font-bold p-3 rounded-lg shadow-md transition transform hover:scale-105 ${addBtnStyle}`}
-          disabled={userState.isFinished || !isCurrentUserCard}
-          aria-label="Add task"
-        >
-          <Plus />
-        </Button>
-      </form>
-
-      <div className="flex-grow min-h-0">
-      <ScrollArea className="h-full pr-2">
-          <TaskList
-            tasks={userState.tasks}
-            isLocked={userState.isLocked || userState.isFinished}
-            onToggle={toggleTask}
-            onToggleTimer={toggleTimer}
-            onUpdate={updateTask}
-            onDelete={deleteTask}
-            theme={effectiveTheme}
-            onRestore={restorePreviousList}
-            canRestore={!!userState.previousTasks && userState.previousTasks.length > 0}
-            isCurrentUserCard={isCurrentUserCard}
+        <form onSubmit={handleSubmit} className="flex gap-2 mb-4 flex-shrink-0">
+          <Input
+            type="text"
+            name="task-input"
+            autoComplete="off"
+            placeholder={isCurrentUserCard ? "Add a task..." : `This is ${userName}'s list`}
+            className={`bg-white/80 dark:bg-white/[0.04] border-slate-300 dark:border-white/10 transition focus:border-transparent ${ringStyle}`}
+            disabled={userState.isFinished || !isCurrentUserCard}
           />
-        </ScrollArea>
-      </div>
-      
-      <div className="flex items-center gap-2 mt-6 flex-shrink-0">
-         <Button
+          <Button
+            type="submit"
+            className={`text-white font-bold p-3 rounded-lg shadow-md transition transform hover:scale-105 ${addBtnStyle}`}
+            disabled={userState.isFinished || !isCurrentUserCard}
+            aria-label="Add task"
+          >
+            <Plus />
+          </Button>
+        </form>
+
+        <div className="flex-grow min-h-0">
+          <ScrollArea className="h-full pr-2">
+            <TaskList
+              tasks={userState.tasks}
+              isLocked={userState.isLocked || userState.isFinished}
+              onToggle={toggleTask}
+              onToggleTimer={toggleTimer}
+              onUpdate={updateTask}
+              onDelete={deleteTask}
+              theme={effectiveTheme}
+              onRestore={restorePreviousList}
+              canRestore={!!userState.previousTasks && userState.previousTasks.length > 0}
+              isCurrentUserCard={isCurrentUserCard}
+            />
+          </ScrollArea>
+        </div>
+
+        <div className="flex items-center gap-2 mt-6 flex-shrink-0">
+          <Button
             onClick={isCurrentUserCard ? (undoState.active ? handleCancelUndo : triggerUndo) : undefined}
             className={`w-full font-semibold transition py-3 text-base h-auto text-white ${actionBtnStyle} ${ringStyle}`}
             disabled={!isCurrentUserCard}
@@ -463,32 +462,32 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
             {getActionButtonIcon()}
             {getActionButtonText()}
           </Button>
-      </div>
+        </div>
 
-      <AlertDialog open={showLockWarning} onOpenChange={setShowLockWarning}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <div className="flex justify-center">
+        <AlertDialog open={showLockWarning} onOpenChange={setShowLockWarning}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <div className="flex justify-center">
                 <AlertTriangle className="text-amber-500 h-8 w-8 mb-2" />
-            </div>
-            <AlertDialogTitle>
-              Add to a Locked List?
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              You are adding a task to a list that is already locked. This new task will also be locked immediately and cannot be edited or deleted. Do you want to continue?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="w-full border-slate-300">Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmAddTask} className={`${confirmButtonStyle} w-full`}>
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </Card>
+              </div>
+              <AlertDialogTitle>
+                Add to a Locked List?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                You are adding a task to a list that is already locked. This new task will also be locked immediately and cannot be edited or deleted. Do you want to continue?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="w-full border-slate-300 dark:border-white/10">Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmAddTask} className={`${confirmButtonStyle} w-full`}>
+                Confirm
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </Card>
     </>
   );
 }
 
-    
+

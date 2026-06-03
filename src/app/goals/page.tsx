@@ -47,7 +47,7 @@ export default function GoalsPage() {
 
     const handleAddGoal = async (newGoal: Omit<Goal, 'id' | 'createdAt' | 'startDate' | 'status'>) => {
         if (!user || !firestore) return;
-        
+
         await addDoc(collection(firestore, 'user_goals', user.uid, 'goals'), {
             ...newGoal,
             status: 'active',
@@ -61,7 +61,7 @@ export default function GoalsPage() {
     const bucketListGoals = goals.filter(g => g.type === 'bucket-list');
 
     const getButtonThemeClass = (theme: CardTheme) => {
-        switch(theme) {
+        switch (theme) {
             case 'periwinkle': return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
             case 'cyan': return 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white';
             case 'emerald': return 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white';
@@ -70,7 +70,7 @@ export default function GoalsPage() {
     };
 
     const getIconThemeClass = (theme: CardTheme) => {
-        switch(theme) {
+        switch (theme) {
             case 'periwinkle': return 'text-[--theme-periwinkle-text]';
             case 'cyan': return 'text-[--theme-cyan-text]';
             case 'emerald': return 'text-[--theme-emerald-text]';
@@ -82,14 +82,14 @@ export default function GoalsPage() {
     const renderGoalList = (goalList: Goal[], type: Goal['type']) => {
         if (isLoading) {
             return <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {[...Array(3)].map((_, i) => <div key={i} className="h-48 bg-slate-100 rounded-xl animate-pulse" />)}
+                {[...Array(3)].map((_, i) => <div key={i} className="h-48 bg-slate-100 dark:bg-white/[0.04] rounded-xl animate-pulse" />)}
             </div>
         }
         if (goalList.length === 0) {
             return (
-                <div className="text-center py-20 bg-slate-50/50 rounded-xl mt-8">
-                    <h3 className="text-lg font-semibold text-slate-700">No {type.replace('-', ' ')} goals yet.</h3>
-                    <p className="text-slate-500 mt-1">Ready to set your first one?</p>
+                <div className="text-center py-20 bg-slate-50/50 dark:bg-white/[0.03] rounded-xl mt-8">
+                    <h3 className="text-lg font-semibold text-slate-700 dark:text-white/80">No {type.replace('-', ' ')} goals yet.</h3>
+                    <p className="text-slate-500 dark:text-slate-400 mt-1">Ready to set your first one?</p>
                 </div>
             );
         }
@@ -99,11 +99,11 @@ export default function GoalsPage() {
             </div>
         );
     };
-    
+
     if (isUserLoading) {
         return (
-            <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]">
-                <Loader2 className="h-12 w-12 animate-spin text-slate-500" />
+            <div className="h-screen w-full flex items-center justify-center bg-[var(--app-bg)]">
+                <Loader2 className="h-12 w-12 animate-spin text-slate-500 dark:text-slate-400" />
             </div>
         );
     }
@@ -116,15 +116,15 @@ export default function GoalsPage() {
                 onAddGoal={handleAddGoal}
                 theme={cardTheme}
             />
-            <div className="min-h-screen w-full bg-[#e3eeff] p-6">
+            <div className="min-h-screen w-full bg-[var(--app-bg)] p-6">
                 <div className="max-w-6xl mx-auto">
                     <div className="flex flex-col gap-4">
                         <header className="flex items-center justify-between">
                             <div className='flex items-center gap-2'>
-                                <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600">
+                                <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600 dark:text-slate-400">
                                     <ArrowLeft className="h-5 w-5" />
                                 </Button>
-                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 flex items-center gap-3">
+                                <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
                                     <GoalIcon className={`h-7 w-7 sm:h-8 sm:w-8 ${getIconThemeClass(cardTheme)}`} />
                                     My Goals
                                 </h1>
@@ -141,12 +141,12 @@ export default function GoalsPage() {
                         </header>
 
                         <Tabs defaultValue="short-term" className="w-full">
-                            <TabsList className="grid w-full grid-cols-3 bg-slate-300/80 backdrop-blur-sm">
+                            <TabsList className="grid w-full grid-cols-3 bg-slate-300/80 dark:bg-white/[0.04] backdrop-blur-sm">
                                 <TabsTrigger value="short-term">Short Term</TabsTrigger>
                                 <TabsTrigger value="long-term">Long Term</TabsTrigger>
                                 <TabsTrigger value="bucket-list">Bucket List</TabsTrigger>
                             </TabsList>
-                            
+
                             <div className="block sm:hidden mt-4">
                                 <Button
                                     onClick={() => setDialogOpen(true)}

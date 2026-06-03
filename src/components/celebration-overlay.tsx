@@ -19,7 +19,7 @@ type CelebrationOverlayProps = {
 
 const formatTotalTime = (totalSeconds: number) => {
   if (totalSeconds < 1) return '0 seconds';
-  
+
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = Math.floor(totalSeconds % 60);
@@ -33,14 +33,14 @@ const formatTotalTime = (totalSeconds: number) => {
 };
 
 export function CelebrationOverlay({ completed, total, totalTimeSpent, onNewList, onRestorePrevious, canRestore, theme, isCurrentUserCard }: CelebrationOverlayProps) {
-  
-  const buttonClass = theme === 'periwinkle' ? 'bg-purple-500 hover:bg-purple-600 focus:ring-purple-400' 
-    : theme === 'cyan' ? 'bg-cyan-500 hover:bg-cyan-600 focus:ring-cyan-400'
-    : 'bg-emerald-500 hover:bg-emerald-600 focus:ring-emerald-400';
 
-  const restoreButtonClass = theme === 'periwinkle' ? 'text-purple-600 border-purple-300 hover:bg-purple-50' 
-    : theme === 'cyan' ? 'text-cyan-600 border-cyan-300 hover:bg-cyan-50'
-    : 'text-emerald-600 border-emerald-300 hover:bg-emerald-50';
+  const buttonClass = theme === 'periwinkle' ? 'bg-[--theme-periwinkle-primary] hover:bg-purple-600 focus:ring-purple-400'
+    : theme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-600 focus:ring-cyan-400'
+      : 'bg-[--theme-emerald-primary] hover:bg-emerald-600 focus:ring-emerald-400';
+
+  const restoreButtonClass = theme === 'periwinkle' ? 'text-purple-600 dark:text-purple-300 border-purple-300 dark:border-purple-500/40 hover:bg-purple-50 dark:hover:bg-purple-500/10'
+    : theme === 'cyan' ? 'text-cyan-600 dark:text-cyan-300 border-cyan-300 dark:border-cyan-500/40 hover:bg-cyan-50 dark:hover:bg-cyan-500/10'
+      : 'text-emerald-600 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/40 hover:bg-emerald-50 dark:hover:bg-emerald-500/10';
 
 
   return (
@@ -48,7 +48,7 @@ export function CelebrationOverlay({ completed, total, totalTimeSpent, onNewList
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="absolute inset-0 z-20 flex flex-col justify-center items-center text-center p-4 rounded-2xl bg-white/80 backdrop-blur-sm"
+      className="absolute inset-0 z-20 flex flex-col justify-center items-center text-center p-4 rounded-2xl bg-white/80 dark:bg-[#0a0e1a]/85 backdrop-blur-sm dark:backdrop-blur-xl"
     >
       <motion.div
         initial={{ scale: 0.5, opacity: 0 }}
@@ -62,18 +62,18 @@ export function CelebrationOverlay({ completed, total, totalTimeSpent, onNewList
         className="flex flex-col items-center gap-6 w-full max-w-xs"
       >
         <div>
-            <h3 className="text-4xl font-bold text-emerald-600">List Finished!</h3>
-            <p className="text-lg text-slate-600 mt-2">
-              You completed {completed} of {total} tasks.
-            </p>
+          <h3 className="text-4xl font-bold text-emerald-600">List Finished!</h3>
+          <p className="text-lg text-slate-600 dark:text-slate-300 mt-2">
+            You completed {completed} of {total} tasks.
+          </p>
         </div>
         {totalTimeSpent > 0 && (
           <div className="flex flex-col items-center">
-            <div className="flex items-center gap-2 text-slate-700">
+            <div className="flex items-center gap-2 text-slate-700 dark:text-slate-200">
               <Timer className="h-5 w-5" />
               <span className="font-semibold">Your Total Working Time</span>
             </div>
-            <p className="text-lg font-bold text-slate-800">{formatTotalTime(totalTimeSpent)}</p>
+            <p className="text-lg font-bold text-slate-800 dark:text-white/80">{formatTotalTime(totalTimeSpent)}</p>
           </div>
         )}
         <div className="flex flex-col sm:flex-row gap-4 w-full">
@@ -83,7 +83,7 @@ export function CelebrationOverlay({ completed, total, totalTimeSpent, onNewList
                 onClick={onNewList}
                 className={`w-full px-6 py-2 text-white font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-transform transform hover:scale-105 ${buttonClass}`}
               >
-                <Plus className="w-4 h-4 mr-2"/>
+                <Plus className="w-4 h-4 mr-2" />
                 Start New List
               </Button>
               {canRestore && (
@@ -92,7 +92,7 @@ export function CelebrationOverlay({ completed, total, totalTimeSpent, onNewList
                   onClick={onRestorePrevious}
                   className={`w-full px-6 py-2 font-semibold rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75 transition-transform transform hover:scale-105 ${restoreButtonClass}`}
                 >
-                  <History className="w-4 h-4 mr-2"/>
+                  <History className="w-4 h-4 mr-2" />
                   Previous List
                 </Button>
               )}

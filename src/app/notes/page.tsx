@@ -37,13 +37,13 @@ export default function NotesPage() {
         const unsubscribe = onSnapshot(notesQuery, (snapshot) => {
             const fetchedNotes: Note[] = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id } as Note));
             setNotes(fetchedNotes);
-            
+
             setSelectedNote(prevSelected => {
                 if (!prevSelected) return null;
                 const updatedNoteInList = fetchedNotes.find(n => n.id === prevSelected.id);
                 return updatedNoteInList || null;
             });
-            
+
             setIsLoadingNotes(false);
         }, (error) => {
             console.error("Error fetching notes:", error);
@@ -55,23 +55,23 @@ export default function NotesPage() {
 
     if (isUserLoading) {
         return (
-            <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]">
-                <Loader2 className="h-8 w-8 animate-spin text-slate-500" />
+            <div className="h-screen w-full flex items-center justify-center bg-[var(--app-bg)]">
+                <Loader2 className="h-8 w-8 animate-spin text-slate-500 dark:text-slate-400" />
             </div>
         );
     }
-    
+
     if (!user) {
-         return (
-            <div className="h-screen w-full flex flex-col items-center justify-center bg-[#e3eeff] p-4">
-                <p className="text-slate-600 mb-4">Please log in to see your notes.</p>
+        return (
+            <div className="h-screen w-full flex flex-col items-center justify-center bg-[var(--app-bg)] p-4">
+                <p className="text-slate-600 dark:text-slate-300 mb-4">Please log in to see your notes.</p>
                 <Button onClick={() => router.push('/login')}>Login</Button>
             </div>
         );
     }
 
     return (
-        <div className="h-screen w-full flex bg-[#e3eeff] relative overflow-hidden">
+        <div className="h-screen w-full flex bg-[var(--app-bg)] relative overflow-hidden">
             {/* --- Sidebar Panel --- */}
             <div
                 className={cn(
@@ -98,13 +98,13 @@ export default function NotesPage() {
                     'md:translate-x-0'
                 )}
             >
-                <div className="flex-shrink-0 border-b border-slate-300/70 p-2 flex items-center md:hidden">
+                <div className="flex-shrink-0 border-b border-slate-300/70 dark:border-white/[0.06] p-2 flex items-center md:hidden">
                     {/* Mobile back button */}
                     <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => setSelectedNote(null)}
-                        className="h-9 w-9 text-slate-600"
+                        className="h-9 w-9 text-slate-600 dark:text-slate-400"
                     >
                         <ArrowLeft className="h-5 w-5" />
                     </Button>

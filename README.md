@@ -1,4 +1,4 @@
-# TaskFlipper: A Next.js and Firebase Project
+# BuddyBoard: A Next.js and Firebase Project
 
 This is a web application built with Next.js, React, Tailwind CSS, and Firebase. It's designed for task management, user pairing, and group collaboration.
 

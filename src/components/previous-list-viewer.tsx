@@ -41,7 +41,7 @@ export function PreviousListViewer({
             {previousTasks.map((task, index) => (
               <li
                 key={index}
-                className="text-sm p-3 rounded-md bg-slate-100 text-slate-700"
+                className="text-sm p-3 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
               >
                 {task.text}
               </li>
@@ -49,7 +49,7 @@ export function PreviousListViewer({
           </ul>
         </ScrollArea>
         <DialogClose asChild>
-            <Button variant="outline" className="mt-4 w-full">Close</Button>
+          <Button variant="outline" className="mt-4 w-full">Close</Button>
         </DialogClose>
       </DialogContent>
     </Dialog>

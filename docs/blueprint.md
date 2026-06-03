@@ -1,4 +1,4 @@
-# **App Name**: TaskFlipper
+# **App Name**: BuddyBoard
 
 ## Core Features:
 

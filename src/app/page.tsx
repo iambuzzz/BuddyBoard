@@ -23,15 +23,15 @@ import { FirestorePermissionError } from '@/firebase/errors';
 import { errorEmitter } from '@/firebase/error-emitter';
 
 const LoadingScreen = () => (
-  <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff]">
-    <Loader2 className="h-12 w-12 animate-spin text-slate-500" />
-  </div>
+    <div className="h-screen w-full flex items-center justify-center bg-[var(--app-bg)]">
+        <Loader2 className="h-12 w-12 animate-spin text-slate-500 dark:text-slate-400" />
+    </div>
 );
 
 const PremiumOptions = () => (
     <DropdownMenu>
         <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="More Options">
+            <Button variant="ghost" size="icon" className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="More Options">
                 <MoreVertical className="h-5 w-5" />
             </Button>
         </DropdownMenuTrigger>
@@ -43,7 +43,7 @@ const PremiumOptions = () => (
                 </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-                 <Link href="/goals" className='cursor-pointer'>
+                <Link href="/goals" className='cursor-pointer'>
                     <GoalIcon className="mr-2 h-4 w-4" />
                     <span>Goals</span>
                 </Link>
@@ -63,7 +63,7 @@ const CreateProfile = () => {
     const handleCreateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!user || !firestore || !displayName.trim()) {
-            toast({ title: "Error", description: "Please enter a display name.", variant: "destructive"});
+            toast({ title: "Error", description: "Please enter a display name.", variant: "destructive" });
             return;
         }
 
@@ -98,7 +98,7 @@ const CreateProfile = () => {
 
         try {
             await batch.commit();
-            toast({ title: "Welcome!", description: "Your profile has been created."});
+            toast({ title: "Welcome!", description: "Your profile has been created." });
             refetch();
         } catch (error: any) {
             console.error("Error creating profile:", error);
@@ -109,7 +109,7 @@ const CreateProfile = () => {
     };
 
     return (
-        <div className="h-screen w-full flex items-center justify-center bg-[#e3eeff] p-4">
+        <div className="h-screen w-full flex items-center justify-center bg-[var(--app-bg)] p-4">
             <Card className="w-[400px]">
                 <CardHeader>
                     <CardTitle>Welcome!</CardTitle>
@@ -131,7 +131,7 @@ const CreateProfile = () => {
                     </CardContent>
                     <CardFooter>
                         <Button type="submit" disabled={loading} className="w-full">
-                            {loading ? <Loader2 className="animate-spin mr-2"/> : null}
+                            {loading ? <Loader2 className="animate-spin mr-2" /> : null}
                             Create Profile
                         </Button>
                     </CardFooter>
@@ -157,7 +157,7 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
     };
 
     const getButtonThemeClass = (theme: CardTheme) => {
-        switch(theme) {
+        switch (theme) {
             case 'periwinkle': return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
             case 'cyan': return 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white';
             case 'emerald': return 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white';
@@ -174,57 +174,57 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
             }
             setIsLoading(false);
         },
-        (error: FirestoreError) => {
-            if (error.code === 'permission-denied' && !auth?.currentUser) {
-                console.log("Ignoring permission error after logout.");
-                return;
-            }
-            const permissionError = new FirestorePermissionError({
-                path: taskListRef.path,
-                operation: 'get',
+            (error: FirestoreError) => {
+                if (error.code === 'permission-denied' && !auth?.currentUser) {
+                    console.log("Ignoring permission error after logout.");
+                    return;
+                }
+                const permissionError = new FirestorePermissionError({
+                    path: taskListRef.path,
+                    operation: 'get',
+                });
+                errorEmitter.emit('permission-error', permissionError);
             });
-            errorEmitter.emit('permission-error', permissionError);
-        });
         return () => unsubscribe();
     }, [firestore, userId, auth]);
 
 
     if (isLoading || !userState) {
         return (
-             <div className="h-full w-full flex items-center justify-center">
-               <div className="flex flex-col items-center gap-4 text-slate-500">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                  <p>Loading your tasks...</p>
-               </div>
-             </div>
+            <div className="h-full w-full flex items-center justify-center">
+                <div className="text-slate-500 dark:text-slate-400">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <p>Loading your tasks...</p>
+                </div>
+            </div>
         );
     }
 
     return (
         <div className="flex flex-col h-full">
-             <div className="flex justify-between items-center mb-4">
-                 <div className="w-40 flex justify-start">
+            <div className="flex justify-between items-center mb-4">
+                <div className="w-40 flex justify-start">
                     <Link href="/settings">
-                        <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
+                        <Button variant="ghost" size="icon" className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Settings">
                             <Settings className="h-5 w-5" />
                         </Button>
                     </Link>
-                 </div>
-                 <Button
+                </div>
+                <Button
                     onClick={() => router.push(`/stats/${profile.uid}`)}
                     className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 ${getButtonThemeClass(profile.cardTheme)}`}
                 >
                     <AreaChart className="h-4 w-4" />
                     <span>Stats</span>
                 </Button>
-                 <div className="w-40 flex justify-end items-center">
+                <div className="w-40 flex justify-end items-center">
                     {!isFirstCardInGroup && (
-                         <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
+                        <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Go to Top">
                             <ArrowUp className="h-5 w-5" />
                         </Button>
                     )}
                     <PremiumOptions />
-                 </div>
+                </div>
             </div>
             <div className="flex-grow h-full">
                 <TaskCard userState={userState} userProfile={profile} userId={userId} />
@@ -234,10 +234,10 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
 };
 
 type PairedCardProps = {
-  user1: { profile: UserProfile; state: UserState };
-  user2: { profile: UserProfile; state: UserState };
-  isCurrentUserThePrimary: boolean;
-  isFirstCardInGroup?: boolean;
+    user1: { profile: UserProfile; state: UserState };
+    user2: { profile: UserProfile; state: UserState };
+    isCurrentUserThePrimary: boolean;
+    isFirstCardInGroup?: boolean;
 };
 
 const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGroup = true }: PairedCardProps) => {
@@ -247,7 +247,7 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
     const auth = useAuth();
     const router = useRouter();
 
-    
+
     const handleGoToTop = () => {
         const listEl = document.querySelector('.snap-y');
         if (listEl) {
@@ -258,25 +258,25 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
     const visibleUser = showBack ? secondaryUser : primaryUser;
 
     const getButtonThemeClass = (theme: CardTheme) => {
-        switch(theme) {
+        switch (theme) {
             case 'periwinkle': return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
             case 'cyan': return 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white';
             case 'emerald': return 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white';
             default: return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
         }
     }
-    
+
     return (
         <div className="flex flex-col h-full">
             <div className="flex justify-between items-center mb-4">
-                 <div className="w-40 flex justify-start">
-                     <Link href="/settings">
-                        <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
+                <div className="w-40 flex justify-start">
+                    <Link href="/settings">
+                        <Button variant="ghost" size="icon" className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Settings">
                             <Settings className="h-5 w-5" />
                         </Button>
                     </Link>
-                 </div>
-                 <Button
+                </div>
+                <Button
                     onClick={() => router.push(`/stats/${visibleUser.profile.uid}`)}
                     className={`inline-flex items-center gap-2 rounded-full backdrop-blur-sm shadow-lg text-sm font-semibold px-4 py-2 focus:outline-none focus:ring-0 ${getButtonThemeClass(visibleUser.profile.cardTheme)}`}
                 >
@@ -284,11 +284,11 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
                     <span>Stats</span>
                 </Button>
                 <div className="w-40 flex justify-end items-center gap-2">
-                    <Button variant="ghost" size="icon" onClick={() => setShowBack(p => !p)} className="text-slate-600 hover:bg-slate-100" aria-label="Switch User">
+                    <Button variant="ghost" size="icon" onClick={() => setShowBack(p => !p)} className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Switch User">
                         <RefreshCw className="h-5 w-5" />
                     </Button>
                     {!isFirstCardInGroup && (
-                         <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
+                        <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Go to Top">
                             <ArrowUp className="h-5 w-5" />
                         </Button>
                     )}
@@ -298,7 +298,7 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
             <div className="app-flip-shell flex-grow">
                 <div className={`app-flip-card ${showBack ? 'is-back' : ''}`}>
                     <div className="app-face front" style={{ pointerEvents: showBack ? 'none' : 'auto' }}>
-                       <TaskCard userId={primaryUser.profile.uid} userProfile={primaryUser.profile} userState={primaryUser.state} />
+                        <TaskCard userId={primaryUser.profile.uid} userProfile={primaryUser.profile} userState={primaryUser.state} />
                     </div>
                     <div className="app-face back" style={{ pointerEvents: showBack ? 'auto' : 'none' }}>
                         <TaskCard userId={secondaryUser.profile.uid} userProfile={secondaryUser.profile} userState={secondaryUser.state} />
@@ -312,15 +312,15 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
 const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partnerId: string }) => {
     const firestore = useFirestore();
     const auth = useAuth();
-    const [currentUserData, setCurrentUserData] = useState<{profile: UserProfile, state: UserState} | null>(null);
-    const [partnerData, setPartnerData] = useState<{profile: UserProfile, state: UserState} | null>(null);
+    const [currentUserData, setCurrentUserData] = useState<{ profile: UserProfile, state: UserState } | null>(null);
+    const [partnerData, setPartnerData] = useState<{ profile: UserProfile, state: UserState } | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         if (!firestore) return;
         setIsLoading(true);
 
-        const fetchData = (userId: string, setData: (data: {profile: UserProfile, state: UserState}) => void) => {
+        const fetchData = (userId: string, setData: (data: { profile: UserProfile, state: UserState }) => void) => {
             let unsubProfile: () => void;
             let unsubState: () => void;
 
@@ -336,7 +336,7 @@ const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partn
                         }
                     }, (error: FirestoreError) => {
                         if (error.code === 'permission-denied' && !auth?.currentUser) return;
-                         errorEmitter.emit('permission-error', new FirestorePermissionError({ path: stateRef.path, operation: 'get' }));
+                        errorEmitter.emit('permission-error', new FirestorePermissionError({ path: stateRef.path, operation: 'get' }));
                     });
                 }
             }, (error: FirestoreError) => {
@@ -367,9 +367,9 @@ const PairedView = ({ currentUserId, partnerId }: { currentUserId: string, partn
 
 
     if (isLoading || !currentUserData || !partnerData) {
-         return <LoadingScreen />;
+        return <LoadingScreen />;
     }
-    
+
     return (
         <div className="h-full w-full flex items-center justify-center p-4">
             <div className="w-full max-w-4xl h-full">
@@ -393,12 +393,12 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
     const [userStates, setUserStates] = useState<Record<string, UserState | null>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [isSheetOpen, setSheetOpen] = useState(false);
-    
+
     const [flippedStates, setFlippedStates] = useState<Record<string, boolean>>({});
 
     const auth = useAuth();
     const router = useRouter();
-    
+
     const handleGoToTop = () => {
         const listEl = document.querySelector('.snap-y');
         if (listEl) {
@@ -411,16 +411,16 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
 
         let scrollId = uid;
         let shouldBeFlipped = false;
-        
+
         const pair = displayItems.find(item => Array.isArray(item) && (item[0].uid === uid || item[1].uid === uid));
-        
+
         if (pair && Array.isArray(pair)) {
             scrollId = pair[0].uid; // The scroll ID is always the first user in the pair
             if (pair[1].uid === uid) {
                 shouldBeFlipped = true;
             }
         }
-        
+
         const element = document.querySelector(`[data-scroll-id="${scrollId}"]`);
         if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -431,19 +431,19 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
 
     useEffect(() => {
         if (!firestore || !groupId) return;
-    
+
         setIsLoading(true);
         const groupRef = doc(firestore, 'groups', groupId);
-    
+
         const unsubGroup = onSnapshot(groupRef, async (groupSnap) => {
             if (!groupSnap.exists()) {
                 setIsLoading(false);
                 return;
             }
-    
+
             const groupData = groupSnap.data() as Group;
             const memberUids = Object.keys(groupData.members);
-    
+
             if (memberUids.length === 0) {
                 setDisplayItems([]);
                 setUserStates({});
@@ -451,7 +451,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                 setIsLoading(false);
                 return;
             }
-    
+
             const usersQuery = query(collection(firestore, 'users'), where('uid', 'in', memberUids));
             const usersSnap = await getDocs(usersQuery);
             const members = usersSnap.docs.map(d => d.data() as UserProfile);
@@ -466,7 +466,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             const currentUserProfile = memberMap.get(currentUserId);
             if (currentUserProfile && currentUserProfile.pairedWith && memberMap.has(currentUserProfile.pairedWith) && !processed.has(currentUserId)) {
                 const partner = memberMap.get(currentUserProfile.pairedWith)!;
-                 if (partner.pairedWith === currentUserId) { // Ensure the pairing is mutual
+                if (partner.pairedWith === currentUserId) { // Ensure the pairing is mutual
                     items.push([currentUserProfile, partner]);
                     processed.add(currentUserId);
                     processed.add(partner.uid);
@@ -489,7 +489,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                 }
             }
 
-             items.sort((a, b) => {
+            items.sort((a, b) => {
                 const aIsCurrentUser = Array.isArray(a) ? a.some(m => m.uid === currentUserId) : a.uid === currentUserId;
                 const bIsCurrentUser = Array.isArray(b) ? b.some(m => m.uid === currentUserId) : b.uid === currentUserId;
 
@@ -500,7 +500,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                 const nameB = Array.isArray(b) ? b[0].displayName : b.displayName;
                 return nameA.localeCompare(nameB);
             });
-            
+
             setDisplayItems(items);
             setFlippedStates(newFlippedStates);
 
@@ -517,10 +517,10 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                 });
             });
 
-             if(members.length > 0) {
+            if (members.length > 0) {
                 setIsLoading(false);
             }
-    
+
             return () => {
                 unsubscribers.forEach(unsub => unsub());
             };
@@ -528,22 +528,22 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
             if (error.code === 'permission-denied' && !auth?.currentUser) return;
             errorEmitter.emit('permission-error', new FirestorePermissionError({ path: groupRef.path, operation: 'get' }));
         });
-    
+
         return () => unsubGroup();
     }, [firestore, groupId, currentUserId, auth]);
 
 
     if (isLoading) {
         return (
-             <div className="h-full w-full flex items-center justify-center">
-               <div className="flex flex-col items-center gap-4 text-slate-500">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                  <p>Loading group tasks...</p>
-               </div>
-             </div>
+            <div className="h-full w-full flex items-center justify-center">
+                <div className="text-slate-500 dark:text-slate-400">
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                    <p>Loading group tasks...</p>
+                </div>
+            </div>
         );
     }
-    
+
     if (displayItems.length === 0) {
         return (
             <div className="h-full w-full flex items-center justify-center">
@@ -554,7 +554,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
 
     const getButtonThemeClass = (theme: CardTheme | undefined) => {
         if (!theme) return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
-        switch(theme) {
+        switch (theme) {
             case 'periwinkle': return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
             case 'cyan': return 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white';
             case 'emerald': return 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white';
@@ -563,17 +563,17 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
     };
 
     const renderSoloTopBar = (member: UserProfile, isFirstCard: boolean) => {
-         return (
+        return (
             <div className="flex justify-between items-center mb-4">
-                 <div className="w-40 flex justify-start items-center gap-2">
-                    <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Group Members" onClick={() => setSheetOpen(true)}>
+                <div className="w-40 flex justify-start items-center gap-2">
+                    <Button variant="ghost" size="icon" className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Group Members" onClick={() => setSheetOpen(true)}>
                         <Users className="h-5 w-5" />
                     </Button>
                     <Link href="/settings">
-                       <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
-                           <Settings className="h-5 w-5" />
-                       </Button>
-                   </Link>
+                        <Button variant="ghost" size="icon" className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Settings">
+                            <Settings className="h-5 w-5" />
+                        </Button>
+                    </Link>
                 </div>
                 <Button
                     onClick={() => router.push(`/stats/${member.uid}`)}
@@ -582,115 +582,115 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                     <AreaChart className="h-4 w-4" />
                     <span>Stats</span>
                 </Button>
-               <div className="w-40 flex justify-end items-center">
-                   {!isFirstCard && (
-                        <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
-                           <ArrowUp className="h-5 w-5" />
-                       </Button>
-                   )}
-                   <PremiumOptions />
+                <div className="w-40 flex justify-end items-center">
+                    {!isFirstCard && (
+                        <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Go to Top">
+                            <ArrowUp className="h-5 w-5" />
+                        </Button>
+                    )}
+                    <PremiumOptions />
                 </div>
-           </div>
+            </div>
         )
     }
 
     return (
         <>
-        <GroupMembersSheet 
-            isOpen={isSheetOpen}
-            onOpenChange={setSheetOpen}
-            members={groupMembers}
-            onSelectMember={handleSelectMember}
-            currentUserId={currentUserId}
-        />
-        <div className="h-screen w-full snap-y snap-mandatory overflow-y-auto">
-            {displayItems.map((item, index) => {
-                const isPair = Array.isArray(item);
-                const scrollId = isPair ? item[0].uid : item.uid;
-                const isFirstCard = index === 0;
+            <GroupMembersSheet
+                isOpen={isSheetOpen}
+                onOpenChange={setSheetOpen}
+                members={groupMembers}
+                onSelectMember={handleSelectMember}
+                currentUserId={currentUserId}
+            />
+            <div className="h-screen w-full snap-y snap-mandatory overflow-y-auto">
+                {displayItems.map((item, index) => {
+                    const isPair = Array.isArray(item);
+                    const scrollId = isPair ? item[0].uid : item.uid;
+                    const isFirstCard = index === 0;
 
-                return (
-                    <div key={scrollId} data-scroll-id={scrollId} className="h-screen w-full snap-center flex items-center justify-center p-4">
-                        <div className="w-full max-w-4xl h-full flex flex-col">
-                            {isPair ? (
-                                (() => {
-                                    const [user1, user2] = item;
-                                    const isCurrentUserInThisPair = user1.uid === currentUserId || user2.uid === currentUserId;
-                                    
-                                    const primaryUser = (isFirstCard && isCurrentUserInThisPair) 
-                                        ? (user1.uid === currentUserId ? user1 : user2) 
-                                        : user1;
-                                    const secondaryUser = primaryUser.uid === user1.uid ? user2 : user1;
-                                    
-                                    const primaryState = userStates[primaryUser.uid];
-                                    const secondaryState = userStates[secondaryUser.uid];
-                                    
-                                    if (!primaryState || !secondaryState) {
+                    return (
+                        <div key={scrollId} data-scroll-id={scrollId} className="h-screen w-full snap-center flex items-center justify-center p-4">
+                            <div className="w-full max-w-4xl h-full flex flex-col">
+                                {isPair ? (
+                                    (() => {
+                                        const [user1, user2] = item;
+                                        const isCurrentUserInThisPair = user1.uid === currentUserId || user2.uid === currentUserId;
+
+                                        const primaryUser = (isFirstCard && isCurrentUserInThisPair)
+                                            ? (user1.uid === currentUserId ? user1 : user2)
+                                            : user1;
+                                        const secondaryUser = primaryUser.uid === user1.uid ? user2 : user1;
+
+                                        const primaryState = userStates[primaryUser.uid];
+                                        const secondaryState = userStates[secondaryUser.uid];
+
+                                        if (!primaryState || !secondaryState) {
+                                            return (
+                                                <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl">
+                                                    <div className="text-slate-500 dark:text-slate-400">
+                                                        <Loader2 className="h-6 w-6 animate-spin" />
+                                                        <p>Loading {user1.displayName} & {user2.displayName}'s tasks...</p>
+                                                    </div>
+                                                </div>
+                                            );
+                                        }
+
                                         return (
-                                            <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
-                                                <div className="flex flex-col items-center gap-4 text-slate-500">
-                                                    <Loader2 className="h-6 w-6 animate-spin" />
-                                                    <p>Loading {user1.displayName} & {user2.displayName}'s tasks...</p>
+                                            <PairedTaskWrapper
+                                                user1={{ profile: primaryUser, state: primaryState }}
+                                                user2={{ profile: secondaryUser, state: secondaryState }}
+                                                showBack={flippedStates[scrollId]}
+                                                setShowBack={(value) => setFlippedStates(prev => ({ ...prev, [scrollId]: value }))}
+                                                isFirstCardInGroup={isFirstCard}
+                                                onOpenGroupSheet={() => setSheetOpen(true)}
+                                            />
+                                        );
+                                    })()
+                                ) : (
+                                    (() => {
+                                        const member = item as UserProfile;
+                                        const userState = userStates[member.uid];
+                                        return (
+                                            <div className="h-full w-full flex flex-col">
+                                                {renderSoloTopBar(member, isFirstCard)}
+                                                <div className="flex-grow min-h-0">
+                                                    {userState ? (
+                                                        <TaskCard
+                                                            userId={member.uid}
+                                                            userProfile={member}
+                                                            userState={userState}
+                                                        />
+                                                    ) : (
+                                                        <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl">
+                                                            <div className="text-slate-500 dark:text-slate-400">
+                                                                <Loader2 className="h-6 w-6 animate-spin" />
+                                                                <p>Loading {member.displayName}'s tasks...</p>
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
                                         );
-                                    }
-                                    
-                                    return (
-                                        <PairedTaskWrapper 
-                                            user1={{ profile: primaryUser, state: primaryState }}
-                                            user2={{ profile: secondaryUser, state: secondaryState }}
-                                            showBack={flippedStates[scrollId]}
-                                            setShowBack={(value) => setFlippedStates(prev => ({...prev, [scrollId]: value}))}
-                                            isFirstCardInGroup={isFirstCard}
-                                            onOpenGroupSheet={() => setSheetOpen(true)}
-                                        />
-                                    );
-                                })()
-                            ) : (
-                                (() => {
-                                    const member = item as UserProfile;
-                                    const userState = userStates[member.uid];
-                                    return (
-                                        <div className="h-full w-full flex flex-col">
-                                            {renderSoloTopBar(member, isFirstCard)}
-                                            <div className="flex-grow min-h-0">
-                                            {userState ? (
-                                                <TaskCard 
-                                                    userId={member.uid}
-                                                    userProfile={member}
-                                                    userState={userState}
-                                                />
-                                            ) : (
-                                                <div className="h-full w-full flex items-center justify-center bg-slate-100 rounded-2xl">
-                                                    <div className="flex flex-col items-center gap-4 text-slate-500">
-                                                        <Loader2 className="h-6 w-6 animate-spin" />
-                                                        <p>Loading {member.displayName}'s tasks...</p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                            </div>
-                                        </div>
-                                    );
-                                })()
-                            )}
+                                    })()
+                                )}
+                            </div>
                         </div>
-                    </div>
-                );
-            })}
-        </div>
+                    );
+                })}
+            </div>
         </>
     );
 };
 
 
 type PairedTaskWrapperProps = {
-  user1: { profile: UserProfile; state: UserState };
-  user2: { profile: UserProfile; state: UserState };
-  showBack: boolean;
-  setShowBack: (value: boolean) => void;
-  isFirstCardInGroup: boolean;
-  onOpenGroupSheet: () => void;
+    user1: { profile: UserProfile; state: UserState };
+    user2: { profile: UserProfile; state: UserState };
+    showBack: boolean;
+    setShowBack: (value: boolean) => void;
+    isFirstCardInGroup: boolean;
+    onOpenGroupSheet: () => void;
 };
 
 
@@ -699,11 +699,11 @@ const PairedTaskWrapper = ({ user1, user2, showBack, setShowBack, isFirstCardInG
     const router = useRouter();
 
     const handleGoToTop = () => { const listEl = document.querySelector('.snap-y'); if (listEl) { listEl.scrollTo({ top: 0, behavior: 'smooth' }); } };
-    
+
     const visibleUser = showBack ? user2 : user1;
 
     const getButtonThemeClass = (theme: CardTheme) => {
-        switch(theme) {
+        switch (theme) {
             case 'periwinkle': return 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white';
             case 'cyan': return 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white';
             case 'emerald': return 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white';
@@ -714,15 +714,15 @@ const PairedTaskWrapper = ({ user1, user2, showBack, setShowBack, isFirstCardInG
     return (
         <div className="flex flex-col h-full">
             <div className="flex justify-between items-center mb-4">
-                 <div className="w-40 flex justify-start items-center gap-2">
-                    <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Group Members" onClick={onOpenGroupSheet}>
+                <div className="w-40 flex justify-start items-center gap-2">
+                    <Button variant="ghost" size="icon" className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Group Members" onClick={onOpenGroupSheet}>
                         <Users className="h-5 w-5" />
                     </Button>
                     <Link href="/settings">
-                       <Button variant="ghost" size="icon" className="text-slate-600 hover:bg-slate-100" aria-label="Settings">
-                           <Settings className="h-5 w-5" />
-                       </Button>
-                   </Link>
+                        <Button variant="ghost" size="icon" className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Settings">
+                            <Settings className="h-5 w-5" />
+                        </Button>
+                    </Link>
                 </div>
                 <Button
                     onClick={() => router.push(`/stats/${visibleUser.profile.uid}`)}
@@ -731,23 +731,23 @@ const PairedTaskWrapper = ({ user1, user2, showBack, setShowBack, isFirstCardInG
                     <AreaChart className="h-4 w-4" />
                     <span>Stats</span>
                 </Button>
-               <div className="w-40 flex justify-end items-center gap-2">
-                   <Button variant="ghost" size="icon" onClick={() => setShowBack(!showBack)} className="text-slate-600 hover:bg-slate-100" aria-label="Switch User">
+                <div className="w-40 flex justify-end items-center gap-2">
+                    <Button variant="ghost" size="icon" onClick={() => setShowBack(!showBack)} className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Switch User">
                         <RefreshCw className="h-5 w-5" />
                     </Button>
-                   {!isFirstCardInGroup && (
-                        <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 hover:bg-slate-100" aria-label="Go to Top">
-                           <ArrowUp className="h-5 w-5" />
-                       </Button>
-                   )}
-                   <PremiumOptions />
+                    {!isFirstCardInGroup && (
+                        <Button variant="ghost" size="icon" onClick={handleGoToTop} className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="Go to Top">
+                            <ArrowUp className="h-5 w-5" />
+                        </Button>
+                    )}
+                    <PremiumOptions />
                 </div>
-           </div>
+            </div>
 
             <div className="app-flip-shell flex-grow">
                 <div className={`app-flip-card ${showBack ? 'is-back' : ''}`}>
                     <div className="app-face front" style={{ pointerEvents: showBack ? 'none' : 'auto' }}>
-                       <TaskCard userId={user1.profile.uid} userProfile={user1.profile} userState={user1.state} />
+                        <TaskCard userId={user1.profile.uid} userProfile={user1.profile} userState={user1.state} />
                     </div>
                     <div className="app-face back" style={{ pointerEvents: showBack ? 'auto' : 'none' }}>
                         <TaskCard userId={user2.profile.uid} userProfile={user2.profile} userState={user2.state} />
@@ -760,52 +760,52 @@ const PairedTaskWrapper = ({ user1, user2, showBack, setShowBack, isFirstCardInG
 
 
 export default function Home() {
-  const { user, profile, isLoading: isUserLoading } = useUser();
-  const router = useRouter();
-  
-  useEffect(() => {
-    if (!isUserLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, isUserLoading, router]);
+    const { user, profile, isLoading: isUserLoading } = useUser();
+    const router = useRouter();
 
-  if (isUserLoading) {
-    return <LoadingScreen />;
-  }
-  
-  if (user && !profile) {
-      return <CreateProfile />;
-  }
+    useEffect(() => {
+        if (!isUserLoading && !user) {
+            router.push('/login');
+        }
+    }, [user, isUserLoading, router]);
 
-  if (!user || !profile) {
-    return <LoadingScreen />;
-  }
-  
-  const partnerId = profile.pairedWith;
-  const groupId = profile.groupId;
+    if (isUserLoading) {
+        return <LoadingScreen />;
+    }
 
-  const renderContent = () => {
-    if (groupId) {
-      return <GroupView groupId={groupId} currentUserId={user.uid} />;
+    if (user && !profile) {
+        return <CreateProfile />;
     }
-    if (partnerId) {
-      return <PairedView currentUserId={user.uid} partnerId={partnerId} />;
+
+    if (!user || !profile) {
+        return <LoadingScreen />;
     }
-    // Solo View
+
+    const partnerId = profile.pairedWith;
+    const groupId = profile.groupId;
+
+    const renderContent = () => {
+        if (groupId) {
+            return <GroupView groupId={groupId} currentUserId={user.uid} />;
+        }
+        if (partnerId) {
+            return <PairedView currentUserId={user.uid} partnerId={partnerId} />;
+        }
+        // Solo View
+        return (
+            <div className="h-full w-full flex items-center justify-center p-4">
+                <div className="w-full max-w-4xl h-full relative">
+                    <SoloView userId={user.uid} profile={profile} />
+                </div>
+            </div>
+        );
+    };
+
     return (
-      <div className="h-full w-full flex items-center justify-center p-4">
-        <div className="w-full max-w-4xl h-full relative">
-            <SoloView userId={user.uid} profile={profile} />
-        </div>
-      </div>
+        <main className="h-screen w-full flex flex-col items-center bg-[var(--app-bg)] relative overflow-hidden">
+            <div className="w-full h-full flex-grow">
+                {renderContent()}
+            </div>
+        </main>
     );
-  };
-
-  return (
-    <main className="h-screen w-full flex flex-col items-center bg-[#e3eeff] relative overflow-hidden">
-      <div className="w-full h-full flex-grow">
-        {renderContent()}
-      </div>
-    </main>
-  );
 }

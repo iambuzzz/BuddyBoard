@@ -42,17 +42,6 @@ const TaskTimer = ({ task, onToggleTimer, theme, isLocked, isCurrentUserCard }: 
     return () => clearInterval(interval);
   }, [task.timerState, task.timeSpent, task.timerStartedAt]);
 
-  const timerColor = task.timerState === 'running' ? (
-    theme === 'periwinkle' ? 'text-violet-500' :
-    theme === 'cyan' ? 'text-cyan-500' :
-    'text-emerald-500'
-  ) : 'text-slate-400';
-
-  const timerButtonHover = 
-    theme === 'periwinkle' ? 'hover:text-violet-600' :
-    theme === 'cyan' ? 'hover:text-cyan-600' :
-    'hover:text-emerald-600';
-
   if (task.isCompleted) {
     if (task.timeSpent > 0) {
       return (
@@ -66,21 +55,34 @@ const TaskTimer = ({ task, onToggleTimer, theme, isLocked, isCurrentUserCard }: 
       );
     }
     return (
-       <div className="flex items-center justify-center h-8 w-8 sm:mr-2">
-          <Check className="h-4 w-4 text-emerald-500" />
-       </div>
+      <div className="flex items-center justify-center h-8 w-8 sm:mr-2">
+        <Check className="h-4 w-4 text-emerald-500" />
+      </div>
     );
   }
 
+  const timerButtonCommon = "transition-all duration-200";
+  const timerColor = task.timerState === 'running' ? (
+    theme === 'periwinkle' ? `text-violet-500 bg-violet-500/10 hover:bg-violet-500/20 hover:text-violet-600` :
+      theme === 'cyan' ? `text-cyan-500 bg-cyan-500/10 hover:bg-cyan-500/20 hover:text-cyan-600` :
+        `text-emerald-500 bg-emerald-500/10 hover:bg-emerald-500/20 hover:text-emerald-600`
+  ) : (
+    theme === 'periwinkle' ? `text-slate-400 dark:text-slate-500 hover:text-violet-600 hover:bg-violet-500/10` :
+      theme === 'cyan' ? `text-slate-400 dark:text-slate-500 hover:text-cyan-600 hover:bg-cyan-500/10` :
+        `text-slate-400 dark:text-slate-500 hover:text-emerald-600 hover:bg-emerald-500/10`
+  );
+
   return (
-    <div className={cn("flex items-center gap-1 text-sm sm:mr-2", timerColor)}>
-       <Timer className="h-4 w-4" />
-       <span>{formatTime(displayTime)}</span>
-       {isLocked && isCurrentUserCard && (
-        <Button variant="ghost" size="icon" className={`h-8 w-8 ${timerColor} ${timerButtonHover}`} onClick={onToggleTimer}>
+    <div className={cn("flex items-center gap-1 text-sm sm:mr-2", task.timerState === 'running' ? (
+      theme === 'periwinkle' ? 'text-violet-500' : theme === 'cyan' ? 'text-cyan-500' : 'text-emerald-500'
+    ) : 'text-slate-400 dark:text-slate-500')}>
+      <Timer className="h-4 w-4" />
+      <span>{formatTime(displayTime)}</span>
+      {isLocked && isCurrentUserCard && (
+        <Button variant="ghost" size="icon" className={`h-8 w-8 ${timerColor} ${timerButtonCommon}`} onClick={onToggleTimer}>
           {task.timerState === 'running' ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </Button>
-       )}
+      )}
     </div>
   );
 };
@@ -91,9 +93,11 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
   const [text, setText] = useState(task.text);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const editBtnHoverClass = theme === 'periwinkle' ? 'hover:text-[--theme-periwinkle-text]' 
-    : theme === 'cyan' ? 'hover:text-[--theme-cyan-text]'
-    : 'hover:text-[--theme-emerald-text]';
+  const editBtnHoverClass = theme === 'periwinkle' ? 'hover:text-[--theme-periwinkle-text] hover:bg-violet-500/10'
+    : theme === 'cyan' ? 'hover:text-[--theme-cyan-text] hover:bg-cyan-500/10'
+      : 'hover:text-[--theme-emerald-text] hover:bg-emerald-500/10';
+
+  const deleteBtnHoverClass = 'hover:text-destructive hover:bg-destructive/10';
 
   useEffect(() => {
     if (isEditing) {
@@ -125,9 +129,8 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
 
   return (
     <li
-      className={`task-item flex items-center p-2.5 rounded-lg bg-slate-50 transition-colors ${
-        task.isCompleted ? 'completed' : 'hover:bg-slate-100'
-      }`}
+      className={`task-item flex items-center p-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.04] transition-colors ${task.isCompleted ? 'completed' : 'hover:bg-slate-100 dark:hover:bg-white/[0.08]'
+        }`}
     >
       <div
         className={`mr-3 flex-shrink-0 ${canToggle ? 'cursor-pointer' : 'cursor-default'}`}
@@ -136,7 +139,7 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
         {task.isCompleted ? (
           <CheckCircle2 className="text-emerald-500" />
         ) : (
-          <Circle className="text-slate-400" />
+          <Circle className="text-slate-400 dark:text-slate-500" />
         )}
       </div>
 
@@ -149,19 +152,19 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
             onChange={(e) => setText(e.target.value)}
             onBlur={handleSave}
             onKeyDown={handleKeyDown}
-            className="flex-grow bg-white border border-slate-300 rounded px-2 py-1 text-base min-w-0"
+            className="flex-grow bg-white dark:bg-white/[0.06] border border-slate-300 dark:border-white/10 rounded px-2 py-1 text-base min-w-0 dark:text-white"
           />
         ) : (
           <>
             <span className="task-text break-all py-1 sm:self-center">{task.text}</span>
             <div className="flex items-center justify-end sm:justify-start flex-shrink-0">
-              <TaskTimer task={task} onToggleTimer={() => onToggleTimer(task.id)} theme={theme} isLocked={isLocked} isCurrentUserCard={isCurrentUserCard}/>
+              <TaskTimer task={task} onToggleTimer={() => onToggleTimer(task.id)} theme={theme} isLocked={isLocked} isCurrentUserCard={isCurrentUserCard} />
               {!isLocked && isCurrentUserCard && (
                 <>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className={`h-8 w-8 text-slate-400 ${editBtnHoverClass}`}
+                    className={`h-8 w-8 text-slate-400 dark:text-slate-500 ${editBtnHoverClass}`}
                     onClick={() => setIsEditing(true)}
                   >
                     <Edit className="h-4 w-4" />
@@ -169,7 +172,7 @@ export function TaskItem({ task, isLocked, onToggle, onUpdate, onDelete, onToggl
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-slate-400 hover:text-destructive"
+                    className={`h-8 w-8 text-slate-400 dark:text-slate-500 ${deleteBtnHoverClass}`}
                     onClick={() => onDelete(task.id)}
                   >
                     <Trash2 className="h-4 w-4" />

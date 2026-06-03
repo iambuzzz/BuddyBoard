@@ -61,17 +61,17 @@ export function GroupMembersSheet({
               >
                 <Avatar className="h-9 w-9 mr-3">
                   <AvatarImage src={member.photoURL} alt={member.displayName} />
-                  <AvatarFallback className="bg-slate-200 text-slate-600 font-bold">
+                  <AvatarFallback className="bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 font-bold">
                     {getInitials(member.displayName)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="flex flex-col items-start">
-                    <span className="font-semibold text-base">{member.displayName}</span>
-                    {member.uid === currentUserId && (
-                        <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
-                            <User className="h-3 w-3"/> You
-                        </span>
-                    )}
+                  <span className="font-semibold text-base">{member.displayName}</span>
+                  {member.uid === currentUserId && (
+                    <span className="text-xs text-emerald-600 font-medium flex items-center gap-1">
+                      <User className="h-3 w-3" /> You
+                    </span>
+                  )}
                 </div>
               </Button>
             ))}
