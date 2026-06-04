@@ -627,8 +627,8 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
 
                                         if (!primaryState || !secondaryState) {
                                             return (
-                                                <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl">
-                                                    <div className="text-slate-500 dark:text-slate-400">
+                                                <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl h-full w-full flex items-center justify-center">
+                                                    <div className="text-slate-500 dark:text-slate-400 flex flex-col items-center gap-2">
                                                         <Loader2 className="h-6 w-6 animate-spin" />
                                                         <p>Loading {user1.displayName} & {user2.displayName}'s tasks...</p>
                                                     </div>
@@ -662,8 +662,8 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                                                             userState={userState}
                                                         />
                                                     ) : (
-                                                        <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl">
-                                                            <div className="text-slate-500 dark:text-slate-400">
+                                                        <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl h-full w-full flex items-center justify-center">
+                                                            <div className="text-slate-500 dark:text-slate-400 flex flex-col items-center gap-2">
                                                                 <Loader2 className="h-6 w-6 animate-spin" />
                                                                 <p>Loading {member.displayName}'s tasks...</p>
                                                             </div>
