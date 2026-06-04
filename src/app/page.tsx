@@ -192,7 +192,7 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
     if (isLoading || !userState) {
         return (
             <div className="h-full w-full flex items-center justify-center">
-                <div className="text-slate-500 dark:text-slate-400">
+                <div className="text-slate-500 dark:text-slate-400 flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin" />
                     <p>Loading your tasks...</p>
                 </div>
@@ -536,7 +536,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
     if (isLoading) {
         return (
             <div className="h-full w-full flex items-center justify-center">
-                <div className="text-slate-500 dark:text-slate-400">
+                <div className="text-slate-500 dark:text-slate-400 flex flex-col items-center gap-2">
                     <Loader2 className="h-8 w-8 animate-spin" />
                     <p>Loading group tasks...</p>
                 </div>
