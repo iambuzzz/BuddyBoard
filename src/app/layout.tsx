@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   manifest: '/manifest.json',
 };
 
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#e3eeff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0a0e1a' },
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -18,7 +25,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
-        <meta name="theme-color" content="#e3eeff" />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link
           rel="preconnect"
