@@ -303,7 +303,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   };
 
   const getActionButtonIcon = () => {
-    if (undoState.active) return <RotateCcw className="w-4 h-4 mr-2 animate-spin" />;
+    if (undoState.active) return <RotateCcw className="w-4 h-4 mr-2 animate-spin [animation-direction:reverse]" />;
     if (userState.isFinished) return <Plus className="w-4 h-4 mr-2" />;
     if (userState.isLocked) return <Check className="w-4 h-4 mr-2" />;
     return <Lock className="w-4 h-4 mr-2" />;

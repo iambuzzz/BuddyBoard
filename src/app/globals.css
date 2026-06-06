@@ -629,10 +629,9 @@
   color: rgba(255, 255, 255, 0.95);
 }
 
-/* Paragraphs & spans */
-.dark p, .dark span, .dark div {
-  color: inherit;
-}
+/* Paragraphs & spans
+   Removed to allow utility classes (e.g. text-cyan-500) to apply properly
+*/
 
 /* Labels & form text */
 .dark label,
@@ -660,9 +659,7 @@
 /* Dialog / sheet content text */
 .dark [role="dialog"] h2,
 .dark [role="dialog"] h3,
-.dark [role="dialog"] p,
-.dark [role="dialog"] label,
-.dark [role="dialog"] span {
+.dark [role="dialog"] label {
   color: rgba(255, 255, 255, 0.9);
 }
 
@@ -673,9 +670,6 @@
 }
 
 /* Buttons — cancel, outline, ghost variants */
-.dark button {
-  color: inherit;
-}
 .dark button[data-variant="outline"],
 .dark [role="dialog"] button[class*="outline"] {
   color: rgba(255, 255, 255, 0.8);

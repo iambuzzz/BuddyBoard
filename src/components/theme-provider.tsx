@@ -21,6 +21,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const initial = stored || 'light';
     setThemeState(initial);
     document.documentElement.classList.toggle('dark', initial === 'dark');
+    
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (!metaThemeColor) {
+      metaThemeColor = document.createElement('meta');
+      metaThemeColor.setAttribute('name', 'theme-color');
+      document.head.appendChild(metaThemeColor);
+    }
+    metaThemeColor.setAttribute('content', initial === 'dark' ? '#0a0e1a' : '#e3eeff');
+
     setMounted(true);
   }, []);
 
@@ -28,6 +37,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     setThemeState(newTheme);
     localStorage.setItem('theme', newTheme);
     document.documentElement.classList.toggle('dark', newTheme === 'dark');
+    
+    let metaThemeColor = document.querySelector('meta[name="theme-color"]');
+    if (metaThemeColor) {
+      metaThemeColor.setAttribute('content', newTheme === 'dark' ? '#0a0e1a' : '#e3eeff');
+    }
   };
 
   const toggleTheme = () => {

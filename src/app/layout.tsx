@@ -1,4 +1,4 @@
-import type { Metadata, Viewport } from 'next';
+import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseClientProvider } from '@/firebase/client-provider';
@@ -8,13 +8,6 @@ export const metadata: Metadata = {
   title: 'BuddyBoard',
   description: 'Collaborative accountability and productivity platform',
   manifest: '/manifest.json',
-};
-
-export const viewport: Viewport = {
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#e3eeff' },
-    { media: '(prefers-color-scheme: dark)', color: '#0a0e1a' },
-  ],
 };
 
 export default function RootLayout({
