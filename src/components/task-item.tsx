@@ -195,7 +195,7 @@ export function TaskItem({ task, index, isLocked, onToggle, onUpdate, onDelete, 
           ref={provided.innerRef}
           {...provided.draggableProps}
           className={`task-item flex items-center p-2.5 rounded-lg bg-slate-50 dark:bg-white/[0.04] transition-colors ${task.isCompleted ? 'completed' : 'hover:bg-slate-100 dark:hover:bg-white/[0.08]'
-            } ${snapshot.isDragging ? 'shadow-lg ring-2 ring-[--theme-primary]/20 opacity-90' : ''}`}
+            } ${snapshot.isDragging ? 'shadow-lg ring-2 ring-[--theme-primary]/30 opacity-100 !bg-white dark:!bg-slate-800 z-50' : ''}`}
         >
           <div
             className={`mr-3 flex-shrink-0 ${canToggle ? 'cursor-pointer' : (!isLocked && isCurrentUserCard ? 'cursor-grab active:cursor-grabbing' : 'cursor-default')}`}
