@@ -220,7 +220,7 @@ export function TaskItem({ task, index, isLocked, onToggle, onUpdate, onDelete, 
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="flex-grow bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded px-2 py-1.5 text-base sm:text-sm min-w-[150px] dark:text-white focus:outline-none focus:ring-2 focus:ring-[--theme-primary]"
+                  className="flex-grow bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded px-2 py-1.5 text-base sm:text-sm min-w-[100px] dark:text-white focus:outline-none focus:ring-2 focus:ring-[--theme-primary]"
                 />
                 <div className="flex items-center gap-1 shrink-0 bg-slate-200/50 dark:bg-black/20 p-1 rounded-md">
                   <button type="button" onClick={() => setEditCategory('deep-work')} className={cn("p-1.5 rounded transition-all", editCategory === 'deep-work' ? "bg-emerald-100 dark:bg-emerald-500/20 ring-1 ring-emerald-500/50 shadow-sm" : "hover:bg-white/50 dark:hover:bg-slate-800/50 opacity-70 hover:opacity-100")}><Hammer className="h-4 w-4 text-emerald-500" /></button>
