@@ -26,7 +26,7 @@ import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 type ViewRange = '7D' | '1M' | '3M' | 'YTD' | 'ALL';
-type CategoryFilter = 'deep-work' | 'self-growth' | 'life-break' | 'all';
+type CategoryFilter = 'deep-work' | 'self-growth' | 'life-break';
 
 interface StatsContainerProps {
   userId: string;
@@ -59,7 +59,6 @@ const CATEGORY_FILTER_OPTIONS: { label: string; value: CategoryFilter }[] = [
   { label: '🔨 Work', value: 'deep-work' },
   { label: '💪 Self Growth', value: 'self-growth' },
   { label: '☕ Life-Break', value: 'life-break' },
-  { label: 'All', value: 'all' },
 ];
 
 const getCategoryLabel = (filter: CategoryFilter) => {
@@ -67,7 +66,6 @@ const getCategoryLabel = (filter: CategoryFilter) => {
     case 'deep-work': return 'Work Hours';
     case 'self-growth': return 'Self Growth Hours';
     case 'life-break': return 'Break Hours';
-    case 'all': return 'Total Hours';
   }
 };
 
@@ -155,8 +153,6 @@ export function StatsContainer({ userId }: StatsContainerProps) {
         return stat.selfGrowthHours || 0;
       case 'life-break':
         return stat.lifeBreakHours || 0;
-      case 'all':
-        return (stat.hours || 0) + (stat.selfGrowthHours || 0) + (stat.lifeBreakHours || 0);
     }
   };
 
