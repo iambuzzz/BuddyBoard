@@ -101,7 +101,7 @@ export function StatsContainer({ userId }: StatsContainerProps) {
   const [isProfileLoading, setIsProfileLoading] = useState(true);
   const [isStateLoading, setIsStateLoading] = useState(true);
 
-  const [chartType, setChartType] = useState<'bar' | 'line'>('line');
+  const [chartType, setChartType] = useState<'bar' | 'line'>('bar');
   const [viewRange, setViewRange] = useState<ViewRange>('7D');
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('deep-work');
   const [sliderRange, setSliderRange] = useState<{
