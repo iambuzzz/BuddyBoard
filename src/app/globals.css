@@ -94,7 +94,6 @@
     @apply bg-background;
     min-height: 100dvh;
     background-color: var(--app-bg);
-    overflow-y: auto;
   }
 }
 
