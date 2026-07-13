@@ -158,7 +158,6 @@ export function TaskItem({ task, index, isLocked, onToggle, onUpdate, onDelete, 
   useEffect(() => {
     if (isEditing) {
       inputRef.current?.focus();
-      inputRef.current?.select();
     }
   }, [isEditing]);
 
