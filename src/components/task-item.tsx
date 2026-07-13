@@ -213,7 +213,7 @@ export function TaskItem({ task, index, isLocked, onToggle, onUpdate, onDelete, 
 
           <div className="flex-grow flex flex-col sm:flex-row sm:items-center justify-between min-w-0">
             {isEditing ? (
-              <div className="flex flex-col gap-1.5 w-full min-w-0 py-0.5 overflow-hidden">
+              <div className="flex flex-col gap-1.5 w-full min-w-0 py-0.5 ">
                 <input
                   ref={inputRef}
                   type="text"

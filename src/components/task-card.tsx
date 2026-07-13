@@ -575,7 +575,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
                   <div className="flex flex-col">
                     <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{opt.label}</span>
                     <span className="text-xs text-slate-400 dark:text-slate-500">
-                      {opt.value === 'deep-work' ? 'Counts toward work time' : opt.value === 'self-growth' ? 'Gym, learning, growth' : 'Chores, breaks, reels'}
+                      {opt.value === 'deep-work' ? 'Study, Office, Coding, etc.' : opt.value === 'self-growth' ? 'Gym, learning, growth' : 'Chores, breaks, reels'}
                     </span>
                   </div>
                 </button>
