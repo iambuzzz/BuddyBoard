@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Plus, Lock, Check, AlertTriangle, RotateCcw, History } from 'lucide-react';
+import { Plus, Lock, Check, AlertTriangle, RotateCcw, History, ChevronDown, Hammer, Dumbbell, Coffee } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
 import { isSameDay, startOfToday, format } from 'date-fns';
 import {
@@ -20,7 +20,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 
-import type { UserState, Task, PreviousTask, UserProfile, CardTheme, DailyStat } from '@/lib/types';
+import type { UserState, Task, PreviousTask, UserProfile, CardTheme, DailyStat, TaskCategory } from '@/lib/types';
 import { useFirestore, useUser as useAuthUser } from '@/firebase'; // Renamed to avoid conflict
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -61,22 +61,55 @@ const getInitials = (name: string) => {
     .toUpperCase();
 };
 
+const CATEGORY_OPTIONS: { value: TaskCategory; label: string; icon: React.ReactNode; color: string }[] = [
+  { value: 'deep-work', label: 'Work', icon: <Hammer className="w-4 h-4" />, color: 'text-violet-500 dark:text-violet-400' },
+  { value: 'self-growth', label: 'Self Growth', icon: <Dumbbell className="w-4 h-4" />, color: 'text-teal-500 dark:text-teal-400' },
+  { value: 'life-break', label: 'Life / Break', icon: <Coffee className="w-4 h-4" />, color: 'text-amber-500 dark:text-amber-400' },
+];
+
+// Compute time spent on a task, including running timer
+const computeTaskTime = (task: Task): number => {
+  let time = task.timeSpent;
+  if (task.timerState === 'running' && task.timerStartedAt) {
+    time += (Date.now() - task.timerStartedAt) / 1000;
+  }
+  return time;
+};
+
 export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const firestore = useFirestore();
   const { user: authUser } = useAuthUser(); // Current authenticated user
   const { toast } = useToast();
 
   const [taskToAdd, setTaskToAdd] = useState('');
+  const [taskCategoryToAdd, setTaskCategoryToAdd] = useState<TaskCategory>('deep-work');
   const [showLockWarning, setShowLockWarning] = useState(false);
   const [undoState, setUndoState] = useState<{ active: boolean; countdown: number }>({ active: false, countdown: 5 });
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const [showPreviousList, setShowPreviousList] = useState(false);
+  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [pendingTaskText, setPendingTaskText] = useState('');
+  const categoryPickerRef = useRef<HTMLDivElement>(null);
+  const taskInputRef = useRef<HTMLInputElement>(null);
 
   const userName = userProfile?.displayName || 'My';
   const isCurrentUserCard = authUser?.uid === userId;
 
   const cardTheme = userProfile?.cardTheme ?? 'periwinkle';
   const themeClass = getThemeClass(cardTheme);
+
+  // Close category picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (categoryPickerRef.current && !categoryPickerRef.current.contains(e.target as Node)) {
+        setShowCategoryPicker(false);
+      }
+    };
+    if (showCategoryPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showCategoryPicker]);
 
   const updateFirestore = useCallback(async (updatePayload: Partial<UserState>) => {
     if (!firestore || !userId) return;
@@ -90,10 +123,11 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   }, [firestore, userId, toast]);
 
 
-  const addTask = (text: string) => {
+  const addTask = (text: string, category: TaskCategory = 'deep-work') => {
     const newTask: Task = {
       id: crypto.randomUUID(),
       text,
+      category,
       isCompleted: false,
       createdAt: Date.now(),
       timeSpent: 0,
@@ -104,14 +138,28 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     updateFirestore({ tasks: newTasks });
   };
 
-  const updateTask = (taskId: string, newText: string) => {
-    const newTasks = userState.tasks.map(t => t.id === taskId ? { ...t, text: newText } : t);
+  const updateTask = (taskId: string, updates: Partial<Task>) => {
+    const newTasks = userState.tasks.map(t => t.id === taskId ? { ...t, ...updates } : t);
     updateFirestore({ tasks: newTasks });
   };
 
   const deleteTask = (taskId: string) => {
     const newTasks = userState.tasks.filter(t => t.id !== taskId);
     updateFirestore({ tasks: newTasks });
+  };
+
+  const updateTaskTime = (taskId: string, newTimeSeconds: number) => {
+    const newTasks = userState.tasks.map(t =>
+      t.id === taskId ? { ...t, timeSpent: newTimeSeconds } : t
+    );
+    updateFirestore({ tasks: newTasks });
+  };
+
+  const reorderTasks = (startIndex: number, endIndex: number) => {
+    const result = Array.from(userState.tasks);
+    const [removed] = result.splice(startIndex, 1);
+    result.splice(endIndex, 0, removed);
+    updateFirestore({ tasks: result });
   };
 
   const toggleTimer = (taskId: string) => {
@@ -175,18 +223,25 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
       let newCurrentStreak = userState.currentStreak;
       if (allTasksCompleted) newCurrentStreak++; else newCurrentStreak = 0;
 
-      const totalTimeSpentSeconds = userState.tasks.reduce((acc, task) => {
-        let taskTime = task.timeSpent;
-        if (task.timerState === 'running' && task.timerStartedAt) {
-          taskTime += (Date.now() - task.timerStartedAt) / 1000;
-        }
-        return acc + taskTime;
-      }, 0);
+      // Categorized time calculation
+      const deepWorkTime = userState.tasks
+        .filter(t => (t.category || 'deep-work') === 'deep-work')
+        .reduce((acc, t) => acc + computeTaskTime(t), 0);
+
+      const selfGrowthTime = userState.tasks
+        .filter(t => t.category === 'self-growth')
+        .reduce((acc, t) => acc + computeTaskTime(t), 0);
+
+      const lifeBreakTime = userState.tasks
+        .filter(t => t.category === 'life-break')
+        .reduce((acc, t) => acc + computeTaskTime(t), 0);
 
       const listDate = format(new Date(userState.lockedAt || now), 'yyyy-MM-dd');
       const newStat: DailyStat = {
         date: listDate,
-        hours: totalTimeSpentSeconds / 3600
+        hours: deepWorkTime / 3600,
+        selfGrowthHours: selfGrowthTime / 3600,
+        lifeBreakHours: lifeBreakTime / 3600,
       };
 
       const existingStats = userState.historical_stats || [];
@@ -204,7 +259,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
         isFinished: true,
         totalCompleted: (userState.totalCompleted ?? 0) + completedCount,
         totalAssigned: (userState.totalAssigned ?? 0) + totalTasks,
-        previousTasks: userState.tasks.map(t => ({ text: t.text })),
+        previousTasks: userState.tasks.map(t => ({ text: t.text, category: t.category || 'deep-work' })),
         currentStreak: newCurrentStreak,
         maxStreak: Math.max(userState.maxStreak, newCurrentStreak),
         lastLockedAt: userState.lockedAt,
@@ -237,6 +292,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
     const restoredTasks: Task[] = userState.previousTasks.map((task: PreviousTask) => ({
       id: crypto.randomUUID(),
       text: task.text,
+      category: task.category || 'deep-work',
       isCompleted: false,
       createdAt: Date.now(),
       timeSpent: 0,
@@ -273,8 +329,9 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
 
   const handleConfirmAddTask = () => {
     if (taskToAdd) {
-      addTask(taskToAdd);
+      addTask(taskToAdd, taskCategoryToAdd);
       setTaskToAdd('');
+      setTaskCategoryToAdd('deep-work');
     }
     setShowLockWarning(false);
   };
@@ -282,17 +339,36 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!isCurrentUserCard) return;
-    const text = (e.currentTarget.elements.namedItem('task-input') as HTMLInputElement).value.trim();
+    const text = taskInputRef.current?.value.trim() || '';
     if (!text) return;
 
     if (userState.isLocked && !userState.isFinished) {
       setTaskToAdd(text);
+      setTaskCategoryToAdd('deep-work');
       setShowLockWarning(true);
     } else {
-      addTask(text);
+      addTask(text, 'deep-work');
     }
 
-    (e.currentTarget.elements.namedItem('task-input') as HTMLInputElement).value = '';
+    if (taskInputRef.current) taskInputRef.current.value = '';
+  };
+
+  const handleCategorySelect = (category: TaskCategory) => {
+    if (pendingTaskText) {
+      if (userState.isLocked && !userState.isFinished) {
+        setTaskToAdd(pendingTaskText);
+        setTaskCategoryToAdd(category);
+        setShowLockWarning(true);
+      } else {
+        addTask(pendingTaskText, category);
+      }
+      if (taskInputRef.current) taskInputRef.current.value = '';
+      setPendingTaskText('');
+    } else {
+      toast({ title: 'No task text', description: 'Type a task first, then pick a category.', variant: 'destructive' });
+    }
+
+    setShowCategoryPicker(false);
   };
 
   const getActionButtonText = () => {
@@ -332,13 +408,11 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
 
   const getActionBtnStyle = () => {
     const baseStyle =
-      cardTheme === 'periwinkle' ? 'bg-[--theme-periwinkle-primary] hover:bg-purple-500' :
-        cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-500' :
-          'bg-[--theme-emerald-primary] hover:bg-emerald-500';
+      cardTheme === 'periwinkle' ? 'bg-[--theme-periwinkle-primary] hover:bg-purple-500 text-white dark:bg-[--theme-periwinkle-secondary] dark:hover:bg-[--theme-periwinkle-secondary] dark:hover:opacity-80' :
+        cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white dark:bg-[--theme-cyan-secondary] dark:hover:bg-[--theme-cyan-secondary] dark:hover:opacity-80' :
+          'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white dark:bg-[--theme-emerald-secondary] dark:hover:bg-[--theme-emerald-secondary] dark:hover:opacity-80';
 
     if (undoState.active) {
-      // Use the same base style but maybe with a pulse effect for loading state
-      // The transparency is handled by globals.css when using the theme variable classes
       return `${baseStyle} animate-pulse`;
     }
     return baseStyle;
@@ -347,9 +421,9 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const actionBtnStyle = getActionBtnStyle();
 
   const ringStyle =
-    cardTheme === 'periwinkle' ? 'focus-visible:ring-[--theme-periwinkle-primary]' :
-      cardTheme === 'cyan' ? 'focus-visible:ring-[--theme-cyan-primary]' :
-        'focus-visible:ring-[--theme-emerald-primary]';
+    cardTheme === 'periwinkle' ? 'focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-violet-500 dark:focus-visible:ring-violet-500' :
+      cardTheme === 'cyan' ? 'focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-cyan-500 dark:focus-visible:ring-cyan-500' :
+        'focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-500';
 
   const titleColor =
     cardTheme === 'periwinkle' ? 'text-[--theme-periwinkle-text]' :
@@ -368,6 +442,17 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
       cardTheme === 'cyan' ? 'border-[--theme-cyan-text]' :
         'border-[--theme-emerald-text]';
 
+  // Compute categorized times for celebration overlay
+  const deepWorkTimeSpent = userState.tasks
+    .filter(t => (t.category || 'deep-work') === 'deep-work')
+    .reduce((acc, t) => acc + (t.timeSpent || 0), 0);
+  const selfGrowthTimeSpent = userState.tasks
+    .filter(t => t.category === 'self-growth')
+    .reduce((acc, t) => acc + (t.timeSpent || 0), 0);
+  const lifeBreakTimeSpent = userState.tasks
+    .filter(t => t.category === 'life-break')
+    .reduce((acc, t) => acc + (t.timeSpent || 0), 0);
+
   return (
     <>
       <PreviousListViewer
@@ -382,7 +467,9 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
             <CelebrationOverlay
               completed={userState.tasks.filter(t => t.isCompleted).length}
               total={userState.tasks.length}
-              totalTimeSpent={userState.tasks.reduce((acc, task) => acc + (task.timeSpent || 0), 0)}
+              totalTimeSpent={deepWorkTimeSpent}
+              selfGrowthTime={selfGrowthTimeSpent}
+              lifeBreakTime={lifeBreakTimeSpent}
               onNewList={startNewList}
               onRestorePrevious={restorePreviousList}
               canRestore={!!userState.previousTasks && userState.previousTasks.length > 0}
@@ -417,24 +504,84 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
           </div>
         </header>
 
-        <form onSubmit={handleSubmit} className="flex gap-2 mb-4 flex-shrink-0">
-          <Input
-            type="text"
-            name="task-input"
-            autoComplete="off"
-            placeholder={isCurrentUserCard ? "Add a task..." : `This is ${userName}'s list`}
-            className={`bg-white/80 dark:bg-white/[0.04] border-slate-300 dark:border-white/10 transition focus:border-transparent ${ringStyle}`}
+        <div className="flex gap-1.5 sm:gap-2 mb-4 flex-shrink-0">
+          <form onSubmit={handleSubmit} className="flex gap-1.5 sm:gap-2 flex-1 min-w-0">
+            <Input
+              ref={taskInputRef}
+              type="text"
+              name="task-input"
+              autoComplete="off"
+              placeholder={isCurrentUserCard ? "Add a task..." : `This is ${userName}'s list`}
+              className={`bg-white/80 dark:bg-white/[0.04] border-slate-300 dark:border-white/10 transition focus:border-transparent ${ringStyle}`}
+              disabled={userState.isFinished || !isCurrentUserCard}
+            />
+            <Button
+              type="submit"
+              className={`text-white font-bold p-2 sm:p-3 rounded-lg shadow-md transition transform hover:scale-105 ${addBtnStyle}`}
+              disabled={userState.isFinished || !isCurrentUserCard}
+              aria-label="Add work task"
+            >
+              <Plus className="w-5 h-5" />
+            </Button>
+          </form>
+          <button
+            type="button"
+            className={`text-white font-bold p-2 sm:p-3 rounded-lg shadow-md transition transform hover:scale-105 inline-flex items-center justify-center ${addBtnStyle} disabled:pointer-events-none disabled:opacity-50`}
             disabled={userState.isFinished || !isCurrentUserCard}
-          />
-          <Button
-            type="submit"
-            className={`text-white font-bold p-3 rounded-lg shadow-md transition transform hover:scale-105 ${addBtnStyle}`}
-            disabled={userState.isFinished || !isCurrentUserCard}
-            aria-label="Add task"
+            aria-label="Choose task category"
+            onClick={() => {
+              const text = taskInputRef.current?.value.trim() || '';
+              if (!text) {
+                toast({ title: 'No task text', description: 'Type a task first, then pick a category.', variant: 'destructive' });
+                return;
+              }
+              setPendingTaskText(text);
+              setShowCategoryPicker(true);
+            }}
           >
-            <Plus />
-          </Button>
-        </form>
+            <ChevronDown className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Full-screen category picker overlay */}
+        {showCategoryPicker && (
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-md"
+            onClick={() => setShowCategoryPicker(false)}
+          >
+            <div
+              className="category-picker flex flex-col gap-2 bg-white/95 dark:bg-slate-900/95 border border-slate-200/50 dark:border-white/10 rounded-3xl shadow-2xl p-6 mx-6 w-full max-w-sm"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-base font-bold text-center text-slate-700 dark:text-slate-200 mb-2">What type of task?</h3>
+              {CATEGORY_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className="category-picker-btn flex items-center gap-4 px-5 py-4 rounded-2xl text-left bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.1] border border-transparent hover:border-slate-200 dark:hover:border-white/10 transition-all"
+                  onClick={() => handleCategorySelect(opt.value)}
+                >
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-xl ${opt.value === 'deep-work' ? 'bg-violet-100 dark:bg-violet-500/15' : opt.value === 'self-growth' ? 'bg-teal-100 dark:bg-teal-500/15' : 'bg-amber-100 dark:bg-amber-500/15'}`}>
+                    <span className={opt.color}>{opt.icon}</span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{opt.label}</span>
+                    <span className="text-xs text-slate-400 dark:text-slate-500">
+                      {opt.value === 'deep-work' ? 'Counts toward work time' : opt.value === 'self-growth' ? 'Gym, learning, growth' : 'Chores, breaks, reels'}
+                    </span>
+                  </div>
+                </button>
+              ))}
+              <button
+                type="button"
+                className="mt-1 text-xs text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 transition-colors py-2"
+                onClick={() => setShowCategoryPicker(false)}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="flex-grow min-h-0">
           <ScrollArea className="h-full pr-2">
@@ -443,6 +590,8 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
               isLocked={userState.isLocked || userState.isFinished}
               onToggle={toggleTask}
               onToggleTimer={toggleTimer}
+              onUpdateTime={updateTaskTime}
+              onReorder={reorderTasks}
               onUpdate={updateTask}
               onDelete={deleteTask}
               theme={effectiveTheme}
@@ -456,7 +605,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
         <div className="flex items-center gap-2 mt-6 flex-shrink-0">
           <Button
             onClick={isCurrentUserCard ? (undoState.active ? handleCancelUndo : triggerUndo) : undefined}
-            className={`w-full font-semibold transition py-3 text-base h-auto text-white ${actionBtnStyle} ${ringStyle}`}
+            className={`w-full font-semibold transition py-3 text-base h-auto ${actionBtnStyle} ${ringStyle}`}
             disabled={!isCurrentUserCard}
           >
             {getActionButtonIcon()}

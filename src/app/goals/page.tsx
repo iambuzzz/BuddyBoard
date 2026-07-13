@@ -77,6 +77,17 @@ export default function GoalsPage() {
             default: return 'text-[--theme-periwinkle-text]';
         }
     }
+    
+    const getBackButtonThemeClass = (theme: CardTheme) => {
+        switch (theme) {
+            case 'periwinkle': return 'hover:bg-violet-100 hover:text-violet-700 dark:hover:bg-purple-500/20 dark:hover:text-purple-400';
+            case 'cyan': return 'hover:bg-cyan-100 hover:text-cyan-700 dark:hover:bg-cyan-500/20 dark:hover:text-cyan-400';
+            case 'emerald': return 'hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-400';
+            default: return 'hover:bg-violet-100 hover:text-violet-700 dark:hover:bg-purple-500/20 dark:hover:text-purple-400';
+        }
+    };
+
+    const themeTabClass = cardTheme === 'cyan' ? 'data-[state=active]:bg-cyan-400 data-[state=active]:text-white dark:data-[state=active]:bg-[#22d3ee]/15 dark:data-[state=active]:text-[#67e8f9] dark:data-[state=active]:shadow-[0_0_12px_rgba(34,211,238,0.15)]' : cardTheme === 'emerald' ? 'data-[state=active]:bg-emerald-400 data-[state=active]:text-white dark:data-[state=active]:bg-[#34d399]/15 dark:data-[state=active]:text-[#6ee7b7] dark:data-[state=active]:shadow-[0_0_12px_rgba(52,211,153,0.15)]' : 'data-[state=active]:bg-violet-400 data-[state=active]:text-white dark:data-[state=active]:bg-[#a78bfa]/15 dark:data-[state=active]:text-[#c4b5fd] dark:data-[state=active]:shadow-[0_0_12px_rgba(167,139,250,0.15)]';
 
 
     const renderGoalList = (goalList: Goal[], type: Goal['type']) => {
@@ -121,7 +132,7 @@ export default function GoalsPage() {
                     <div className="flex flex-col gap-4">
                         <header className="flex items-center justify-between">
                             <div className='flex items-center gap-2'>
-                                <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600 dark:text-slate-400">
+                                <Button variant="ghost" size="icon" onClick={() => router.back()} className={`h-9 w-9 text-slate-600 dark:text-slate-400 transition-colors ${getBackButtonThemeClass(cardTheme)}`}>
                                     <ArrowLeft className="h-5 w-5" />
                                 </Button>
                                 <h1 className="text-2xl sm:text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
@@ -141,10 +152,10 @@ export default function GoalsPage() {
                         </header>
 
                         <Tabs defaultValue="short-term" className="w-full">
-                            <TabsList className="grid w-full grid-cols-3 bg-slate-300/80 dark:bg-white/[0.04] backdrop-blur-sm">
-                                <TabsTrigger value="short-term">Short Term</TabsTrigger>
-                                <TabsTrigger value="long-term">Long Term</TabsTrigger>
-                                <TabsTrigger value="bucket-list">Bucket List</TabsTrigger>
+                            <TabsList className="grid w-full grid-cols-3">
+                                <TabsTrigger value="short-term" className={themeTabClass}>Short Term</TabsTrigger>
+                                <TabsTrigger value="long-term" className={themeTabClass}>Long Term</TabsTrigger>
+                                <TabsTrigger value="bucket-list" className={themeTabClass}>Bucket List</TabsTrigger>
                             </TabsList>
 
                             <div className="block sm:hidden mt-4">

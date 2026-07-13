@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
 
 type ViewRange = '7D' | '1M' | '3M' | 'YTD' | 'ALL';
+type CategoryFilter = 'deep-work' | 'self-growth' | 'life-break' | 'all';
 
 interface StatsContainerProps {
   userId: string;
@@ -54,7 +55,23 @@ const formatAverageLabel = (value: number) => {
   return `Avg ${parts.join(' ')}`;
 };
 
-const CustomTooltip = ({ active, payload, label }: any) => {
+const CATEGORY_FILTER_OPTIONS: { label: string; value: CategoryFilter }[] = [
+  { label: '🔨 Work', value: 'deep-work' },
+  { label: '💪 Self Growth', value: 'self-growth' },
+  { label: '☕ Life-Break', value: 'life-break' },
+  { label: 'All', value: 'all' },
+];
+
+const getCategoryLabel = (filter: CategoryFilter) => {
+  switch (filter) {
+    case 'deep-work': return 'Work Hours';
+    case 'self-growth': return 'Self Growth Hours';
+    case 'life-break': return 'Break Hours';
+    case 'all': return 'Total Hours';
+  }
+};
+
+const CustomTooltip = ({ active, payload, label, categoryLabel }: any) => {
   if (active && payload && payload.length) {
     const value = payload[0].value;
     const hours = Math.floor(value);
@@ -69,6 +86,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
       <div className="bg-background border border-border shadow-lg rounded-lg p-2 px-3 text-sm">
         <p className="font-bold mb-1">{label}</p>
         <p className='font-semibold text-foreground'>{formattedValue}</p>
+        {categoryLabel && <p className='text-xs text-muted-foreground mt-0.5'>{categoryLabel}</p>}
       </div>
     );
   }
@@ -87,6 +105,7 @@ export function StatsContainer({ userId }: StatsContainerProps) {
 
   const [chartType, setChartType] = useState<'bar' | 'line'>('line');
   const [viewRange, setViewRange] = useState<ViewRange>('7D');
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('deep-work');
   const [sliderRange, setSliderRange] = useState<{
     startDate: string;
     endDate: string;
@@ -125,14 +144,28 @@ export function StatsContainer({ userId }: StatsContainerProps) {
 
   useEffect(() => {
     setSliderRange(null);
-  }, [viewRange]);
+  }, [viewRange, categoryFilter]);
+
+  // Extract the hours value based on current category filter
+  const getHoursForFilter = (stat: DailyStat, filter: CategoryFilter): number => {
+    switch (filter) {
+      case 'deep-work':
+        return stat.hours || 0;
+      case 'self-growth':
+        return stat.selfGrowthHours || 0;
+      case 'life-break':
+        return stat.lifeBreakHours || 0;
+      case 'all':
+        return (stat.hours || 0) + (stat.selfGrowthHours || 0) + (stat.lifeBreakHours || 0);
+    }
+  };
 
   const allTimeStats = useMemo(() => {
     const historicalStats = userState?.historical_stats || [];
     if (historicalStats.length === 0) return [];
 
     const sortedStats = [...historicalStats].sort((a, b) => parseISO(a.date).getTime() - parseISO(b.date).getTime());
-    const statsMap = new Map(sortedStats.map(stat => [stat.date, stat.hours]));
+    const statsMap = new Map(sortedStats.map(stat => [stat.date, stat]));
 
     const firstDate = parseISO(sortedStats[0].date);
     const yesterday = startOfDay(subDays(new Date(), 1));
@@ -145,9 +178,12 @@ export function StatsContainer({ userId }: StatsContainerProps) {
       let currentDate = new Date(firstDate);
       while (currentDate <= yesterday) {
         const dateKey = format(currentDate, 'yyyy-MM-dd');
-        filledStats.push({
+        const existingStat = statsMap.get(dateKey);
+        filledStats.push(existingStat || {
           date: dateKey,
-          hours: statsMap.get(dateKey) || 0,
+          hours: 0,
+          selfGrowthHours: 0,
+          lifeBreakHours: 0,
         });
         currentDate.setDate(currentDate.getDate() + 1);
       }
@@ -155,10 +191,7 @@ export function StatsContainer({ userId }: StatsContainerProps) {
 
     // Always add today's stat if it exists in the map (i.e., list was finished today).
     if (statsMap.has(todayStr)) {
-      filledStats.push({
-        date: todayStr,
-        hours: statsMap.get(todayStr)!,
-      });
+      filledStats.push(statsMap.get(todayStr)!);
     }
 
     return filledStats;
@@ -190,19 +223,26 @@ export function StatsContainer({ userId }: StatsContainerProps) {
         break;
     }
 
-    const totalHours = data.reduce((sum, stat) => sum + stat.hours, 0);
-    const avg = data.length > 0 ? totalHours / data.length : 0;
+    // Map data to use filtered category hours
+    const mappedData = data.map(stat => ({
+      ...stat,
+      displayHours: getHoursForFilter(stat, categoryFilter),
+    }));
 
-    const calculatedMax = data.length > 0 ? Math.max(...data.map(d => d.hours)) : 0;
+    const totalHours = mappedData.reduce((sum, stat) => sum + stat.displayHours, 0);
+    const avg = mappedData.length > 0 ? totalHours / mappedData.length : 0;
+
+    const calculatedMax = mappedData.length > 0 ? Math.max(...mappedData.map(d => d.displayHours)) : 0;
     const yAxisDomainMax = Math.ceil(Math.max(calculatedMax, avg, 1));
 
-    return { filteredData: data, yAxisMax: yAxisDomainMax, viewRangeAvg: avg };
+    return { filteredData: mappedData, yAxisMax: yAxisDomainMax, viewRangeAvg: avg };
 
-  }, [allTimeStats, viewRange]);
+  }, [allTimeStats, viewRange, categoryFilter]);
 
   const formattedData = useMemo(() => {
     return filteredData.map((d) => ({
       ...d,
+      hours: d.displayHours,
       label: format(parseISO(d.date), 'MMM d'),
       isoDate: d.date,
     }));
@@ -219,7 +259,7 @@ export function StatsContainer({ userId }: StatsContainerProps) {
       return date >= start && date <= end;
     });
 
-    const total = rangeData.reduce((s, d) => s + d.hours, 0);
+    const total = rangeData.reduce((s, d) => s + d.displayHours, 0);
     return rangeData.length ? total / rangeData.length : null;
   }, [sliderRange, filteredData]);
 
@@ -229,11 +269,6 @@ export function StatsContainer({ userId }: StatsContainerProps) {
   }, [yAxisMax]);
 
   const themeStyle = useMemo(() => {
-    // Return empty object as we are using CSS variables from globals.css directly
-    // but the chart needs explicit --primary for its attributes.
-    // We map the theme variables to --primary so the chart can use var(--primary)
-
-    // Actually, we can just return the mapping of --primary to the current theme variable
     if (!userProfile?.cardTheme) {
       return { '--primary': 'var(--theme-periwinkle-primary)', '--accent': 'var(--theme-periwinkle-secondary)' } as React.CSSProperties;
     }
@@ -317,6 +352,7 @@ export function StatsContainer({ userId }: StatsContainerProps) {
       />
     );
 
+    const categoryLabel = getCategoryLabel(categoryFilter);
 
     const chart = (chartType === 'line') ?
       (
@@ -362,12 +398,12 @@ export function StatsContainer({ userId }: StatsContainerProps) {
           <Tooltip
             isAnimationActive={false}
             cursor={{ stroke: 'var(--primary)', strokeWidth: 2, opacity: 0.5 }}
-            content={<CustomTooltip />}
+            content={<CustomTooltip categoryLabel={categoryLabel} />}
           />
           <Area
             type="monotone"
             dataKey="hours"
-            name="Study Hours"
+            name={categoryLabel}
             stroke="var(--primary)"
             strokeWidth={3}
             fillOpacity={1}
@@ -434,12 +470,12 @@ export function StatsContainer({ userId }: StatsContainerProps) {
           <Tooltip
             isAnimationActive={false}
             cursor={{ fill: 'var(--primary)', opacity: 0.15 }}
-            content={<CustomTooltip />}
+            content={<CustomTooltip categoryLabel={categoryLabel} />}
           />
           <Bar
             dataKey="hours"
             fill="url(#colorHoursBar)"
-            name="Study Hours"
+            name={categoryLabel}
             radius={[4, 4, 0, 0]}
           />
           {avgToShow > 0 && referenceLine}
@@ -512,6 +548,21 @@ export function StatsContainer({ userId }: StatsContainerProps) {
                     <LineChartIcon className="h-5 w-5" />
                   </ToggleGroupItem>
                 </ToggleGroup>
+                {/* Category Filter */}
+                <ToggleGroup
+                  type="single"
+                  defaultValue={categoryFilter}
+                  aria-label="Category Filter"
+                  onValueChange={(value: CategoryFilter) => value && setCategoryFilter(value)}
+                  className='flex-wrap justify-center rounded-md border bg-background dark:bg-white/[0.04] dark:border-white/[0.06]'
+                >
+                  {CATEGORY_FILTER_OPTIONS.map(item => (
+                    <ToggleGroupItem key={item.value} value={item.value} aria-label={item.label} className="h-9 px-2 text-xs sm:px-3 sm:text-sm">
+                      {item.label}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+                {/* View Range */}
                 <ToggleGroup
                   type="single"
                   defaultValue={viewRange}
@@ -535,7 +586,7 @@ export function StatsContainer({ userId }: StatsContainerProps) {
                     className="h-3 w-3 rounded-sm"
                     style={{ backgroundColor: 'var(--primary)' }}
                   />
-                  <span>Study Hours</span>
+                  <span>{getCategoryLabel(categoryFilter)}</span>
                 </div>
               </div>
             </CardContent>

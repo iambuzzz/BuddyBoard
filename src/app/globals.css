@@ -92,9 +92,21 @@
   }
   body {
     @apply bg-background;
-    min-height: 100vh;
+    min-height: 100dvh;
     background-color: var(--app-bg);
     overflow-y: auto;
+  }
+}
+
+@layer utilities {
+  .h-screen {
+    height: 100dvh;
+  }
+  .min-h-screen {
+    min-height: 100dvh;
+  }
+  .max-h-screen {
+    max-height: 100dvh;
   }
 
   /* Dark mode body — animated gradient background */
@@ -126,11 +138,12 @@
 @media (max-width: 768px) {
   .dark .bg-card,
   .dark [class*="bg-card"] {
-    background: rgba(15, 20, 35, 0.95) !important;
+    background: #0f1423 !important; /* Fully opaque for scroll performance */
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
   .dark body {
+    background: #0a0e1a !important; /* Flat dark color, removes heavy gradient compositing */
     animation: none;
   }
 }
@@ -153,12 +166,7 @@
 .dark textarea::placeholder {
   color: rgba(255, 255, 255, 0.35) !important;
 }
-.dark input:focus,
-.dark textarea:focus {
-  background: rgba(255, 255, 255, 0.07) !important;
-  border-color: rgba(167, 139, 250, 0.5) !important;
-  box-shadow: 0 0 0 2px rgba(167, 139, 250, 0.15) !important;
-}
+
 .dark input[data-transparent]:focus,
 .dark textarea[data-transparent]:focus {
   background: transparent !important;
@@ -170,11 +178,6 @@
 .dark [role="tablist"] {
   background: rgba(255, 255, 255, 0.04);
   border: 1px solid rgba(255, 255, 255, 0.06);
-}
-.dark [role="tab"][data-state="active"] {
-  background: rgba(167, 139, 250, 0.15) !important;
-  color: #c4b5fd !important;
-  box-shadow: 0 0 12px rgba(167, 139, 250, 0.1);
 }
 .dark [role="tab"] {
   color: rgba(255, 255, 255, 0.5);
@@ -251,10 +254,7 @@
 .dark [role="radio"] {
   border-color: rgba(255, 255, 255, 0.2);
 }
-.dark [role="radio"][data-state="checked"] {
-  border-color: #a78bfa;
-  color: #a78bfa;
-}
+/* Removed hardcoded checked colors for radio to allow dynamic Tailwind classes */
 
 /* ─── Dark mode ScrollArea ─── */
 .dark [data-radix-scroll-area-viewport] + div [data-orientation="vertical"] > div {
@@ -281,10 +281,7 @@
 }
 
 /* ─── Dark mode Switch ─── */
-.dark button[role="switch"][data-state="checked"] {
-  background: linear-gradient(135deg, #a78bfa, #818cf8) !important;
-  box-shadow: 0 0 15px rgba(167, 139, 250, 0.5);
-}
+/* Removed hardcoded switch gradients to allow dynamic Tailwind classes */
 .dark button[role="switch"][data-state="unchecked"] {
   background: rgba(255, 255, 255, 0.1) !important;
 }
@@ -694,4 +691,32 @@
   font-family: inherit !important;
   font-size: inherit !important;
   transition: background-color 5000s ease-in-out 0s;
+}
+
+
+
+/* ─── Category Picker Dropdown ─── */
+.category-picker {
+  animation: categoryPickerIn 0.15s ease-out;
+}
+
+@keyframes categoryPickerIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.category-picker-btn {
+  transition: all 0.15s ease;
+}
+.category-picker-btn:hover {
+  transform: scale(1.1);
+}
+.category-picker-btn:active {
+  transform: scale(0.95);
 }

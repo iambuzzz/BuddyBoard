@@ -1,9 +1,13 @@
 
 
+// Task category types
+export type TaskCategory = 'deep-work' | 'self-growth' | 'life-break';
+
 // Represents a single task item for any user.
 export interface Task {
   id: string;
   text: string;
+  category: TaskCategory; // defaults to 'deep-work' for backward compat
   isCompleted: boolean;
   createdAt: number;
   completedAt?: number | null; // Timestamp when the task was completed
@@ -15,12 +19,15 @@ export interface Task {
 // A simplified task object for historical records.
 export interface PreviousTask {
   text: string;
+  category?: TaskCategory; // optional for backward compatibility
 }
 
 // Represents a single entry for daily historical stats.
 export interface DailyStat {
   date: string; // ISO string format: "YYYY-MM-DD"
-  hours: number; // Total hours spent on that day
+  hours: number; // Deep Work hours (main stat)
+  selfGrowthHours?: number; // optional for backward compat
+  lifeBreakHours?: number;  // optional for backward compat
 }
 
 // The complete state for a single user's task list.

@@ -4,9 +4,10 @@ import { useState } from 'react';
 import { doc, updateDoc, serverTimestamp, deleteDoc } from 'firebase/firestore';
 import { useFirestore, useUser } from '@/firebase';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, PartyPopper, Loader2, RotateCcw, Trash2 } from 'lucide-react';
+import { Check, PartyPopper, Loader2, RotateCcw, Trash2, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { EditGoalDialog } from '@/components/edit-goal-dialog';
 import { cn } from '@/lib/utils';
 import type { Goal, CardTheme } from '@/lib/types';
 import { format } from 'date-fns';
@@ -39,6 +40,7 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
 
   const confirmAchieve = async () => {
     if (!user || !firestore || isAchieved) return;
@@ -79,15 +81,29 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
 
   const handleDeleteGoal = async () => {
     if (!user || !firestore) return;
+
     setIsUpdating(true);
     const goalRef = doc(firestore, `user_goals/${user.uid}/goals/${goal.id}`);
     try {
       await deleteDoc(goalRef);
     } catch (error) {
       console.error("Error deleting goal:", error);
-    } finally {
-      // No need to setIsUpdating(false) as the component will unmount on success
+      setIsUpdating(false);
       setShowDeleteDialog(false);
+    }
+  };
+
+  const handleEditGoal = async (updatedFields: Partial<Goal>) => {
+    if (!user || !firestore) return;
+
+    const goalRef = doc(firestore, `user_goals/${user.uid}/goals/${goal.id}`);
+    try {
+      await updateDoc(goalRef, {
+        ...updatedFields,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error("Error updating goal:", error);
     }
   };
 
@@ -136,8 +152,23 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
   const currentThemeStyle = themeStyles[theme] || themeStyles.periwinkle;
   const currentAchievedStyle = achievedThemeStyles[theme] || achievedThemeStyles.periwinkle;
 
+  const getEditBtnClass = (theme: CardTheme) => {
+    switch (theme) {
+        case 'cyan': return 'hover:bg-cyan-100 hover:text-cyan-700 dark:hover:bg-cyan-500/20 dark:hover:text-cyan-400';
+        case 'emerald': return 'hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-400';
+        default: return 'hover:bg-violet-100 hover:text-violet-700 dark:hover:bg-purple-500/20 dark:hover:text-purple-400';
+    }
+  };
+
   return (
     <>
+      <EditGoalDialog
+        isOpen={showEditDialog}
+        onOpenChange={setShowEditDialog}
+        onEditGoal={handleEditGoal}
+        goal={goal}
+        theme={theme}
+      />
       <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -186,16 +217,28 @@ export function GoalCard({ goal, theme }: GoalCardProps) {
 
               <div className="flex items-center flex-shrink-0 -mr-2">
                 {!isAchieved && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setShowDeleteDialog(true)}
-                    disabled={isUpdating}
-                    className="h-8 w-8 text-slate-400 dark:text-white/40 hover:text-destructive"
-                    aria-label="Delete goal"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowEditDialog(true)}
+                      disabled={isUpdating}
+                      className={`h-8 w-8 text-slate-400 dark:text-white/40 transition-colors ${getEditBtnClass(theme)}`}
+                      aria-label="Edit goal"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setShowDeleteDialog(true)}
+                      disabled={isUpdating}
+                      className="h-8 w-8 text-slate-400 dark:text-white/40 hover:text-destructive"
+                      aria-label="Delete goal"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </>
                 )}
                 <AnimatePresence>
                   {isAchieved && (

@@ -3,6 +3,7 @@
 'use client';
 
 import { useTheme } from '@/components/theme-provider';
+import { cn } from '@/lib/utils';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -182,6 +183,38 @@ export default function SettingsPage() {
         return role === 'admin' || role === 'co-admin';
     }, [userRoleInGroup]);
 
+    const cardTheme = profileForm.watch('cardTheme') || profile?.cardTheme || 'periwinkle';
+    const themeButtonClass = cardTheme === 'cyan' ? 'bg-[--theme-cyan-primary] text-white hover:bg-cyan-500 dark:bg-[--theme-cyan-secondary] dark:hover:bg-[--theme-cyan-secondary] dark:hover:opacity-80 dark:text-white' : cardTheme === 'emerald' ? 'bg-[--theme-emerald-primary] text-white hover:bg-emerald-500 dark:bg-[--theme-emerald-secondary] dark:hover:bg-[--theme-emerald-secondary] dark:hover:opacity-80 dark:text-white' : 'bg-[--theme-periwinkle-primary] text-white hover:bg-purple-500 dark:bg-[--theme-periwinkle-secondary] dark:hover:bg-[--theme-periwinkle-secondary] dark:hover:opacity-80 dark:text-white';
+    const themeTabClass = cardTheme === 'cyan' ? 'data-[state=active]:bg-cyan-400 data-[state=active]:text-white dark:data-[state=active]:bg-[#22d3ee]/15 dark:data-[state=active]:text-[#67e8f9] dark:data-[state=active]:shadow-[0_0_12px_rgba(34,211,238,0.15)]' : cardTheme === 'emerald' ? 'data-[state=active]:bg-emerald-400 data-[state=active]:text-white dark:data-[state=active]:bg-[#34d399]/15 dark:data-[state=active]:text-[#6ee7b7] dark:data-[state=active]:shadow-[0_0_12px_rgba(52,211,153,0.15)]' : 'data-[state=active]:bg-violet-400 data-[state=active]:text-white dark:data-[state=active]:bg-[#a78bfa]/15 dark:data-[state=active]:text-[#c4b5fd] dark:data-[state=active]:shadow-[0_0_12px_rgba(167,139,250,0.15)]';
+    const themeSwitchClass = cardTheme === 'cyan' ? 'data-[state=checked]:bg-cyan-500 dark:data-[state=checked]:bg-gradient-to-br dark:data-[state=checked]:from-[#22d3ee] dark:data-[state=checked]:to-[#67e8f9] dark:data-[state=checked]:shadow-[0_0_15px_rgba(34,211,238,0.5)]' : cardTheme === 'emerald' ? 'data-[state=checked]:bg-emerald-500 dark:data-[state=checked]:bg-gradient-to-br dark:data-[state=checked]:from-[#34d399] dark:data-[state=checked]:to-[#6ee7b7] dark:data-[state=checked]:shadow-[0_0_15px_rgba(52,211,153,0.5)]' : 'data-[state=checked]:bg-violet-500 dark:data-[state=checked]:bg-gradient-to-br dark:data-[state=checked]:from-[#a78bfa] dark:data-[state=checked]:to-[#818cf8] dark:data-[state=checked]:shadow-[0_0_15px_rgba(167,139,250,0.5)]';
+    const themeRadioClass = cardTheme === 'cyan' ? 'data-[state=checked]:border-cyan-500 data-[state=checked]:text-cyan-500' : cardTheme === 'emerald' ? 'data-[state=checked]:border-emerald-500 data-[state=checked]:text-emerald-500' : 'data-[state=checked]:border-violet-500 data-[state=checked]:text-violet-500';
+    const themeGhostClass = cardTheme === 'cyan' ? 'hover:bg-cyan-100 hover:text-cyan-700 dark:hover:bg-cyan-500/20 dark:hover:text-cyan-400' : cardTheme === 'emerald' ? 'hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-400' : 'hover:bg-purple-100 hover:text-purple-700 dark:hover:bg-purple-500/20 dark:hover:text-purple-400';
+    const themeDropdownItemClass = cardTheme === 'cyan' ? 'focus:bg-cyan-100 focus:text-cyan-700 dark:focus:bg-cyan-500/20 dark:focus:text-cyan-400' : cardTheme === 'emerald' ? 'focus:bg-emerald-100 focus:text-emerald-700 dark:focus:bg-emerald-500/20 dark:focus:text-emerald-400' : 'focus:bg-purple-100 focus:text-purple-700 dark:focus:bg-purple-500/20 dark:focus:text-purple-400';
+    const themeInputClass = cardTheme === 'cyan' ? ' focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-cyan-500 dark:focus-visible:ring-cyan-500 dark:focus:bg-white/5 transition-colors' : cardTheme === 'emerald' ? 'focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-emerald-500 dark:focus-visible:ring-emerald-500 dark:focus:bg-white/5 transition-colors' : 'focus-visible:border-transparent focus-visible:ring-1 focus-visible:ring-offset-0 focus-visible:ring-violet-500 dark:focus-visible:ring-violet-500 dark:focus:bg-white/5 transition-colors';
+
+    const copyToClipboard = (text: string) => {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(() => {
+                toast({ title: "Copied!", description: "Invitation code copied to clipboard." });
+            }).catch(() => {
+                toast({ title: "Error", description: "Failed to copy. Try copying it manually.", variant: "destructive" });
+            });
+        } else {
+            try {
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                textArea.style.position = "absolute";
+                textArea.style.left = "-999999px";
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                textArea.remove();
+                toast({ title: "Copied!", description: "Invitation code copied to clipboard." });
+            } catch (error) {
+                toast({ title: "Error", description: "Failed to copy. Try copying it manually.", variant: "destructive" });
+            }
+        }
+    };
 
     // --- Data Fetching Effects ---
 
@@ -867,7 +900,7 @@ export default function SettingsPage() {
                             </Avatar>
                             <p>You are currently paired with <span className="font-bold">{pairedPartner.displayName}</span>.</p>
                         </div>
-                        <Button onClick={onUnpair} disabled={isSaving} className="w-full bg-[--theme-periwinkle-primary] hover:bg-violet-500">
+                        <Button onClick={onUnpair} disabled={isSaving} className={cn("w-full transition-colors", themeButtonClass)}>
                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Link2Off className="mr-2 h-4 w-4" />}
                             Unpair
                         </Button>
@@ -890,9 +923,9 @@ export default function SettingsPage() {
                         <Form {...pairInviteForm}>
                             <form onSubmit={pairInviteForm.handleSubmit(onSendPairInvite)} className="flex items-start gap-2">
                                 <FormField control={pairInviteForm.control} name="email" render={({ field }) => (
-                                    <FormItem className="flex-grow"><FormControl><Input placeholder="User's email address" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem className="flex-grow"><FormControl><Input className={themeInputClass} placeholder="User's email address" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
-                                <Button type="submit" disabled={isSaving} className="bg-[--theme-periwinkle-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Invite'}</Button>
+                                <Button type="submit" disabled={isSaving} className={cn("transition-colors", themeButtonClass)}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Invite'}</Button>
                             </form>
                         </Form>
                     </div>
@@ -902,11 +935,11 @@ export default function SettingsPage() {
                             <h3 className="font-semibold mb-2">Received Invitations</h3>
                             <div className="space-y-2">
                                 {receivedPairInvites.map(inv => (
-                                    <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 rounded-md">
+                                    <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 dark:bg-slate-800 rounded-md">
                                         <p>From <span className="font-bold">{inv.senderName}</span></p>
                                         <div className="flex gap-2">
-                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-100" onClick={() => handlePairInvitationAction(inv, 'accept')}><Check className="h-4 w-4" /></Button>
-                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-600 hover:bg-red-100" onClick={() => handlePairInvitationAction(inv, 'decline')}><X className="h-4 w-4" /></Button>
+                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 group" onClick={() => handlePairInvitationAction(inv, 'accept')}><Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /></Button>
+                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 group" onClick={() => handlePairInvitationAction(inv, 'decline')}><X className="h-4 w-4 text-red-600 dark:text-red-400" /></Button>
                                         </div>
                                     </div>
                                 ))}
@@ -918,7 +951,7 @@ export default function SettingsPage() {
                             <h3 className="font-semibold mb-2">Sent Invitations</h3>
                             <div className="space-y-2">
                                 {sentPairInvites.map(inv => (
-                                    <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 rounded-md">
+                                    <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 dark:bg-slate-800 rounded-md">
                                         <p>To <span className="font-bold">{inv.receiverName}</span> (pending)</p>
                                         <Button size="sm" variant="outline" onClick={() => handlePairInvitationAction(inv, 'cancel')}>Cancel</Button>
                                     </div>
@@ -968,17 +1001,17 @@ export default function SettingsPage() {
                                     <Form {...inviteToGroupForm}>
                                         <form onSubmit={inviteToGroupForm.handleSubmit(onInviteToGroup)} className="flex items-start gap-2">
                                             <FormField control={inviteToGroupForm.control} name="email" render={({ field }) => (
-                                                <FormItem className="flex-grow"><FormControl><Input placeholder="User's email to invite" {...field} /></FormControl><FormMessage /></FormItem>
+                                                <FormItem className="flex-grow"><FormControl><Input className={themeInputClass} placeholder="User's email to invite" {...field} /></FormControl><FormMessage /></FormItem>
                                             )} />
-                                            <Button type="submit" disabled={isSaving} className="bg-[--theme-periwinkle-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Invite'}</Button>
+                                            <Button type="submit" disabled={isSaving} className={cn("transition-colors", themeButtonClass)}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Invite'}</Button>
                                         </form>
                                     </Form>
                                 </div>
                                 <div className="space-y-2">
                                     <Label>Or use Invitation Code</Label>
                                     <div className="flex items-center gap-2">
-                                        <Input readOnly value={group.invitationCode} className="bg-slate-100" />
-                                        <Button variant="outline" size="icon" onClick={() => { navigator.clipboard.writeText(group.invitationCode); toast({ title: "Copied!", description: "Invitation code copied to clipboard." }); }}><Copy className="h-4 w-4" /></Button>
+                                        <Input readOnly value={group.invitationCode} className={cn("bg-slate-100", themeInputClass)} />
+                                        <Button variant="outline" size="icon" className={cn("transition-colors", themeGhostClass)} onClick={() => copyToClipboard(group.invitationCode)}><Copy className="h-4 w-4" /></Button>
                                     </div>
                                 </div>
                                 <Separator />
@@ -1008,29 +1041,29 @@ export default function SettingsPage() {
                                                 <DropdownMenu>
                                                     {userRoleInGroup === 'admin' && (
                                                         <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button>
+                                                            <Button variant="ghost" size="icon" className={cn("h-7 w-7 transition-colors", themeGhostClass)}><MoreVertical className="h-4 w-4" /></Button>
                                                         </DropdownMenuTrigger>
                                                     )}
                                                     {userRoleInGroup === 'co-admin' && group.members[member.uid] === 'member' && (
                                                         <DropdownMenuTrigger asChild>
-                                                            <Button variant="ghost" size="icon" className="h-7 w-7"><MoreVertical className="h-4 w-4" /></Button>
+                                                            <Button variant="ghost" size="icon" className={cn("h-7 w-7 transition-colors", themeGhostClass)}><MoreVertical className="h-4 w-4" /></Button>
                                                         </DropdownMenuTrigger>
                                                     )}
                                                     <DropdownMenuContent>
                                                         <DropdownMenuLabel>Manage {member.displayName}</DropdownMenuLabel>
                                                         <DropdownMenuSeparator />
                                                         {userRoleInGroup === 'admin' && group.members[member.uid] !== 'co-admin' &&
-                                                            <DropdownMenuItem onClick={() => handleMemberAction(member, 'make-co-admin')}><Star className="mr-2" /> Make Co-Admin</DropdownMenuItem>
+                                                            <DropdownMenuItem className={themeDropdownItemClass} onClick={() => handleMemberAction(member, 'make-co-admin')}><Star className="mr-2" /> Make Co-Admin</DropdownMenuItem>
                                                         }
                                                         {userRoleInGroup === 'admin' && group.members[member.uid] === 'co-admin' &&
-                                                            <DropdownMenuItem onClick={() => handleMemberAction(member, 'make-member')}><UserCog className="mr-2" /> Make Member</DropdownMenuItem>
+                                                            <DropdownMenuItem className={themeDropdownItemClass} onClick={() => handleMemberAction(member, 'make-member')}><UserCog className="mr-2" /> Make Member</DropdownMenuItem>
                                                         }
-                                                        {userRoleInGroup === 'admin' && group.members[member.uid] !== 'admin' && <DropdownMenuItem onClick={() => handleMemberAction(member, 'make-admin')}><Crown className="mr-2" /> Make Admin</DropdownMenuItem>}
+                                                        {userRoleInGroup === 'admin' && group.members[member.uid] !== 'admin' && <DropdownMenuItem className={themeDropdownItemClass} onClick={() => handleMemberAction(member, 'make-admin')}><Crown className="mr-2" /> Make Admin</DropdownMenuItem>}
 
                                                         {(userRoleInGroup === 'admin' || (userRoleInGroup === 'co-admin' && group.members[member.uid] === 'member')) && (
                                                             <>
                                                                 <DropdownMenuSeparator />
-                                                                <DropdownMenuItem className="text-red-500" onClick={() => handleMemberAction(member, 'kick')}><Trash2 className="mr-2" /> Kick Member</DropdownMenuItem>
+                                                                <DropdownMenuItem className={cn(themeDropdownItemClass, "text-red-500 dark:text-red-400 focus:text-red-600 dark:focus:text-red-300 focus:bg-red-100 dark:focus:bg-red-500/20")} onClick={() => handleMemberAction(member, 'kick')}><Trash2 className="mr-2" /> Kick Member</DropdownMenuItem>
                                                             </>
                                                         )}
                                                     </DropdownMenuContent>
@@ -1042,7 +1075,7 @@ export default function SettingsPage() {
                             </div>
                         </div>
                         <Separator />
-                        <Button onClick={confirmLeaveGroup} disabled={isSaving} className="w-full bg-[--theme-periwinkle-primary] hover:bg-violet-500">
+                        <Button onClick={confirmLeaveGroup} disabled={isSaving} className={cn("w-full transition-colors", themeButtonClass)}>
                             {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <LogOutIcon className="mr-2 h-4 w-4" />}
                             Leave Group
                         </Button>
@@ -1063,11 +1096,11 @@ export default function SettingsPage() {
                             <h3 className="font-semibold mb-2 flex items-center gap-2"><ShieldAlert /> Pending Group Invitations</h3>
                             <div className="space-y-2">
                                 {receivedGroupInvites.map(inv => (
-                                    <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 rounded-md">
+                                    <div key={inv.id} className="flex items-center justify-between text-sm p-2 bg-slate-100 dark:bg-slate-800 rounded-md">
                                         <p>From <span className="font-bold">{inv.senderName}</span> to join <span className="font-bold">{inv.groupName}</span></p>
                                         <div className="flex gap-2">
-                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-emerald-600 hover:bg-emerald-100" onClick={() => handleGroupInvitation(inv, 'accept')}><Check className="h-4 w-4" /></Button>
-                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-600 hover:bg-red-100" onClick={() => handleGroupInvitation(inv, 'decline')}><X className="h-4 w-4" /></Button>
+                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 group" onClick={() => handleGroupInvitation(inv, 'accept')}><Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400" /></Button>
+                                            <Button size="sm" variant="ghost" className="h-7 w-7 p-0 hover:bg-red-100 dark:hover:bg-red-900/30 group" onClick={() => handleGroupInvitation(inv, 'decline')}><X className="h-4 w-4 text-red-600 dark:text-red-400" /></Button>
                                         </div>
                                     </div>
                                 ))}
@@ -1080,9 +1113,9 @@ export default function SettingsPage() {
                         <Form {...joinGroupForm}>
                             <form onSubmit={joinGroupForm.handleSubmit(onJoinGroup)} className="flex items-start gap-2">
                                 <FormField control={joinGroupForm.control} name="invitationCode" render={({ field }) => (
-                                    <FormItem className="flex-grow"><FormControl><Input placeholder="Enter invitation code" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem className="flex-grow"><FormControl><Input className={themeInputClass} placeholder="Enter invitation code" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
-                                <Button type="submit" disabled={isSaving} className="bg-[--theme-periwinkle-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Join'}</Button>
+                                <Button type="submit" disabled={isSaving} className={cn("transition-colors", themeButtonClass)}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Join'}</Button>
                             </form>
                         </Form>
                     </div>
@@ -1092,9 +1125,9 @@ export default function SettingsPage() {
                         <Form {...createGroupForm}>
                             <form onSubmit={createGroupForm.handleSubmit(onCreateGroup)} className="flex items-start gap-2">
                                 <FormField control={createGroupForm.control} name="groupName" render={({ field }) => (
-                                    <FormItem className="flex-grow"><FormControl><Input placeholder="My Awesome Group" {...field} /></FormControl><FormMessage /></FormItem>
+                                    <FormItem className="flex-grow"><FormControl><Input className={themeInputClass} placeholder="My Awesome Group" {...field} /></FormControl><FormMessage /></FormItem>
                                 )} />
-                                <Button type="submit" disabled={isSaving} className="bg-[--theme-periwinkle-primary] hover:bg-violet-500">{isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}</Button>
+                                <Button type="submit" disabled={isSaving} className={cn("transition-colors", themeButtonClass)}>{isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Create'}</Button>
                             </form>
                         </Form>
                     </div>
@@ -1169,7 +1202,7 @@ export default function SettingsPage() {
 
     const DarkModeToggle = () => {
         const { theme, toggleTheme } = useTheme();
-        return <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} />;
+        return <Switch checked={theme === 'dark'} onCheckedChange={toggleTheme} className={themeSwitchClass} />;
     };
 
     const ColorSwatch = ({ primary, secondary, text }: { primary: string; secondary: string; text: string; }) => (
@@ -1185,19 +1218,19 @@ export default function SettingsPage() {
         <div className="min-h-screen w-full flex flex-col items-center bg-[var(--app-bg)] p-4 pb-12">
             <div className="w-full max-w-md">
                 <div className="flex w-full items-center justify-between mb-4">
-                    <Button variant="ghost" onClick={() => router.push('/')}>
+                    <Button variant="ghost" className={cn("transition-colors", themeGhostClass)} onClick={() => router.push('/')}>
                         <ArrowLeft className="mr-2 h-4 w-4" /> Back to Tasks
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={handleLogout} className="text-slate-600 hover:bg-slate-100" aria-label="Logout">
+                    <Button variant="ghost" size="icon" onClick={handleLogout} className={cn("text-slate-600 dark:text-slate-400 transition-colors", themeGhostClass)} aria-label="Logout">
                         <LogOutIcon className="h-5 w-5" />
                     </Button>
                 </div>
 
                 <Tabs defaultValue="profile" className="w-full">
                     <TabsList className="grid w-full grid-cols-3">
-                        <TabsTrigger value="profile">Profile</TabsTrigger>
-                        <TabsTrigger value="pairing">Pairing</TabsTrigger>
-                        <TabsTrigger value="group">Group</TabsTrigger>
+                        <TabsTrigger value="profile" className={themeTabClass}>Profile</TabsTrigger>
+                        <TabsTrigger value="pairing" className={themeTabClass}>Pairing</TabsTrigger>
+                        <TabsTrigger value="group" className={themeTabClass}>Group</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="profile">
@@ -1223,8 +1256,9 @@ export default function SettingsPage() {
                                                 value={photoUrlInput}
                                                 onChange={(e) => setPhotoUrlInput(e.target.value)}
                                                 disabled={isSaving}
+                                                className={themeInputClass}
                                             />
-                                            <Button onClick={handleSavePhotoUrl} disabled={isSaving} className="bg-[--theme-periwinkle-primary] hover:bg-violet-500">
+                                            <Button onClick={handleSavePhotoUrl} disabled={isSaving} className={cn("transition-colors", themeButtonClass)}>
                                                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save'}
                                             </Button>
                                         </div>
@@ -1234,7 +1268,7 @@ export default function SettingsPage() {
                                 <Form {...profileForm}>
                                     <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-8">
                                         <FormField control={profileForm.control} name="displayName" render={({ field }) => (
-                                            <FormItem><FormLabel>Display Name</FormLabel><FormControl><Input placeholder="Your Name" {...field} /></FormControl><FormDescription>This name will be displayed on your task card.</FormDescription><FormMessage /></FormItem>
+                                            <FormItem><FormLabel>Display Name</FormLabel><FormControl><Input className={themeInputClass} placeholder="Your Name" {...field} /></FormControl><FormDescription>This name will be displayed on your task card.</FormDescription><FormMessage /></FormItem>
                                         )} />
                                         {/* Dark Mode Toggle */}
                                         <div className="flex items-center justify-between rounded-lg border dark:border-slate-700 p-4">
@@ -1247,24 +1281,21 @@ export default function SettingsPage() {
                                         <FormField control={profileForm.control} name="cardTheme" render={({ field }) => (
                                             <FormItem className="space-y-3"><FormLabel>Card Theme</FormLabel>
                                                 <FormControl>
-                                                    <RadioGroup onValueChange={field.onChange} value={field.value} className="flex flex-col space-y-1">
-                                                        <FormItem className="flex items-center space-x-3 space-y-0">
-                                                            <FormControl><RadioGroupItem value="periwinkle" /></FormControl>
-                                                            <FormLabel className="font-normal flex-1 flex items-center">Periwinkle
-                                                                <ColorSwatch primary="#a78bfa" secondary="#f5f3ff" text="#6d28d9" />
-                                                            </FormLabel>
+                                                    <RadioGroup onValueChange={field.onChange} value={profileForm.watch('cardTheme')} className="flex flex-col space-y-1">
+                                                        <FormItem className="flex items-center justify-between space-x-3 space-y-0 p-2 border border-transparent hover:border-slate-200 dark:hover:border-slate-700/50 rounded-lg transition-colors cursor-pointer group">
+                                                            <FormControl><RadioGroupItem value="periwinkle" className={themeRadioClass} /></FormControl>
+                                                            <FormLabel className="font-medium cursor-pointer flex-1">Periwinkle</FormLabel>
+                                                            <ColorSwatch primary="#a78bfa" secondary="rgba(167, 139, 250, 0.15)" text="#ddd6fe" />
                                                         </FormItem>
-                                                        <FormItem className="flex items-center space-x-3 space-y-0">
-                                                            <FormControl><RadioGroupItem value="cyan" /></FormControl>
-                                                            <FormLabel className="font-normal flex-1 flex items-center">Cyan
-                                                                <ColorSwatch primary="#22d3ee" secondary="#ecfeff" text="#0e7490" />
-                                                            </FormLabel>
+                                                        <FormItem className="flex items-center justify-between space-x-3 space-y-0 p-2 border border-transparent hover:border-slate-200 dark:hover:border-slate-700/50 rounded-lg transition-colors cursor-pointer group">
+                                                            <FormControl><RadioGroupItem value="cyan" className={themeRadioClass} /></FormControl>
+                                                            <FormLabel className="font-medium cursor-pointer flex-1">Cyan</FormLabel>
+                                                            <ColorSwatch primary="#22d3ee" secondary="rgba(34, 211, 238, 0.15)" text="#cffafe" />
                                                         </FormItem>
-                                                        <FormItem className="flex items-center space-x-3 space-y-0">
-                                                            <FormControl><RadioGroupItem value="emerald" /></FormControl>
-                                                            <FormLabel className="font-normal flex-1 flex items-center">Emerald
-                                                                <ColorSwatch primary="#34d399" secondary="#ecfdf5" text="#065f46" />
-                                                            </FormLabel>
+                                                        <FormItem className="flex items-center justify-between space-x-3 space-y-0 p-2 border border-transparent hover:border-slate-200 dark:hover:border-slate-700/50 rounded-lg transition-colors cursor-pointer group">
+                                                            <FormControl><RadioGroupItem value="emerald" className={themeRadioClass} /></FormControl>
+                                                            <FormLabel className="font-medium cursor-pointer flex-1">Emerald</FormLabel>
+                                                            <ColorSwatch primary="#34d399" secondary="rgba(52, 211, 153, 0.15)" text="#d1fae5" />
                                                         </FormItem>
                                                     </RadioGroup>
                                                 </FormControl><FormMessage />
@@ -1276,16 +1307,16 @@ export default function SettingsPage() {
                                                 <AccordionContent>
                                                     <div className="space-y-8 pt-4">
                                                         <FormField control={profileForm.control} name="currentPassword" render={({ field }) => (
-                                                            <FormItem><FormLabel>Current Password</FormLabel><FormControl><Input type="password" placeholder="Enter current password" {...field} /></FormControl><FormDescription>Required only if you want to change your password.</FormDescription><FormMessage /></FormItem>
+                                                            <FormItem><FormLabel>Current Password</FormLabel><FormControl><Input className={themeInputClass} type="password" placeholder="Enter current password" {...field} /></FormControl><FormDescription>Required only if you want to change your password.</FormDescription><FormMessage /></FormItem>
                                                         )} />
                                                         <FormField control={profileForm.control} name="newPassword" render={({ field }) => (
-                                                            <FormItem><FormLabel>New Password</FormLabel><FormControl><Input type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormItem>
+                                                            <FormItem><FormLabel>New Password</FormLabel><FormControl><Input className={themeInputClass} type="password" placeholder="Enter new password" {...field} /></FormControl><FormDescription>Leave this blank if you do not want to change your password.</FormDescription><FormMessage /></FormItem>
                                                         )} />
                                                     </div>
                                                 </AccordionContent>
                                             </AccordionItem>
                                         </Accordion>
-                                        <Button type="submit" disabled={isSaving} className="w-full bg-[--theme-periwinkle-primary] hover:bg-violet-500">
+                                        <Button type="submit" disabled={isSaving} className={cn("w-full transition-colors", themeButtonClass)}>
                                             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />} Save Changes
                                         </Button>
                                     </form>

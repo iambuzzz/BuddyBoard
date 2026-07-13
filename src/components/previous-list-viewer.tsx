@@ -11,8 +11,8 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
-import type { PreviousTask } from '@/lib/types';
+import { Dumbbell, Coffee } from 'lucide-react';
+import type { PreviousTask, TaskCategory } from '@/lib/types';
 
 interface PreviousListViewerProps {
   isOpen: boolean;
@@ -20,6 +20,19 @@ interface PreviousListViewerProps {
   previousTasks: PreviousTask[];
   userName?: string;
 }
+
+const getCategoryIndicator = (category?: TaskCategory) => {
+  switch (category) {
+    case 'self-growth':
+      return <Dumbbell className="h-3.5 w-3.5 text-teal-500 dark:text-teal-400 flex-shrink-0" />;
+    case 'life-break':
+      return <Coffee className="h-3.5 w-3.5 text-amber-500 dark:text-amber-400 flex-shrink-0" />;
+    default:
+      return null;
+  }
+};
+
+
 
 export function PreviousListViewer({
   isOpen,
@@ -31,7 +44,7 @@ export function PreviousListViewer({
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md w-[calc(100%-2rem)]">
         <DialogHeader>
-          <DialogTitle>{userName}'s Previous List</DialogTitle>
+          <DialogTitle>{userName}&apos;s Previous List</DialogTitle>
           <DialogDescription>
             This is a read-only view of the last completed list.
           </DialogDescription>
@@ -41,9 +54,10 @@ export function PreviousListViewer({
             {previousTasks.map((task, index) => (
               <li
                 key={index}
-                className="text-sm p-3 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200"
+                className="text-sm p-3 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center gap-2"
               >
-                {task.text}
+                {getCategoryIndicator(task.category)}
+                <span>{task.text}</span>
               </li>
             ))}
           </ul>

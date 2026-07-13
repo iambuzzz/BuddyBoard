@@ -84,19 +84,23 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
             newButton: 'bg-[--theme-periwinkle-primary] hover:bg-violet-500 text-white',
             selectedBg: 'bg-violet-100/80 dark:bg-violet-500/15',
             selectedText: 'text-violet-700 dark:text-violet-300',
+            backBtnHover: 'hover:bg-violet-100 hover:text-violet-700 dark:hover:bg-purple-500/20 dark:hover:text-purple-400',
         },
         cyan: {
             newButton: 'bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white',
             selectedBg: 'bg-cyan-100/80 dark:bg-cyan-500/15',
             selectedText: 'text-cyan-700 dark:text-cyan-300',
+            backBtnHover: 'hover:bg-cyan-100 hover:text-cyan-700 dark:hover:bg-cyan-500/20 dark:hover:text-cyan-400',
         },
         emerald: {
             newButton: 'bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white',
             selectedBg: 'bg-emerald-100/80 dark:bg-emerald-500/15',
             selectedText: 'text-emerald-700 dark:text-emerald-300',
+            backBtnHover: 'hover:bg-emerald-100 hover:text-emerald-700 dark:hover:bg-emerald-500/20 dark:hover:text-emerald-400',
         }
     };
     const currentTheme = themeStyles[theme] || themeStyles.periwinkle;
+    const deleteBtnHoverClass = 'hover:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/20 dark:hover:text-red-400';
 
     const formatTimestamp = (timestamp: any) => {
         if (!timestamp) return null;
@@ -131,7 +135,7 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
             <aside className="w-full md:w-80 md:border-r border-slate-300/70 dark:border-white/[0.06] flex flex-col h-screen bg-transparent">
                 <div className="p-4 border-b border-slate-300/70 dark:border-white/[0.06] flex items-center justify-between">
                     <h2 className="text-xl font-bold flex items-center gap-2 dark:text-white"><Notebook className="h-6 w-6" /> Notes</h2>
-                    <Button variant="ghost" size="icon" onClick={() => router.back()} className="h-9 w-9 text-slate-600 dark:text-slate-400">
+                    <Button variant="ghost" size="icon" onClick={() => router.back()} className={`h-9 w-9 text-slate-600 dark:text-slate-400 transition-colors ${currentTheme.backBtnHover}`}>
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
                 </div>
@@ -167,7 +171,7 @@ export function NotesSidebar({ notes, selectedNoteId, onSelectNote, isLoading, u
                                             e.stopPropagation();
                                             handleDeleteConfirm(note);
                                         }}
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-slate-400 dark:text-slate-500 hover:text-destructive opacity-0 group-hover:opacity-100 focus:opacity-100"
+                                        className={`absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 text-slate-400 dark:text-slate-500 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-colors ${deleteBtnHoverClass}`}
                                         aria-label="Delete note"
                                     >
                                         <Trash2 className="h-4 w-4" />

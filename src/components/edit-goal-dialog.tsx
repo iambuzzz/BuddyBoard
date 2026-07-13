@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -18,18 +18,27 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import type { Goal, CardTheme } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
 
-interface AddGoalDialogProps {
+interface EditGoalDialogProps {
   isOpen: boolean;
   onOpenChange: (isOpen: boolean) => void;
-  onAddGoal: (newGoal: Omit<Goal, 'id' | 'createdAt' | 'startDate' | 'status'>) => Promise<void>;
+  onEditGoal: (updatedGoal: Partial<Goal>) => Promise<void>;
+  goal: Goal;
   theme: CardTheme;
 }
 
-export function AddGoalDialog({ isOpen, onOpenChange, onAddGoal, theme }: AddGoalDialogProps) {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [type, setType] = useState<Goal['type']>('short-term');
+export function EditGoalDialog({ isOpen, onOpenChange, onEditGoal, goal, theme }: EditGoalDialogProps) {
+  const [title, setTitle] = useState(goal.title);
+  const [description, setDescription] = useState(goal.description || '');
+  const [type, setType] = useState<Goal['type']>(goal.type);
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTitle(goal.title);
+      setDescription(goal.description || '');
+      setType(goal.type);
+    }
+  }, [goal, isOpen]);
 
   const getButtonThemeClass = (theme: CardTheme) => {
     switch(theme) {
@@ -59,21 +68,17 @@ export function AddGoalDialog({ isOpen, onOpenChange, onAddGoal, theme }: AddGoa
   const handleSubmit = async () => {
     if (!title.trim() || !type) return;
     setIsSaving(true);
-    await onAddGoal({ title, description, type });
+    await onEditGoal({ title, description, type });
     setIsSaving(false);
     onOpenChange(false);
-    // Reset form
-    setTitle('');
-    setDescription('');
-    setType('short-term');
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Set a New Goal</DialogTitle>
-          <DialogDescription>What new heights do you want to reach?</DialogDescription>
+          <DialogTitle>Edit Goal</DialogTitle>
+          <DialogDescription>Update your goal details.</DialogDescription>
         </DialogHeader>
         <div className="grid gap-6 py-4">
           <div className="grid gap-2">
@@ -116,7 +121,7 @@ export function AddGoalDialog({ isOpen, onOpenChange, onAddGoal, theme }: AddGoa
           </Button>
           <Button onClick={handleSubmit} disabled={!title.trim() || isSaving} className={getButtonThemeClass(theme)}>
             {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Add Goal
+            Save Changes
           </Button>
         </DialogFooter>
       </DialogContent>

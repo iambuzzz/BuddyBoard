@@ -20,9 +20,25 @@ export function FirebaseClientProvider({ children }: FirebaseClientProviderProps
   } | null>(null);
 
   useEffect(() => {
+    // Patch console.error to ignore Firestore future update time warning which triggers Next.js error overlay
+    const originalConsoleError = console.error;
+    console.error = (...args: any[]) => {
+      if (
+        typeof args[0] === 'string' &&
+        args[0].includes('Detected an update time that is in the future')
+      ) {
+        return;
+      }
+      originalConsoleError.apply(console, args);
+    };
+
     // Firebase should only be initialized on the client.
     const instances = initializeFirebase();
     setFirebaseInstances(instances);
+
+    return () => {
+      console.error = originalConsoleError;
+    };
   }, []);
 
   if (!firebaseInstances) {

@@ -28,29 +28,35 @@ const LoadingScreen = () => (
     </div>
 );
 
-const PremiumOptions = () => (
-    <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="More Options">
-                <MoreVertical className="h-5 w-5" />
-            </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-            <DropdownMenuItem asChild>
-                <Link href="/notes" className='cursor-pointer'>
-                    <Notebook className="mr-2 h-4 w-4" />
-                    <span>Notes</span>
-                </Link>
-            </DropdownMenuItem>
-            <DropdownMenuItem asChild>
-                <Link href="/goals" className='cursor-pointer'>
-                    <GoalIcon className="mr-2 h-4 w-4" />
-                    <span>Goals</span>
-                </Link>
-            </DropdownMenuItem>
-        </DropdownMenuContent>
-    </DropdownMenu>
-);
+const PremiumOptions = ({ theme }: { theme?: CardTheme }) => {
+    const focusClass = theme === 'cyan' ? 'focus:bg-cyan-100 focus:text-cyan-700 dark:focus:bg-cyan-500/20 dark:focus:text-cyan-400' :
+        theme === 'emerald' ? 'focus:bg-emerald-100 focus:text-emerald-700 dark:focus:bg-emerald-500/20 dark:focus:text-emerald-400' :
+            'focus:bg-purple-100 focus:text-purple-700 dark:focus:bg-purple-500/20 dark:focus:text-purple-400';
+
+    return (
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" aria-label="More Options">
+                    <MoreVertical className="h-5 w-5" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild className={`cursor-pointer transition-colors ${focusClass}`}>
+                    <Link href="/notes">
+                        <Notebook className="mr-2 h-4 w-4" />
+                        <span>Notes</span>
+                    </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild className={`cursor-pointer transition-colors ${focusClass}`}>
+                    <Link href="/goals">
+                        <GoalIcon className="mr-2 h-4 w-4" />
+                        <span>Goals</span>
+                    </Link>
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+};
 
 
 const CreateProfile = () => {
@@ -223,7 +229,7 @@ const SoloView = ({ userId, profile, isFirstCardInGroup = true }: { userId: stri
                             <ArrowUp className="h-5 w-5" />
                         </Button>
                     )}
-                    <PremiumOptions />
+                    <PremiumOptions theme={profile.cardTheme} />
                 </div>
             </div>
             <div className="flex-grow h-full">
@@ -292,7 +298,7 @@ const PairedTaskCard = ({ user1, user2, isCurrentUserThePrimary, isFirstCardInGr
                             <ArrowUp className="h-5 w-5" />
                         </Button>
                     )}
-                    <PremiumOptions />
+                    <PremiumOptions theme={visibleUser.profile.cardTheme} />
                 </div>
             </div>
             <div className="app-flip-shell flex-grow">
@@ -588,7 +594,7 @@ const GroupView = ({ groupId, currentUserId }: { groupId: string; currentUserId:
                             <ArrowUp className="h-5 w-5" />
                         </Button>
                     )}
-                    <PremiumOptions />
+                    <PremiumOptions theme={member.cardTheme} />
                 </div>
             </div>
         )
@@ -740,7 +746,7 @@ const PairedTaskWrapper = ({ user1, user2, showBack, setShowBack, isFirstCardInG
                             <ArrowUp className="h-5 w-5" />
                         </Button>
                     )}
-                    <PremiumOptions />
+                    <PremiumOptions theme={visibleUser.profile.cardTheme} />
                 </div>
             </div>
 
