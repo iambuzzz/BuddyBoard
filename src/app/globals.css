@@ -111,25 +111,13 @@
   .snap-center {
     scroll-snap-align: center;
   }
-}
 
-/* Dark mode body — animated gradient background via pseudo-element.
-   Using ::before avoids creating a containing block on body,
-   which would break position:fixed elements like drag overlays */
-.dark body {
-  background: #0a0e1a;
-  position: relative;
-}
-
-.dark body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: linear-gradient(135deg, #0a0e1a 0%, #0f1629 25%, #12102e 50%, #0d1a2d 75%, #0a0e1a 100%);
-  background-size: 400% 400%;
-  animation: darkBgShift 30s ease infinite;
-  pointer-events: none;
+  /* Dark mode body — animated gradient background */
+  .dark body {
+    background: linear-gradient(135deg, #0a0e1a 0%, #0f1629 25%, #12102e 50%, #0d1a2d 75%, #0a0e1a 100%);
+    background-size: 400% 400%;
+    animation: darkBgShift 30s ease infinite;
+  }
 }
 
 @keyframes darkBgShift {
@@ -138,26 +126,22 @@
   100% { background-position: 0% 50%; }
 }
 
-/* ─── Dark mode Card glass effect ─── */
+/* ─── Dark mode Card — solid dark background ─── */
+/* NOTE: backdrop-filter was removed because it creates a new CSS containing
+   block, which breaks position:fixed drag overlays (@hello-pangea/dnd). */
 .dark .bg-card,
 .dark [class*="bg-card"] {
-  background: rgba(15, 20, 35, 0.75) !important;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(15, 20, 35, 0.95) !important;
 }
 
 @media (max-width: 768px) {
   .dark .bg-card,
   .dark [class*="bg-card"] {
-    background: #0f1423 !important; /* Fully opaque for scroll performance */
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+    background: #0f1423 !important;
   }
   .dark body {
-    background: #0a0e1a !important; /* Flat dark color, removes heavy gradient compositing */
-  }
-  .dark body::before {
-    display: none; /* Remove animated gradient on mobile for performance */
+    background: #0a0e1a !important;
+    animation: none;
   }
 }
 
