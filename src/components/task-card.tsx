@@ -76,6 +76,14 @@ const computeTaskTime = (task: Task): number => {
   return time;
 };
 
+// Generate a unique ID that works in non-secure contexts (HTTP dev server on mobile)
+const generateId = () => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return Date.now().toString(36) + Math.random().toString(36).substring(2, 12);
+};
+
 export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
   const firestore = useFirestore();
   const { user: authUser } = useAuthUser(); // Current authenticated user
@@ -125,7 +133,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
 
   const addTask = (text: string, category: TaskCategory = 'deep-work') => {
     const newTask: Task = {
-      id: crypto.randomUUID(),
+      id: generateId(),
       text,
       category,
       isCompleted: false,
@@ -290,7 +298,7 @@ export function TaskCard({ userState, userProfile, userId }: TaskCardProps) {
       return;
     }
     const restoredTasks: Task[] = userState.previousTasks.map((task: PreviousTask) => ({
-      id: crypto.randomUUID(),
+      id: generateId(),
       text: task.text,
       category: task.category || 'deep-work',
       isCompleted: false,

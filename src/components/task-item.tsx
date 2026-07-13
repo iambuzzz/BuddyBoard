@@ -213,7 +213,7 @@ export function TaskItem({ task, index, isLocked, onToggle, onUpdate, onDelete, 
 
           <div className="flex-grow flex flex-col sm:flex-row sm:items-center justify-between min-w-0">
             {isEditing ? (
-              <div className="flex flex-col gap-2 w-full min-w-0 py-0.5">
+              <div className="flex flex-col gap-1.5 w-full min-w-0 py-0.5 overflow-hidden">
                 <input
                   ref={inputRef}
                   type="text"
@@ -222,15 +222,15 @@ export function TaskItem({ task, index, isLocked, onToggle, onUpdate, onDelete, 
                   onKeyDown={handleKeyDown}
                   className="w-full bg-white dark:bg-black/20 border border-slate-300 dark:border-white/10 rounded px-2 py-1.5 text-base sm:text-sm dark:text-white focus:outline-none focus:ring-2 focus:ring-[--theme-primary]"
                 />
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 shrink-0 bg-slate-200/50 dark:bg-black/20 p-1 rounded-md">
-                    <button type="button" onClick={() => setEditCategory('deep-work')} className={cn("p-1.5 rounded transition-all", editCategory === 'deep-work' ? "bg-emerald-100 dark:bg-emerald-500/20 ring-1 ring-emerald-500/50 shadow-sm" : "hover:bg-white/50 dark:hover:bg-slate-800/50 opacity-70 hover:opacity-100")}><Hammer className="h-4 w-4 text-emerald-500" /></button>
-                    <button type="button" onClick={() => setEditCategory('self-growth')} className={cn("p-1.5 rounded transition-all", editCategory === 'self-growth' ? "bg-blue-100 dark:bg-blue-500/20 ring-1 ring-blue-500/50 shadow-sm" : "hover:bg-white/50 dark:hover:bg-slate-800/50 opacity-70 hover:opacity-100")}><Dumbbell className="h-4 w-4 text-blue-500" /></button>
-                    <button type="button" onClick={() => setEditCategory('life-break')} className={cn("p-1.5 rounded transition-all", editCategory === 'life-break' ? "bg-red-100 dark:bg-red-500/20 ring-1 ring-red-500/50 shadow-sm" : "hover:bg-white/50 dark:hover:bg-slate-800/50 opacity-70 hover:opacity-100")}><Coffee className="h-4 w-4 text-red-500" /></button>
+                <div className="flex items-center justify-between gap-1">
+                  <div className="flex items-center gap-0.5 shrink-0 bg-slate-200/50 dark:bg-black/20 p-0.5 rounded-md">
+                    <button type="button" onClick={() => setEditCategory('deep-work')} className={cn("p-1 rounded transition-all", editCategory === 'deep-work' ? "bg-emerald-100 dark:bg-emerald-500/20 ring-1 ring-emerald-500/50 shadow-sm" : "hover:bg-white/50 dark:hover:bg-slate-800/50 opacity-70 hover:opacity-100")}><Hammer className="h-3.5 w-3.5 text-emerald-500" /></button>
+                    <button type="button" onClick={() => setEditCategory('self-growth')} className={cn("p-1 rounded transition-all", editCategory === 'self-growth' ? "bg-blue-100 dark:bg-blue-500/20 ring-1 ring-blue-500/50 shadow-sm" : "hover:bg-white/50 dark:hover:bg-slate-800/50 opacity-70 hover:opacity-100")}><Dumbbell className="h-3.5 w-3.5 text-blue-500" /></button>
+                    <button type="button" onClick={() => setEditCategory('life-break')} className={cn("p-1 rounded transition-all", editCategory === 'life-break' ? "bg-red-100 dark:bg-red-500/20 ring-1 ring-red-500/50 shadow-sm" : "hover:bg-white/50 dark:hover:bg-slate-800/50 opacity-70 hover:opacity-100")}><Coffee className="h-3.5 w-3.5 text-red-500" /></button>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
-                    <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)} className={`h-8 px-2 text-slate-500 transition-colors ${cancelBtnHoverClass}`}>Cancel</Button>
-                    <Button size="sm" onClick={handleSave} className={cn("h-8 px-3 transition-colors", theme === 'periwinkle' ? "bg-[--theme-periwinkle-primary] hover:bg-purple-500 text-white dark:bg-[--theme-periwinkle-secondary] dark:hover:bg-[--theme-periwinkle-secondary] dark:hover:opacity-80" : theme === 'cyan' ? "bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white dark:bg-[--theme-cyan-secondary] dark:hover:bg-[--theme-cyan-secondary] dark:hover:opacity-80" : "bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white dark:bg-[--theme-emerald-secondary] dark:hover:bg-[--theme-emerald-secondary] dark:hover:opacity-80")}>Save</Button>
+                    <Button size="sm" variant="ghost" onClick={() => setIsEditing(false)} className={`h-7 px-1.5 text-xs text-slate-500 transition-colors ${cancelBtnHoverClass}`}>Cancel</Button>
+                    <Button size="sm" onClick={handleSave} className={cn("h-7 px-2 text-xs transition-colors", theme === 'periwinkle' ? "bg-[--theme-periwinkle-primary] hover:bg-purple-500 text-white dark:bg-[--theme-periwinkle-secondary] dark:hover:bg-[--theme-periwinkle-secondary] dark:hover:opacity-80" : theme === 'cyan' ? "bg-[--theme-cyan-primary] hover:bg-cyan-500 text-white dark:bg-[--theme-cyan-secondary] dark:hover:bg-[--theme-cyan-secondary] dark:hover:opacity-80" : "bg-[--theme-emerald-primary] hover:bg-emerald-500 text-white dark:bg-[--theme-emerald-secondary] dark:hover:bg-[--theme-emerald-secondary] dark:hover:opacity-80")}>Save</Button>
                   </div>
                 </div>
               </div>
